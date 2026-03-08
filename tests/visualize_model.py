@@ -1,0 +1,17 @@
+import mujoco
+import mujoco.viewer
+
+model = mujoco.MjModel.from_xml_path("models/parts/bottom_case.xml")
+data = mujoco.MjData(model)
+
+with mujoco.viewer.launch_passive(model, data) as viewer:
+    viewer.cam.azimuth = 45
+    viewer.cam.elevation = -20
+    viewer.cam.distance = 0.6      # ~60cm back, good for keyboard-sized object
+    viewer.cam.lookat = [0, 0, 0.011]   # look at case center
+    
+    import time
+    while viewer.is_running():
+        mujoco.mj_step(model, data)
+        viewer.sync()
+        time.sleep(0.002)
