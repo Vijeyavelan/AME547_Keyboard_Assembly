@@ -1,7 +1,7 @@
 import mujoco
 import mujoco.viewer
-
-model = mujoco.MjModel.from_xml_path("models/parts/bottom_case.xml")
+import sys
+model = mujoco.MjModel.from_xml_path(sys.argv[1])
 data = mujoco.MjData(model)
 
 with mujoco.viewer.launch_passive(model, data) as viewer:
