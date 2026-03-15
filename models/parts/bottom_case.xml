@@ -1,0 +1,357 @@
+<mujoco model="keyboard_bottom_case">
+  <!--
+    AME 547 - Keyboard Assembly Cell Simulation
+    Component: Bottom Case (75% Layout, 84-key)
+    
+    Real-world reference dimensions (Noire/QK75-class 75% keyboard):
+      Outer footprint : 325mm (L) x 115mm (W) x 28mm (H total case)
+      Bottom half height: ~6mm floor + 22mm walls = bottom_case height ~22mm
+      Wall thickness   : 3mm
+      Material         : ABS plastic
+
+    Coordinate convention (MuJoCo world frame):
+      +X → keyboard length (left to right)
+      +Y → keyboard width  (front to back)
+      +Z → up
+
+    The bottom case sits on the world floor (z=0 at bottom face).
+    Origin of body = geometric center of the outer shell.
+
+    Geometry strategy:
+      - Use 5 geoms: 1 floor slab + 4 wall geoms (box primitives)
+      - This avoids a hollow mesh and keeps contact simulation clean
+      - All sizes in MuJoCo half-extents (meters, so divide mm by 2000)
+
+    ABS plastic material properties:
+      density  : ~1050 kg/m³
+      friction : [1.0, 0.005, 0.0001] (slide, roll, spin) — typical ABS on steel fixture
+
+    Mounting features:
+      4 screw boss sites at corners (M3, inset 8mm from edges)
+      1 site at body center for fixture registration / dowel pin
+  -->
+
+  <compiler angle="radian" autolimits="true"/>
+
+  <option gravity="0 0 -9.81" timestep="0.002"/>
+
+  <default>
+    <geom rgba="0.15 0.15 0.18 1"/>   <!-- dark charcoal ABS -->
+  </default>
+
+  <asset>
+    <material name="abs_black"
+              rgba="0.15 0.15 0.18 1"
+              specular="0.3"
+              shininess="0.4"
+              reflectance="0.05"/>
+  </asset>
+
+  <worldbody>
+
+    <!-- ── Static ground plane (fixture table) ────────────────────────── -->
+    <geom name="ground" type="plane" size="1 1 0.1"
+          pos="0 0 0" euler="0 0 0"
+          friction="0.8 0.005 0.0001"
+          rgba="0.4 0.4 0.4 1"/>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         BOTTOM CASE BODY
+         Center of body placed at (0, 0, z_center)
+         z_center = half of case height = 0.011m (11mm) above ground
+         ══════════════════════════════════════════════════════════════════ -->
+    <body name="bottom_case" pos="0 0 0.011">
+
+      <!-- ── Inertial properties (ABS plastic, ~1050 kg/m³) ────────────
+           Approximate mass for a 325x115x22mm ABS shell ~ 85g
+           MuJoCo will auto-compute inertia from geom masses if density set,
+           but we provide explicit mass for assembly logging clarity.
+      -->
+      <inertial pos="0 0 0"
+                mass="0.085"
+                diaginertia="3.2e-5 2.4e-4 2.5e-4"/>
+
+      <!-- Free joint — becomes welded/fixed once placed in fixture.
+           Comment this out if placing as a static fixture anchor. -->
+      <freejoint name="bottom_case_free"/>
+
+      <!-- ── FLOOR SLAB ──────────────────────────────────────────────────
+           Outer dims: 325mm(x) × 115mm(y) × 3mm(z floor thickness)
+           Half-extents: 0.1625, 0.0575, 0.0015
+           Positioned at bottom of case interior:
+             z_local = -0.011 + 0.0015 = -0.0095  (floor center from body origin)
+      -->
+      <geom name="floor_slab"
+            type="box"
+            size="0.1625 0.0575 0.0015"
+            pos="0 0 -0.0095"
+            material="abs_black"
+            density="1050"
+            friction="1.0 0.005 0.0001"
+            condim="4"
+            priority="1"/>
+
+      <!-- ── WALL: Left (+X side) ────────────────────────────────────────
+           325mm long wall omitted — left/right walls run along Y axis.
+           Left wall: x_local = -(0.1625 - 0.0015) = -0.161
+           Half-extents: wall_thickness/2=0.0015, 0.0575, wall_height/2
+           Wall height from floor top to case rim = 22mm-3mm = 19mm → half = 0.0095
+           Wall center z = -0.011 + 0.003 + 0.0095 = 0.0015
+      -->
+      <geom name="wall_left"
+            type="box"
+            size="0.0015 0.0575 0.0095"
+            pos="-0.161 0 0.0015"
+            material="abs_black"
+            density="1050"
+            friction="1.0 0.005 0.0001"
+            condim="4"
+            priority="1"/>
+
+      <!-- ── WALL: Right (-X side) ──────────────────────────────────────-->
+      <geom name="wall_right"
+            type="box"
+            size="0.0015 0.0575 0.0095"
+            pos="0.161 0 0.0015"
+            material="abs_black"
+            density="1050"
+            friction="1.0 0.005 0.0001"
+            condim="4"
+            priority="1"/>
+
+      <!-- ── WALL: Front (+Y side, toward user) ─────────────────────────
+           Spans full X width (inner span = 325-6mm = 319mm → half = 0.1595)
+           Front wall: y_local = -(0.0575 - 0.0015) = -0.056
+      -->
+      <geom name="wall_front"
+            type="box"
+            size="0.1595 0.0015 0.0095"
+            pos="0 -0.056 0.0015"
+            material="abs_black"
+            density="1050"
+            friction="1.0 0.005 0.0001"
+            condim="4"
+            priority="1"/>
+
+      <!-- ── WALL: Rear (-Y side, away from user) ───────────────────────-->
+      <geom name="wall_rear"
+            type="box"
+            size="0.1595 0.0015 0.0095"
+            pos="0 0.056 0.0015"
+            material="abs_black"
+            density="1050"
+            friction="1.0 0.005 0.0001"
+            condim="4"
+            priority="1"/>
+
+      <!-- ══════════════════════════════════════════════════════════════════
+           BATTERY LOCATING RIBS
+           Battery model: 606090 LiPo (6mm × 60mm × 90mm)
+           Battery footprint in case:
+             X (length): 90mm → half = 0.045m
+             Y (width) : 60mm → half = 0.030m
+           Battery centered in Y (left-right center of case)
+           Battery offset in X: pushed toward rear (+X) to clear
+             USB-C port cutout at front (-X) wall
+             Battery X center = +0.025m from case center
+           
+           Rib geometry:
+             Thickness : 1.5mm → half = 0.00075m
+             Height    : 4mm   → half = 0.002m
+             Rib bottom: sits on floor top face
+               floor top z_local = -0.0095 + 0.0015 = -0.008m
+               rib center z      = -0.008 + 0.002   = -0.006m
+           
+           4 ribs: left wall, right wall, front wall, rear wall
+           forming a tray that locates battery precisely
+           ══════════════════════════════════════════════════════════════════ -->
+
+      <!-- Battery rib: Left side (−Y face of battery footprint) -->
+      <geom name="battery_rib_left"
+            type="box"
+            size="0.045 0.00075 0.002"
+            pos="0.025 -0.03075 -0.006"
+            material="abs_black"
+            density="1050"
+            friction="1.0 0.005 0.0001"
+            condim="4"
+            priority="1"/>
+
+      <!-- Battery rib: Right side (+Y face of battery footprint) -->
+      <geom name="battery_rib_right"
+            type="box"
+            size="0.045 0.00075 0.002"
+            pos="0.025 0.03075 -0.006"
+            material="abs_black"
+            density="1050"
+            friction="1.0 0.005 0.0001"
+            condim="4"
+            priority="1"/>
+
+      <!-- Battery rib: Front (−X face, toward USB port) -->
+      <geom name="battery_rib_front"
+            type="box"
+            size="0.00075 0.030 0.002"
+            pos="-0.02025 0 -0.006"
+            material="abs_black"
+            density="1050"
+            friction="1.0 0.005 0.0001"
+            condim="4"
+            priority="1"/>
+
+      <!-- Battery rib: Rear (+X face, toward rear wall) -->
+      <geom name="battery_rib_rear"
+            type="box"
+            size="0.00075 0.030 0.002"
+            pos="0.07025 0 -0.006"
+            material="abs_black"
+            density="1050"
+            friction="1.0 0.005 0.0001"
+            condim="4"
+            priority="1"/>
+
+      <!-- ══════════════════════════════════════════════════════════════════
+           SCREW BOSSES (M3 plate-to-case screws)
+           4 cylindrical posts rising from case floor
+           Boss OD: 6mm → radius = 0.003m
+           Boss height: 8mm rising from floor top
+             floor top z_local  = -0.008m
+             boss center z      = -0.008 + 0.004 = -0.004m
+             boss top z         = -0.008 + 0.008 = 0.000m (at body midplane)
+           Positions match screw_boss sites (same XY, adjusted Z)
+           Inset 8mm from outer wall centerlines:
+             X: ±(0.1625 - 0.008) = ±0.1545m
+             Y: ±(0.0575 - 0.008) = ±0.0495m
+           ══════════════════════════════════════════════════════════════════ -->
+
+      <!-- Screw boss: Front-Left -->
+      <geom name="screw_boss_geom_FL"
+            type="cylinder"
+            size="0.003 0.004"
+            pos="-0.1545 -0.0495 -0.004"
+            material="abs_black"
+            density="1050"
+            friction="1.0 0.005 0.0001"
+            condim="4"
+            priority="1"/>
+
+      <!-- Screw boss: Front-Right -->
+      <geom name="screw_boss_geom_FR"
+            type="cylinder"
+            size="0.003 0.004"
+            pos="0.1545 -0.0495 -0.004"
+            material="abs_black"
+            density="1050"
+            friction="1.0 0.005 0.0001"
+            condim="4"
+            priority="1"/>
+
+      <!-- Screw boss: Rear-Left -->
+      <geom name="screw_boss_geom_RL"
+            type="cylinder"
+            size="0.003 0.004"
+            pos="-0.1545 0.0495 -0.004"
+            material="abs_black"
+            density="1050"
+            friction="1.0 0.005 0.0001"
+            condim="4"
+            priority="1"/>
+
+      <!-- Screw boss: Rear-Right -->
+      <geom name="screw_boss_geom_RR"
+            type="cylinder"
+            size="0.003 0.004"
+            pos="0.1545 0.0495 -0.004"
+            material="abs_black"
+            density="1050"
+            friction="1.0 0.005 0.0001"
+            condim="4"
+            priority="1"/>
+
+      <!-- ══════════════════════════════════════════════════════════════════
+           REGISTRATION SITES
+           Used for:
+             - Fixture dowel pin registration (center_fixture)
+             - Screw boss locations (M3, corner positions)
+             - PCB placement reference (pcb_origin)
+             - Gasket placement reference (gasket_origin)
+           All positions in body-local frame (z=0 at body center = mid-height)
+           Rim top face z_local = +0.011m
+           Interior floor face z_local = -0.011 + 0.003 = -0.008m
+           ══════════════════════════════════════════════════════════════════ -->
+
+      <!-- Center of bottom face (fixture registration / dowel) -->
+      <site name="fixture_dowel_center"
+            type="cylinder"
+            size="0.002 0.001"
+            pos="0 0 -0.0095"
+            euler="0 0 0"
+            rgba="1 0.8 0 1"/>
+
+      <!-- Corner screw bosses (M3, 8mm inset from outer edge) -->
+      <!-- Front-Left -->
+      <site name="screw_boss_FL"
+            type="cylinder"
+            size="0.003 0.001"
+            pos="-0.1545 -0.0495 -0.0085"
+            rgba="0.8 0.2 0.2 1"/>
+      <!-- Front-Right -->
+      <site name="screw_boss_FR"
+            type="cylinder"
+            size="0.003 0.001"
+            pos="0.1545 -0.0495 -0.0085"
+            rgba="0.8 0.2 0.2 1"/>
+      <!-- Rear-Left -->
+      <site name="screw_boss_RL"
+            type="cylinder"
+            size="0.003 0.001"
+            pos="-0.1545 0.0495 -0.0085"
+            rgba="0.8 0.2 0.2 1"/>
+      <!-- Rear-Right -->
+      <site name="screw_boss_RR"
+            type="cylinder"
+            size="0.003 0.001"
+            pos="0.1545 0.0495 -0.0085"
+            rgba="0.8 0.2 0.2 1"/>
+
+      <!-- PCB placement origin (aligns with PCB body pos in pcb.xml) -->
+      <!-- rgba alpha=0.0 — reference site only, not visible in viewer -->
+      <site name="pcb_origin"
+            type="box"
+            size="0.001 0.001 0.0002"
+            pos="0 0 -0.006"
+            rgba="0.2 0.8 0.2 0.0"/>
+
+      <!-- Gasket seating surface (rim top, where gaskets rest) -->
+      <!-- rgba alpha=0.0 — reference site only, not visible in viewer -->
+      <site name="gasket_seating_surface"
+            type="box"
+            size="0.16 0.056 0.0002"
+            pos="0 0 0.0095"
+            rgba="0.9 0.5 0.1 0.0"/>
+
+      <!-- Robot end-effector grasp target (top center of case) -->
+      <!-- Small dim sites — visible but not dominant -->
+      <site name="grasp_top_center"
+            type="sphere"
+            size="0.002"
+            pos="0 0 0.011"
+            rgba="0 0.6 0.8 0.4"/>
+
+      <!-- Offset grasp points for vacuum gripper (left and right of center) -->
+      <site name="vacuum_grasp_left"
+            type="sphere"
+            size="0.002"
+            pos="-0.08 0 0.011"
+            rgba="0 0.6 0.8 0.3"/>
+      <site name="vacuum_grasp_right"
+            type="sphere"
+            size="0.002"
+            pos="0.08 0 0.011"
+            rgba="0 0.6 0.8 0.3"/>
+
+    </body>
+
+  </worldbody>
+
+</mujoco>
