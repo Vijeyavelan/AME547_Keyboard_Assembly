@@ -1,0 +1,218 @@
+<mujoco model="keyboard_pcb">
+  <!--
+    AME 547 - Keyboard Assembly Cell Simulation
+    Component: PCB (Printed Circuit Board)
+    
+    Reference: Keychron K2 V3
+    
+    Dimensions:
+      305mm × 107mm × 1.6mm (standard FR4)
+      Slightly smaller than case interior (319×109mm)
+      leaving ~7mm clearance each side for walls
+    
+    Coordinate convention: matches bottom_case.xml
+      +X → keyboard length
+      +Y → keyboard width (front to back)
+      +Z → up
+    
+    Position in assembly stack:
+      Sits on top of battery
+      Battery top z_world  = 0.01050m
+      PCB bottom z_world   = 0.01050m
+      PCB center z_world   = 0.01050 + 0.0008 = 0.01130m
+      PCB body pos z       = 0.01130m
+    
+    PCB is slightly offset in X to align with battery:
+      Battery center X = +0.025m
+      PCB centered at X = 0 (spans full case interior)
+    
+    Left edge features (-X face) — match case wall cutouts:
+      All at same Y positions as case cutouts
+      All at Z center = +0.003m (body-local from case)
+      In PCB body-local frame (PCB center at z=0.01130):
+        Feature Z_local = 0.003 - (0.01130 - 0.011) = 0.003 - 0.0003 = 0.0027
+        ≈ 0 (PCB body Z center)
+      
+      USB-C port housing : Y=+0.028, protrudes from left edge
+      Power switch body  : Y=+0.0105
+      OS switch body     : Y=-0.0095
+    
+    Material: FR4 glass-epoxy
+      rgba    : dark green PCB color
+      density : 1850 kg/m³
+      Mass    : 305×107×1.6mm × 1.85g/cm³ ≈ 97g
+    
+    Gripper approach:
+      Angled insertion — left edge enters case first
+      USB-C/switch features engage wall cutouts
+      Then PCB lowers flat onto battery
+      Vacuum dual pad on top face, avoiding component areas
+      Grasp sites: right side of PCB (away from left edge features)
+  -->
+
+  <compiler angle="radian" autolimits="true"/>
+
+  <option gravity="0 0 -9.81" timestep="0.002"/>
+
+  <asset>
+    <material name="fr4_green"
+              rgba="0.08 0.35 0.08 1"
+              specular="0.2"
+              shininess="0.3"
+              reflectance="0.05"/>
+
+    <material name="connector_dark"
+              rgba="0.15 0.15 0.15 1"
+              specular="0.4"
+              shininess="0.5"/>
+  </asset>
+
+  <worldbody>
+
+    <!-- Static ground plane -->
+    <geom name="ground" type="plane" size="1 1 0.1"
+          pos="0 0 0"
+          friction="0.8 0.005 0.0001"
+          rgba="0.4 0.4 0.4 1"/>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         PCB BODY
+         Solo validation: placed flat on ground for inspection
+         Assembly position: z=0.01130m (on top of battery)
+         ══════════════════════════════════════════════════════════════════ -->
+    <body name="pcb" pos="0 0 0.0008">
+
+      <inertial pos="0 0 0"
+                mass="0.097"
+                diaginertia="9.3e-5 8.1e-4 8.9e-4"/>
+
+      <freejoint name="pcb_free"/>
+
+      <!-- ── MAIN PCB BOARD ────────────────────────────────────────────
+           305mm × 107mm × 1.6mm
+           Half-extents: 0.1525, 0.0535, 0.0008
+      -->
+      <geom name="pcb_board"
+            type="box"
+            size="0.1525 0.0535 0.0008"
+            pos="0 0 0"
+            material="fr4_green"
+            density="1850"
+            friction="0.6 0.005 0.0001"
+            condim="4"
+            priority="1"/>
+
+      <!-- ── LEFT EDGE FEATURES (-X face) ─────────────────────────────
+           All features protrude slightly from PCB left edge
+           Matching Y positions of case wall cutouts exactly
+           Z center = 0 (PCB board center height)
+      -->
+
+      <!-- USB-C port housing -->
+      <!-- 9mm wide × 4mm tall × 3mm deep protrusion -->
+      <geom name="usbc_housing"
+            type="box"
+            size="0.0015 0.0045 0.002"
+            pos="-0.154 0.028 0.001"
+            material="connector_dark"
+            density="1050"
+            friction="0.6 0.005 0.0001"
+            condim="4"
+            priority="1"/>
+
+      <!-- Power switch body (Cable/BT toggle) -->
+      <!-- 14mm wide × 6mm tall × 3mm deep -->
+      <geom name="power_switch"
+            type="box"
+            size="0.0015 0.007 0.003"
+            pos="-0.154 0.0105 0.002"
+            material="connector_dark"
+            density="1050"
+            friction="0.6 0.005 0.0001"
+            condim="4"
+            priority="1"/>
+
+      <!-- OS mode switch body (Win/Mac toggle) -->
+      <geom name="os_switch"
+            type="box"
+            size="0.0015 0.007 0.003"
+            pos="-0.154 -0.0095 0.002"
+            material="connector_dark"
+            density="1050"
+            friction="0.6 0.005 0.0001"
+            condim="4"
+            priority="1"/>
+
+      <!-- ══════════════════════════════════════════════════════════════
+           REGISTRATION SITES
+           ══════════════════════════════════════════════════════════════ -->
+
+      <!-- Corner reference sites — Phase 2 (Option B)
+           Full 84-socket grid added in Phase 3
+           Corners define the switch grid boundary
+           Switch grid starts ~10mm from each PCB edge
+           Grid origin: front-left corner of switch area
+      -->
+
+      <!-- Switch grid corner FL (front-left) -->
+      <site name="switch_grid_FL"
+            type="sphere"
+            size="0.002"
+            pos="-0.1425 -0.0435 0.0008"
+            rgba="1 0.2 0.2 0.8"/>
+
+      <!-- Switch grid corner FR (front-right) -->
+      <site name="switch_grid_FR"
+            type="sphere"
+            size="0.002"
+            pos="0.1425 -0.0435 0.0008"
+            rgba="1 0.2 0.2 0.8"/>
+
+      <!-- Switch grid corner RL (rear-left) -->
+      <site name="switch_grid_RL"
+            type="sphere"
+            size="0.002"
+            pos="-0.1425 0.0435 0.0008"
+            rgba="1 0.2 0.2 0.8"/>
+
+      <!-- Switch grid corner RR (rear-right) -->
+      <site name="switch_grid_RR"
+            type="sphere"
+            size="0.002"
+            pos="0.1425 0.0435 0.0008"
+            rgba="1 0.2 0.2 0.8"/>
+
+      <!-- PCB center reference -->
+      <site name="pcb_center"
+            type="sphere"
+            size="0.002"
+            pos="0 0 0.0008"
+            rgba="0 0.8 0.2 0.4"/>
+
+      <!-- Left edge insertion reference -->
+      <!-- Robot aligns this site to case usbc_cutout site -->
+      <site name="left_edge_ref"
+            type="sphere"
+            size="0.002"
+            pos="-0.1525 0.028 0"
+            rgba="0 0.5 1 0.8"/>
+
+      <!-- Vacuum grasp sites — right side of PCB, away from left edge -->
+      <!-- Both on solid PCB surface, clear of component areas -->
+      <site name="vacuum_grasp_left"
+            type="sphere"
+            size="0.002"
+            pos="0.05 0 0.0008"
+            rgba="0 0.6 0.8 0.3"/>
+
+      <site name="vacuum_grasp_right"
+            type="sphere"
+            size="0.002"
+            pos="0.12 0 0.0008"
+            rgba="0 0.6 0.8 0.3"/>
+
+    </body>
+
+  </worldbody>
+
+</mujoco>

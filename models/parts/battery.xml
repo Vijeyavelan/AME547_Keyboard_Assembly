@@ -1,0 +1,166 @@
+<mujoco model="keyboard_battery">
+  <!--
+    AME 547 - Keyboard Assembly Cell Simulation
+    Component: Battery (606090 LiPo)
+    
+    Reference: Keychron K2 V3
+    Battery model: 606090
+      6mm  thick (Z)
+      60mm wide  (Y)
+      90mm long  (X)
+    Capacity: 4000mAh
+    
+    Coordinate convention: matches bottom_case.xml
+      +X → keyboard length (left to right)
+      +Y → keyboard width  (front to back)
+      +Z → up
+
+    Position in assembly:
+      Sits inside battery rib tray on case floor
+      Battery center X = +25mm from case center
+        (offset toward rear, clear of USB-C port)
+      Battery center Y = 0 (centered left-right)
+      Battery bottom face sits on EPDM foam top face
+        EPDM foam top z_world = 0.003 + 0.0015 = 0.00450m
+        Battery center z_world = 0.00450 + 0.003 = 0.00750m
+
+    Geometry: single box geom
+      Half-extents: 0.045, 0.030, 0.003
+      (45mm, 30mm, 3mm)
+
+    Material: silver/metallic LiPo pouch
+      Typical li-polymer battery appearance
+      density: ~2400 kg/m³ (LiPo cells ~2.4g/cm³)
+      Mass: 90mm × 60mm × 6mm × 2.4g/cm³ = ~78g
+            real 4000mAh 606090 ≈ 75-85g ✓
+
+    Gripper: vacuum tool, single central pad
+      Battery top face is flat metallic surface
+      Vacuum cup diameter 30mm fits on 90×60mm face
+      Grasp point at center top face
+      JST connector on one short end (-X face)
+      → robot must pick with correct X orientation
+  -->
+
+  <compiler angle="radian" autolimits="true"/>
+
+  <option gravity="0 0 -9.81" timestep="0.002"/>
+
+  <asset>
+    <material name="lipo_silver"
+              rgba="0.75 0.75 0.78 1"
+              specular="0.8"
+              shininess="0.6"
+              reflectance="0.3"/>
+
+    <!-- JST connector end marking -->
+    <material name="connector_end"
+              rgba="0.85 0.85 0.88 1"
+              specular="0.9"
+              shininess="0.7"
+              reflectance="0.4"/>
+  </asset>
+
+  <worldbody>
+
+    <!-- Static ground plane -->
+    <geom name="ground" type="plane" size="1 1 0.1"
+          pos="0 0 0"
+          friction="0.8 0.005 0.0001"
+          rgba="0.4 0.4 0.4 1"/>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         BATTERY BODY
+         Solo validation position: placed at correct world height
+         In assembly scene: pos matches case floor + EPDM foam stack
+         z_world = 0.00750m (on top of EPDM foam)
+         X offset = +0.025m (matches battery rib tray center)
+         ══════════════════════════════════════════════════════════════════ -->
+    <body name="battery" pos="0.025 0 0.00750">
+
+      <inertial pos="0 0 0"
+                mass="0.080"
+                diaginertia="3.6e-5 1.6e-4 1.8e-4"/>
+
+      <freejoint name="battery_free"/>
+
+      <!-- ── MAIN BATTERY BODY ─────────────────────────────────────────
+           Single box — 90mm × 60mm × 6mm
+           Half-extents: 0.045, 0.030, 0.003
+      -->
+      <geom name="battery_body"
+            type="box"
+            size="0.045 0.030 0.003"
+            pos="0 0 0"
+            material="lipo_silver"
+            density="2400"
+            friction="0.6 0.005 0.0001"
+            condim="4"
+            priority="1"/>
+
+      <!-- ── JST CONNECTOR INDICATOR ──────────────────────────────────
+           Small box on -X face indicating connector side
+           Helps robot orientation verification
+           Width: 8mm, Height: 4mm, Depth: 2mm
+           Positioned flush with -X face
+      -->
+      <geom name="jst_connector"
+            type="box"
+            size="0.001 0.004 0.002"
+            pos="-0.046 0 -0.001"
+            material="connector_end"
+            density="1050"
+            friction="0.6 0.005 0.0001"
+            condim="4"
+            priority="1"/>
+
+      <!-- ══════════════════════════════════════════════════════════════
+           REGISTRATION SITES
+           ══════════════════════════════════════════════════════════════ -->
+
+      <!-- Top face center — primary vacuum grasp point -->
+      <site name="vacuum_grasp_center"
+            type="sphere"
+            size="0.002"
+            pos="0 0 0.003"
+            rgba="0 0.6 0.8 0.4"/>
+
+      <!-- JST connector face marker — robot orientation reference -->
+      <!-- Robot must pick with JST side toward USB-C port (-X) -->
+      <site name="jst_face"
+            type="sphere"
+            size="0.002"
+            pos="-0.045 0 0"
+            rgba="1 0.4 0 0.6"/>
+
+      <!-- Battery body corners — assembly alignment reference -->
+      <!-- Used to verify battery is seated in rib tray correctly -->
+      <site name="corner_FL"
+            type="sphere"
+            size="0.0015"
+            pos="-0.045 -0.030 0.003"
+            rgba="1 0.8 0 0.3"/>
+
+      <site name="corner_FR"
+            type="sphere"
+            size="0.0015"
+            pos="0.045 -0.030 0.003"
+            rgba="1 0.8 0 0.3"/>
+
+      <site name="corner_RL"
+            type="sphere"
+            size="0.0015"
+            pos="-0.045 0.030 0.003"
+            rgba="1 0.8 0 0.3"/>
+
+      <site name="corner_RR"
+            type="sphere"
+            size="0.0015"
+            pos="0.045 0.030 0.003"
+            rgba="1 0.8 0 0.3"/>
+
+    </body>
+
+  </worldbody>
+
+</mujoco>

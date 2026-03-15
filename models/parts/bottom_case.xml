@@ -91,22 +91,158 @@
             condim="4"
             priority="1"/>
 
-      <!-- ── WALL: Left (+X side) ────────────────────────────────────────
-           325mm long wall omitted — left/right walls run along Y axis.
-           Left wall: x_local = -(0.1625 - 0.0015) = -0.161
-           Half-extents: wall_thickness/2=0.0015, 0.0575, wall_height/2
-           Wall height from floor top to case rim = 22mm-3mm = 19mm → half = 0.0095
-           Wall center z = -0.011 + 0.003 + 0.0095 = 0.0015
-      -->
-      <geom name="wall_left"
+      <!-- ── WALL: Left (-X side) ── Y flipped for correct viewer orientation
+           Viewer shows wall from outside (-X direction):
+             Left in viewer  = +Y (rear of keyboard)
+             Right in viewer = -Y (front of keyboard)
+           
+           So to appear LEFT→RIGHT as USB-C | Power | OS:
+             USB-C  must be at most POSITIVE Y → Y=+0.028
+             Power  at Y=+0.0105
+             OS     at Y=-0.0095
+           
+           Segments between/outside features:
+             Seg A: rear end to USB-C
+                    Y +0.0575 to +0.0325  center=+0.045  half=0.0125
+             Seg B: USB-C to Power
+                    Y +0.0235 to +0.0165  center=+0.0200  half=0.003
+             Seg C: Power to OS
+                    Y +0.0035 to -0.0025  center=+0.0005  half=0.003
+             Seg D: OS to front end
+                    Y -0.0165 to -0.0575  center=-0.037  half=0.0205
+           ────────────────────────────────────────────────────────── -->
+
+      <!-- SEGMENT A: rear section, before USB-C (leftmost in viewer) -->
+      <geom name="wall_left_A"
             type="box"
-            size="0.0015 0.0575 0.0095"
-            pos="-0.161 0 0.0015"
+            size="0.0015 0.0125 0.0095"
+            pos="-0.161 0.045 0.0015"
             material="abs_black"
             density="1050"
             friction="1.0 0.005 0.0001"
-            condim="4"
-            priority="1"/>
+            condim="4" priority="1"/>
+
+      <!-- USB-C fill BELOW -->
+      <geom name="wall_left_usbc_below"
+            type="box"
+            size="0.0015 0.0045 0.0045"
+            pos="-0.161 0.028 -0.0035"
+            material="abs_black"
+            density="1050"
+            friction="1.0 0.005 0.0001"
+            condim="4" priority="1"/>
+
+      <!-- USB-C fill ABOVE -->
+      <geom name="wall_left_usbc_above"
+            type="box"
+            size="0.0015 0.0045 0.003"
+            pos="-0.161 0.028 0.008"
+            material="abs_black"
+            density="1050"
+            friction="1.0 0.005 0.0001"
+            condim="4" priority="1"/>
+
+      <!-- SEGMENT B: between USB-C and power switch — widen gap -->
+      <geom name="wall_left_B"
+            type="box"
+            size="0.0015 0.005 0.0095"
+            pos="-0.161 0.0185 0.0015"
+            material="abs_black"
+            density="1050"
+            friction="1.0 0.005 0.0001"
+            condim="4" priority="1"/>
+
+      <!-- POWER SWITCH fill BELOW -->
+      <geom name="wall_left_pwr_below"
+            type="box"
+            size="0.0015 0.007 0.004"
+            pos="-0.161 0.0105 -0.004"
+            material="abs_black"
+            density="1050"
+            friction="1.0 0.005 0.0001"
+            condim="4" priority="1"/>
+
+      <!-- POWER SWITCH fill ABOVE -->
+      <geom name="wall_left_pwr_above"
+            type="box"
+            size="0.0015 0.007 0.0025"
+            pos="-0.161 0.0105 0.0085"
+            material="abs_black"
+            density="1050"
+            friction="1.0 0.005 0.0001"
+            condim="4" priority="1"/>
+
+      <!-- SEGMENT C: between power switch and OS switch -->
+      <geom name="wall_left_C"
+            type="box"
+            size="0.0015 0.005 0.0095"
+            pos="-0.161 -0.0005 0.0015"
+            material="abs_black"
+            density="1050"
+            friction="1.0 0.005 0.0001"
+            condim="4" priority="1"/>
+
+      <!-- OS SWITCH fill BELOW -->
+      <geom name="wall_left_os_below"
+            type="box"
+            size="0.0015 0.007 0.004"
+            pos="-0.161 -0.0095 -0.004"
+            material="abs_black"
+            density="1050"
+            friction="1.0 0.005 0.0001"
+            condim="4" priority="1"/>
+
+      <!-- OS SWITCH fill ABOVE -->
+      <geom name="wall_left_os_above"
+            type="box"
+            size="0.0015 0.007 0.0025"
+            pos="-0.161 -0.0095 0.0085"
+            material="abs_black"
+            density="1050"
+            friction="1.0 0.005 0.0001"
+            condim="4" priority="1"/>
+
+      <!-- SEGMENT D: front section, after OS switch (rightmost in viewer) -->
+      <geom name="wall_left_D"
+            type="box"
+            size="0.0015 0.0205 0.0095"
+            pos="-0.161 -0.037 0.0015"
+            material="abs_black"
+            density="1050"
+            friction="1.0 0.005 0.0001"
+            condim="4" priority="1"/>
+
+      <!-- ── CUTOUT INDICATOR SITES — all at Z=+0.003 ──────────────────
+           LED dot pushed slightly inside wall face (X=-0.160)
+           so it renders visible inside the gap
+      -->
+      <!-- USB-C — blue, leftmost in viewer -->
+      <site name="usbc_cutout"
+            type="box"
+            size="0.001 0.0045 0.002"
+            pos="-0.162 0.028 0.003"
+            rgba="0 0.5 1 0.9"/>
+
+      <!-- LED indicator — centered between USB-C and power switch -->
+      <site name="led_indicator"
+            type="sphere"
+            size="0.0008"
+            pos="-0.163 -0.0245 0.003"
+            rgba="1 1 0 1.0"/>
+
+      <!-- Power switch — orange -->
+      <site name="power_switch_cutout"
+            type="box"
+            size="0.001 0.007 0.003"
+            pos="-0.162 0.0105 0.003"
+            rgba="1 0.5 0 0.9"/>
+
+      <!-- OS switch — orange, matches power switch -->
+      <site name="os_switch_cutout"
+            type="box"
+            size="0.001 0.007 0.003"
+            pos="-0.162 -0.0095 0.003"
+            rgba="1 0.5 0 0.9"/>
 
       <!-- ── WALL: Right (-X side) ──────────────────────────────────────-->
       <geom name="wall_right"
@@ -188,11 +324,37 @@
             condim="4"
             priority="1"/>
 
-      <!-- Battery rib: Front (−X face, toward USB port) -->
-      <geom name="battery_rib_front"
+      <!-- Battery rib: Front (−X face, toward USB port)
+           Split into TWO pieces with 10mm gap at center
+           for JST connector clearance.
+           
+           JST connector sits on battery -X face at Y=0
+           Connector width ~8mm → gap = 10mm (5mm each side)
+           
+           Original full rib: Y = -30mm to +30mm (half=0.030)
+           
+           Left piece:  Y = -30mm to -5mm
+             half-Y = (30-5)/2 = 12.5mm = 0.0125
+             center-Y = -(5 + 12.5) = -17.5mm = -0.0175
+           
+           Right piece: Y = +5mm to +30mm
+             half-Y = (30-5)/2 = 12.5mm = 0.0125
+             center-Y = +(5 + 12.5) = +17.5mm = +0.0175
+      -->
+      <geom name="battery_rib_front_left"
             type="box"
-            size="0.00075 0.030 0.002"
-            pos="-0.02025 0 -0.006"
+            size="0.00075 0.0125 0.002"
+            pos="-0.02025 -0.0175 -0.006"
+            material="abs_black"
+            density="1050"
+            friction="1.0 0.005 0.0001"
+            condim="4"
+            priority="1"/>
+
+      <geom name="battery_rib_front_right"
+            type="box"
+            size="0.00075 0.0125 0.002"
+            pos="-0.02025 0.0175 -0.006"
             material="abs_black"
             density="1050"
             friction="1.0 0.005 0.0001"
@@ -224,11 +386,11 @@
              Y: ±(0.0575 - 0.008) = ±0.0495m
            ══════════════════════════════════════════════════════════════════ -->
 
-      <!-- Screw boss: Front-Left -->
+      <!-- Screw boss: Front-Left — moved inward 3mm from wall to avoid clipping -->
       <geom name="screw_boss_geom_FL"
             type="cylinder"
             size="0.003 0.004"
-            pos="-0.1545 -0.0495 -0.004"
+            pos="-0.1515 -0.0495 -0.004"
             material="abs_black"
             density="1050"
             friction="1.0 0.005 0.0001"
@@ -246,11 +408,11 @@
             condim="4"
             priority="1"/>
 
-      <!-- Screw boss: Rear-Left -->
+      <!-- Screw boss: Rear-Left — moved inward 3mm to match FL -->
       <geom name="screw_boss_geom_RL"
             type="cylinder"
             size="0.003 0.004"
-            pos="-0.1545 0.0495 -0.004"
+            pos="-0.1515 0.0495 -0.004"
             material="abs_black"
             density="1050"
             friction="1.0 0.005 0.0001"
