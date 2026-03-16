@@ -1,0 +1,197 @@
+<mujoco model="keyboard_switch_1u">
+  <!--
+    AME 547 - Keyboard Assembly Cell Simulation
+    Component: Mechanical Switch (1U, Cherry MX-compatible)
+
+    Reference: Cherry MX / Gateron MX-style switch
+    Used for: all 1U keys on Keychron K2 V3
+
+    Real-world dimensions:
+      Housing footprint : 15.6mm × 15.6mm
+      Total height      : 18.9mm (pin bottom to stem top)
+      Housing body      : ~11.9mm tall
+      Stem protrusion   : ~7.0mm above housing top
+
+    Coordinate convention: matches bottom_case.xml
+      +X → keyboard length
+      +Y → keyboard width (front to back)
+      +Z → up
+
+    Body origin: BOTTOM FACE of switch (pin tips)
+      Simplifies placement — set body z = PCB top face z_world
+      PCB top face z_world = 0.01210m
+      All geom/site positions are local offsets upward from z=0
+
+    Stack position:
+      Switch bottom z_world = 0.01210m  (on PCB top face)
+      Switch center z_world = 0.01210 + 0.00945 = 0.02155m
+      Switch top z_world    = 0.01210 + 0.01890 = 0.03100m
+      Body pos z            = 0.01210m
+
+    Geometry strategy (Option B — single file):
+      - Mesh geom  : visual only (contype=0, conaffinity=0)
+      - Primitive  : collision only (invisible or low alpha)
+      - Mesh assets in models/meshes/Switch_Decimated.stl
+      - STL units  : mm → scale=0.001 in asset block
+      - Corrections: refpos="-7.350 0.053 -7.350"
+                     refquat="0.7071 -0.7071 0 0"
+                     (shifts geometric center to origin, rotates +Y-up → +Z-up)
+
+    Primitive collision geometry:
+      Main housing box  : 15.6×15.6×11.9mm → half = 0.0078, 0.0078, 0.00595
+                          center z_local    = 0.00595m
+      Stem cylinder     : radius 4mm, height 7mm → half-height 0.0035
+                          center z_local    = 0.0119 + 0.0035 = 0.0154m
+
+    Material: ABS plastic
+      density : 1050 kg/m³
+      Mass    : ~9g (housing + stem + spring + contacts)
+
+    Insertion approach:
+      Robot 2 (rotary dual-arm, Station 2)
+      Inserted from above, straight down into hot-swap socket
+      Grasp site on top face of housing (vacuum or finger gripper)
+  -->
+
+  <compiler angle="radian" autolimits="true"/>
+
+  <option gravity="0 0 -9.81" timestep="0.002"/>
+
+  <asset>
+    <material name="abs_dark"
+              rgba="0.95 0.95 0.95 1"
+              specular="0.3"
+              shininess="0.4"
+              reflectance="0.05"/>
+
+    <material name="abs_dark_collision"
+              rgba="0.12 0.12 0.12 0.0"/>
+
+    <material name="stem_red"
+              rgba="0.85 0.1 0.1 1"
+              specular="0.4"
+              shininess="0.5"/>
+
+    <!--
+      Mesh asset: Switch_Decimated.stl
+      scale=0.001  : converts mm → meters
+      refpos       : shifts geometric center to origin
+                     raw center was (7.350, -0.053, 7.350) after euler rotation
+                     so refpos negates that offset
+      euler        : rotates +Y-up (Blender export) → +Z-up (MuJoCo)
+                     stem was pointing +Y → rotate 90° around X → stem points +Z
+    -->
+    <mesh name="switch_mesh"
+          file="../../models/meshes/Switch_Decimated.stl"
+          scale="0.001 0.001 0.001"
+          refpos="-7.350 0.053 -7.350"
+          refquat="0.7071 -0.7071 0 0"/>
+
+  </asset>
+
+  <worldbody>
+
+    <!-- Static ground plane -->
+    <geom name="ground" type="plane" size="1 1 0.1"
+          pos="0 0 0"
+          friction="0.8 0.005 0.0001"
+          rgba="0.4 0.4 0.4 1"/>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         SWITCH BODY
+         Solo validation: bottom face at z=0 (ground level)
+         Assembly position: body pos z = 0.01210m (PCB top face)
+         ══════════════════════════════════════════════════════════════════ -->
+    <body name="switch_1u" pos="0 0 0">
+
+      <inertial pos="0 0 0.00945"
+                mass="0.009"
+                diaginertia="2.1e-7 2.1e-7 1.9e-7"/>
+
+      <freejoint name="switch_free"/>
+
+      <!-- ── MESH GEOM (visual only) ───────────────────────────────────
+           contype=0, conaffinity=0 → no collision, rendering only
+           pos z offset: center mesh at body origin (bottom face)
+           After refpos+euler correction, mesh geometric center
+           is at origin — shift up by half total height (0.00945m)
+           so bottom face aligns with body z=0
+      -->
+      <geom name="switch_visual"
+        type="mesh"
+        mesh="switch_mesh"
+        pos="-0.01475 -0.00002 0.00945"
+        material="abs_dark"
+        contype="0"
+        conaffinity="0"/>
+
+      <!-- ── PRIMITIVE COLLISION GEOMS ────────────────────────────────
+           Invisible (alpha=0) — used for contact only
+           Two primitives: main housing box + stem cylinder
+      -->
+
+      <!-- Main housing box -->
+      <!-- 15.6×15.6×11.9mm, half = 0.0078, 0.0078, 0.00595 -->
+      <!-- center z_local = 0.00595 (bottom face at z=0) -->
+      <geom name="switch_housing_col"
+            type="box"
+            size="0.0078 0.0078 0.00595"
+            pos="0 0 0.00595"
+            material="abs_dark_collision"
+            density="1050"
+            friction="0.6 0.005 0.0001"
+            condim="4"
+            priority="1"/>
+
+      <!-- Stem cylinder -->
+      <!-- radius=4mm, half-height=3.5mm -->
+      <!-- center z_local = 0.0119 + 0.0035 = 0.0154 -->
+      <geom name="switch_stem_col"
+            type="cylinder"
+            size="0.004 0.0035"
+            pos="0 0 0.0154"
+            material="abs_dark_collision"
+            density="800"
+            friction="0.6 0.005 0.0001"
+            condim="4"
+            priority="1"/>
+
+      <!-- ══════════════════════════════════════════════════════════════
+           REGISTRATION SITES
+           ══════════════════════════════════════════════════════════════ -->
+
+      <!-- Bottom face center — insertion target point -->
+      <!-- Robot aligns this to hot-swap socket site on PCB -->
+      <site name="insertion_point"
+            type="sphere"
+            size="0.001"
+            pos="0 0 0"
+            rgba="1 0.2 0.2 0.8"/>
+
+      <!-- Top face center — vacuum grasp point -->
+      <site name="vacuum_grasp"
+            type="sphere"
+            size="0.001"
+            pos="0 0 0.0189"
+            rgba="0 0.6 0.8 0.8"/>
+
+      <!-- Housing top face — plate clearance reference -->
+      <!-- Aluminum plate sits at this Z when switch is fully seated -->
+      <site name="housing_top"
+            type="sphere"
+            size="0.001"
+            pos="0 0 0.0119"
+            rgba="0 0.8 0.2 0.6"/>
+
+      <!-- Switch center reference -->
+      <site name="switch_center"
+            type="sphere"
+            size="0.001"
+            pos="0 0 0.00945"
+            rgba="1 1 0 0.4"/>
+
+    </body>
+
+  </worldbody>
+
+</mujoco>

@@ -1,0 +1,134 @@
+<mujoco model="keyboard_sound_foam">
+  <!--
+    AME 547 - Keyboard Assembly Cell Simulation
+    Component: Sound Absorbing Foam
+
+    Reference: Keychron K2 V3
+    Material: PE foam (polyethylene, ~1mm thick)
+
+    Dimensions:
+      305mm × 107mm × 1.0mm — matches PCB footprint exactly
+      Half-extents: 0.1525, 0.0535, 0.0005
+
+    Coordinate convention: matches bottom_case.xml
+      +X → keyboard length
+      +Y → keyboard width (front to back)
+      +Z → up
+
+    Stack position:
+      PCB top face z_world   = 0.01130 + 0.0008  = 0.01210m
+      Foam bottom z_world    = 0.01210m
+      Foam center z_world    = 0.01210 + 0.0005  = 0.01260m
+      Foam top z_world       = 0.01210 + 0.0010  = 0.01310m
+      Body pos z             = 0.01260m
+
+    No left-wall cutouts — fully internal layer.
+    No connector protrusions — PCB connectors are below.
+    Modeled as solid primitive box (mesh upgrade deferred post Apr 18).
+
+    Material properties:
+      rgba    : dark gray foam
+      density : 60 kg/m³ (PE foam)
+      Mass    : 305×107×1mm × 0.06g/cm³ ≈ 2.0g
+
+    Gripper approach:
+      Vacuum pad, top face center
+      Lay flat directly onto PCB top surface
+      No angled insertion required — free of edge features
+  -->
+
+  <compiler angle="radian" autolimits="true"/>
+
+  <option gravity="0 0 -9.81" timestep="0.002"/>
+
+  <asset>
+    <material name="pe_foam_dark"
+              rgba="0.18 0.18 0.18 1"
+              specular="0.05"
+              shininess="0.1"
+              reflectance="0.02"/>
+  </asset>
+
+  <worldbody>
+
+    <!-- Static ground plane -->
+    <geom name="ground" type="plane" size="1 1 0.1"
+          pos="0 0 0"
+          friction="0.8 0.005 0.0001"
+          rgba="0.4 0.4 0.4 1"/>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         SOUND ABSORBING FOAM BODY
+         Solo validation: placed flat on ground for inspection
+         Assembly position: z=0.01260m (on top of PCB)
+         ══════════════════════════════════════════════════════════════════ -->
+    <body name="sound_foam" pos="0 0 0.0005">
+
+      <inertial pos="0 0 0"
+                mass="0.002"
+                diaginertia="2.5e-6 2.1e-5 2.3e-5"/>
+
+      <freejoint name="sound_foam_free"/>
+
+      <!-- ── MAIN FOAM LAYER ───────────────────────────────────────────
+           305mm × 107mm × 1.0mm
+           Half-extents: 0.1525, 0.0535, 0.0005
+      -->
+      <geom name="sound_foam_body"
+            type="box"
+            size="0.1525 0.0535 0.0005"
+            pos="0 0 0"
+            material="pe_foam_dark"
+            density="60"
+            friction="0.5 0.005 0.0001"
+            condim="4"
+            priority="1"/>
+
+      <!-- ══════════════════════════════════════════════════════════════
+           REGISTRATION SITES
+           ══════════════════════════════════════════════════════════════ -->
+
+      <!-- Foam center reference -->
+      <site name="foam_center"
+            type="sphere"
+            size="0.002"
+            pos="0 0 0.0005"
+            rgba="0 0.8 0.2 0.4"/>
+
+      <!-- Corner references — align with PCB switch grid boundary -->
+      <site name="foam_corner_FL"
+            type="sphere"
+            size="0.002"
+            pos="-0.1525 -0.0535 0.0005"
+            rgba="1 0.5 0 0.8"/>
+
+      <site name="foam_corner_FR"
+            type="sphere"
+            size="0.002"
+            pos="0.1525 -0.0535 0.0005"
+            rgba="1 0.5 0 0.8"/>
+
+      <site name="foam_corner_RL"
+            type="sphere"
+            size="0.002"
+            pos="-0.1525 0.0535 0.0005"
+            rgba="1 0.5 0 0.8"/>
+
+      <site name="foam_corner_RR"
+            type="sphere"
+            size="0.002"
+            pos="0.1525 0.0535 0.0005"
+            rgba="1 0.5 0 0.8"/>
+
+      <!-- Vacuum grasp site — top face center, clear of all edges -->
+      <site name="vacuum_grasp"
+            type="sphere"
+            size="0.002"
+            pos="0 0 0.0005"
+            rgba="0 0.6 0.8 0.3"/>
+
+    </body>
+
+  </worldbody>
+
+</mujoco>
