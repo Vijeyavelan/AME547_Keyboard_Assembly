@@ -76,7 +76,7 @@
       -->
       <geom name="sound_foam_body"
             type="box"
-            size="0.1525 0.0535 0.0005"
+            size="0.1480 0.0535 0.0005"
             pos="0 0 0"
             material="pe_foam_dark"
             density="60"
@@ -99,25 +99,25 @@
       <site name="foam_corner_FL"
             type="sphere"
             size="0.002"
-            pos="-0.1525 -0.0535 0.0005"
+            pos="-0.1480 -0.0535 0.0005"
             rgba="1 0.5 0 0.8"/>
 
       <site name="foam_corner_FR"
             type="sphere"
             size="0.002"
-            pos="0.1525 -0.0535 0.0005"
+            pos="0.1480 -0.0535 0.0005"
             rgba="1 0.5 0 0.8"/>
 
       <site name="foam_corner_RL"
             type="sphere"
             size="0.002"
-            pos="-0.1525 0.0535 0.0005"
+            pos="-0.1480 0.0535 0.0005"
             rgba="1 0.5 0 0.8"/>
 
       <site name="foam_corner_RR"
             type="sphere"
             size="0.002"
-            pos="0.1525 0.0535 0.0005"
+            pos="0.1480 0.0535 0.0005"
             rgba="1 0.5 0 0.8"/>
 
       <!-- Vacuum grasp site — top face center, clear of all edges -->

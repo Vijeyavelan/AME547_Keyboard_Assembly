@@ -2,52 +2,58 @@
   <!--
     AME 547 - Keyboard Assembly Cell Simulation
     Component: PCB (Printed Circuit Board)
-    
+
     Reference: Keychron K2 V3
-    
+
     Dimensions:
-      305mm × 107mm × 1.6mm (standard FR4)
-      Slightly smaller than case interior (319×109mm)
-      leaving ~7mm clearance each side for walls
-    
+      313mm × 107mm × 1.6mm (standard FR4)
+      Wider than original 305mm to incorporate FR/RR screw boss positions
+      Half-extents: 0.1565, 0.0535, 0.0008
+
+      Case interior: 319×109mm (half: 0.1595, 0.0545)
+      PCB clearance from case walls: 3mm each side ✓
+      Left connector face at X=-0.1540, PCB left edge at X=-0.1565
+        → 2.5mm connector clearance from PCB edge ✓
+      FR/RR boss at X=+0.1545, PCB right edge at X=+0.1565
+        → 2mm boss clearance from PCB edge ✓
+
     Coordinate convention: matches bottom_case.xml
       +X → keyboard length
       +Y → keyboard width (front to back)
       +Z → up
-    
+
     Position in assembly stack:
       Sits on top of battery
       Battery top z_world  = 0.01050m
       PCB bottom z_world   = 0.01050m
       PCB center z_world   = 0.01050 + 0.0008 = 0.01130m
       PCB body pos z       = 0.01130m
-    
-    PCB is slightly offset in X to align with battery:
-      Battery center X = +0.025m
-      PCB centered at X = 0 (spans full case interior)
-    
-    Left edge features (-X face) — match case wall cutouts:
-      All at same Y positions as case cutouts
-      All at Z center = +0.003m (body-local from case)
-      In PCB body-local frame (PCB center at z=0.01130):
-        Feature Z_local = 0.003 - (0.01130 - 0.011) = 0.003 - 0.0003 = 0.0027
-        ≈ 0 (PCB body Z center)
-      
-      USB-C port housing : Y=+0.028, protrudes from left edge
+
+    Left edge features (-X face):
+      USB-C port housing : Y=+0.028
       Power switch body  : Y=+0.0105
       OS switch body     : Y=-0.0095
-    
+
+    Switch socket sites:
+      84 hot-swap socket positions matching aluminum_plate grid
+      Site Z = PCB top face = +0.0008m (body local)
+      Named sock_<key>
+
+    Screw hole sites:
+      All 8 screw positions now on PCB:
+      FL, FR corners + 4 center (RL, RR also included)
+      Site Z = PCB top face = +0.0008m
+
     Material: FR4 glass-epoxy
       rgba    : dark green PCB color
       density : 1850 kg/m³
-      Mass    : 305×107×1.6mm × 1.85g/cm³ ≈ 97g
-    
+      Mass    : 313×107×1.6mm × 1.85g/cm³ ≈ 99g
+
     Gripper approach:
       Angled insertion — left edge enters case first
       USB-C/switch features engage wall cutouts
       Then PCB lowers flat onto battery
-      Vacuum dual pad on top face, avoiding component areas
-      Grasp sites: right side of PCB (away from left edge features)
+      Vacuum dual pad on top face, right side
   -->
 
   <compiler angle="radian" autolimits="true"/>
@@ -69,32 +75,26 @@
 
   <worldbody>
 
-    <!-- Static ground plane -->
     <geom name="ground" type="plane" size="1 1 0.1"
           pos="0 0 0"
           friction="0.8 0.005 0.0001"
           rgba="0.4 0.4 0.4 1"/>
 
-    <!-- ══════════════════════════════════════════════════════════════════
-         PCB BODY
-         Solo validation: placed flat on ground for inspection
-         Assembly position: z=0.01130m (on top of battery)
-         ══════════════════════════════════════════════════════════════════ -->
     <body name="pcb" pos="0 0 0.0008">
 
       <inertial pos="0 0 0"
-                mass="0.097"
+                mass="0.099"
                 diaginertia="9.3e-5 8.1e-4 8.9e-4"/>
 
       <freejoint name="pcb_free"/>
 
-      <!-- ── MAIN PCB BOARD ────────────────────────────────────────────
-           305mm × 107mm × 1.6mm
-           Half-extents: 0.1525, 0.0535, 0.0008
+      <!-- ── MAIN PCB BOARD ─────────────────────────────────────────────
+           313mm × 107mm × 1.6mm
+           Half-extents: 0.1565, 0.0535, 0.0008
       -->
       <geom name="pcb_board"
             type="box"
-            size="0.1525 0.0535 0.0008"
+            size="0.1565 0.0535 0.0008"
             pos="0 0 0"
             material="fr4_green"
             density="1850"
@@ -102,14 +102,10 @@
             condim="4"
             priority="1"/>
 
-      <!-- ── LEFT EDGE FEATURES (-X face) ─────────────────────────────
-           All features protrude slightly from PCB left edge
-           Matching Y positions of case wall cutouts exactly
-           Z center = 0 (PCB board center height)
+      <!-- ── LEFT EDGE FEATURES (-X face) ──────────────────────────────
+           Connectors at physical positions — unchanged from original
+           All protrude from PCB left edge at X=-0.154
       -->
-
-      <!-- USB-C port housing -->
-      <!-- 9mm wide × 4mm tall × 3mm deep protrusion -->
       <geom name="usbc_housing"
             type="box"
             size="0.0015 0.0045 0.002"
@@ -120,8 +116,6 @@
             condim="4"
             priority="1"/>
 
-      <!-- Power switch body (Cable/BT toggle) -->
-      <!-- 14mm wide × 6mm tall × 3mm deep -->
       <geom name="power_switch"
             type="box"
             size="0.0015 0.007 0.003"
@@ -132,7 +126,6 @@
             condim="4"
             priority="1"/>
 
-      <!-- OS mode switch body (Win/Mac toggle) -->
       <geom name="os_switch"
             type="box"
             size="0.0015 0.007 0.003"
@@ -144,72 +137,151 @@
             priority="1"/>
 
       <!-- ══════════════════════════════════════════════════════════════
-           REGISTRATION SITES
+           REFERENCE SITES
            ══════════════════════════════════════════════════════════════ -->
-
-      <!-- Corner reference sites — Phase 2 (Option B)
-           Full 84-socket grid added in Phase 3
-           Corners define the switch grid boundary
-           Switch grid starts ~10mm from each PCB edge
-           Grid origin: front-left corner of switch area
-      -->
-
-      <!-- Switch grid corner FL (front-left) -->
-      <site name="switch_grid_FL"
-            type="sphere"
-            size="0.002"
-            pos="-0.1425 -0.0435 0.0008"
-            rgba="1 0.2 0.2 0.8"/>
-
-      <!-- Switch grid corner FR (front-right) -->
-      <site name="switch_grid_FR"
-            type="sphere"
-            size="0.002"
-            pos="0.1425 -0.0435 0.0008"
-            rgba="1 0.2 0.2 0.8"/>
-
-      <!-- Switch grid corner RL (rear-left) -->
-      <site name="switch_grid_RL"
-            type="sphere"
-            size="0.002"
-            pos="-0.1425 0.0435 0.0008"
-            rgba="1 0.2 0.2 0.8"/>
-
-      <!-- Switch grid corner RR (rear-right) -->
-      <site name="switch_grid_RR"
-            type="sphere"
-            size="0.002"
-            pos="0.1425 0.0435 0.0008"
-            rgba="1 0.2 0.2 0.8"/>
 
       <!-- PCB center reference -->
       <site name="pcb_center"
-            type="sphere"
-            size="0.002"
+            type="sphere" size="0.002"
             pos="0 0 0.0008"
             rgba="0 0.8 0.2 0.4"/>
 
-      <!-- Left edge insertion reference -->
-      <!-- Robot aligns this site to case usbc_cutout site -->
+      <!-- Left edge insertion reference — robot aligns to usbc_cutout -->
       <site name="left_edge_ref"
-            type="sphere"
-            size="0.002"
-            pos="-0.1525 0.028 0"
+            type="sphere" size="0.002"
+            pos="-0.1565 0.028 0"
             rgba="0 0.5 1 0.8"/>
 
-      <!-- Vacuum grasp sites — right side of PCB, away from left edge -->
-      <!-- Both on solid PCB surface, clear of component areas -->
+      <!-- Vacuum grasp sites — right side, away from left edge features -->
       <site name="vacuum_grasp_left"
-            type="sphere"
-            size="0.002"
+            type="sphere" size="0.002"
             pos="0.05 0 0.0008"
             rgba="0 0.6 0.8 0.3"/>
 
       <site name="vacuum_grasp_right"
-            type="sphere"
-            size="0.002"
+            type="sphere" size="0.002"
             pos="0.12 0 0.0008"
             rgba="0 0.6 0.8 0.3"/>
+
+      <!-- ══════════════════════════════════════════════════════════════
+           SWITCH SOCKET SITES — 84 hot-swap socket positions
+           Matches aluminum_plate switch site grid exactly
+           Site Z = PCB top face = +0.0008m (body local)
+           ══════════════════════════════════════════════════════════════ -->
+
+      <!-- ROW 0 — Function row (16 keys) -->
+      <site name="sock_Esc"     type="cylinder" size="0.002 0.001" pos="-0.1429  0.0480 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_F1"      type="cylinder" size="0.002 0.001" pos="-0.1238  0.0480 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_F2"      type="cylinder" size="0.002 0.001" pos="-0.1048  0.0480 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_F3"      type="cylinder" size="0.002 0.001" pos="-0.0857  0.0480 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_F4"      type="cylinder" size="0.002 0.001" pos="-0.0667  0.0480 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_F5"      type="cylinder" size="0.002 0.001" pos="-0.0476  0.0480 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_F6"      type="cylinder" size="0.002 0.001" pos="-0.0286  0.0480 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_F7"      type="cylinder" size="0.002 0.001" pos="-0.0095  0.0480 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_F8"      type="cylinder" size="0.002 0.001" pos=" 0.0095  0.0480 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_F9"      type="cylinder" size="0.002 0.001" pos=" 0.0286  0.0480 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_F10"     type="cylinder" size="0.002 0.001" pos=" 0.0476  0.0480 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_F11"     type="cylinder" size="0.002 0.001" pos=" 0.0667  0.0480 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_F12"     type="cylinder" size="0.002 0.001" pos=" 0.0857  0.0480 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_PrtSc"   type="cylinder" size="0.002 0.001" pos=" 0.1048  0.0480 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_Pause"   type="cylinder" size="0.002 0.001" pos=" 0.1238  0.0480 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_Del"     type="cylinder" size="0.002 0.001" pos=" 0.1429  0.0480 0.0008" rgba="0 1 0.5 0.6"/>
+
+      <!-- ROW 1 — Number row (15 keys) -->
+      <site name="sock_Grave"   type="cylinder" size="0.002 0.001" pos="-0.1429  0.0290 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_1"       type="cylinder" size="0.002 0.001" pos="-0.1238  0.0290 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_2"       type="cylinder" size="0.002 0.001" pos="-0.1048  0.0290 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_3"       type="cylinder" size="0.002 0.001" pos="-0.0857  0.0290 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_4"       type="cylinder" size="0.002 0.001" pos="-0.0667  0.0290 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_5"       type="cylinder" size="0.002 0.001" pos="-0.0476  0.0290 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_6"       type="cylinder" size="0.002 0.001" pos="-0.0286  0.0290 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_7"       type="cylinder" size="0.002 0.001" pos="-0.0095  0.0290 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_8"       type="cylinder" size="0.002 0.001" pos=" 0.0095  0.0290 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_9"       type="cylinder" size="0.002 0.001" pos=" 0.0286  0.0290 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_0"       type="cylinder" size="0.002 0.001" pos=" 0.0476  0.0290 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_Minus"   type="cylinder" size="0.002 0.001" pos=" 0.0667  0.0290 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_Equal"   type="cylinder" size="0.002 0.001" pos=" 0.0857  0.0290 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_Bksp"    type="cylinder" size="0.002 0.001" pos=" 0.1143  0.0290 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_PgUp"    type="cylinder" size="0.002 0.001" pos=" 0.1429  0.0290 0.0008" rgba="0 1 0.5 0.6"/>
+
+      <!-- ROW 2 — QWERTY row (15 keys) -->
+      <site name="sock_Tab"     type="cylinder" size="0.002 0.001" pos="-0.1381  0.0099 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_Q"       type="cylinder" size="0.002 0.001" pos="-0.1143  0.0099 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_W"       type="cylinder" size="0.002 0.001" pos="-0.0953  0.0099 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_E"       type="cylinder" size="0.002 0.001" pos="-0.0762  0.0099 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_R"       type="cylinder" size="0.002 0.001" pos="-0.0572  0.0099 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_T"       type="cylinder" size="0.002 0.001" pos="-0.0381  0.0099 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_Y"       type="cylinder" size="0.002 0.001" pos="-0.0191  0.0099 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_U"       type="cylinder" size="0.002 0.001" pos=" 0.0000  0.0099 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_I"       type="cylinder" size="0.002 0.001" pos=" 0.0191  0.0099 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_O"       type="cylinder" size="0.002 0.001" pos=" 0.0381  0.0099 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_P"       type="cylinder" size="0.002 0.001" pos=" 0.0572  0.0099 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_LBrace"  type="cylinder" size="0.002 0.001" pos=" 0.0762  0.0099 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_RBrace"  type="cylinder" size="0.002 0.001" pos=" 0.0953  0.0099 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_Bkslash" type="cylinder" size="0.002 0.001" pos=" 0.1191  0.0099 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_PgDn"    type="cylinder" size="0.002 0.001" pos=" 0.1429  0.0099 0.0008" rgba="0 1 0.5 0.6"/>
+
+      <!-- ROW 3 — Home row (14 keys) -->
+      <site name="sock_Caps"    type="cylinder" size="0.002 0.001" pos="-0.1357 -0.0092 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_A"       type="cylinder" size="0.002 0.001" pos="-0.1095 -0.0092 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_S"       type="cylinder" size="0.002 0.001" pos="-0.0905 -0.0092 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_D"       type="cylinder" size="0.002 0.001" pos="-0.0714 -0.0092 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_F"       type="cylinder" size="0.002 0.001" pos="-0.0524 -0.0092 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_G"       type="cylinder" size="0.002 0.001" pos="-0.0333 -0.0092 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_H"       type="cylinder" size="0.002 0.001" pos="-0.0143 -0.0092 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_J"       type="cylinder" size="0.002 0.001" pos=" 0.0048 -0.0092 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_K"       type="cylinder" size="0.002 0.001" pos=" 0.0238 -0.0092 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_L"       type="cylinder" size="0.002 0.001" pos=" 0.0429 -0.0092 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_Semicol" type="cylinder" size="0.002 0.001" pos=" 0.0619 -0.0092 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_Quote"   type="cylinder" size="0.002 0.001" pos=" 0.0810 -0.0092 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_Enter"   type="cylinder" size="0.002 0.001" pos=" 0.1119 -0.0092 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_Home"    type="cylinder" size="0.002 0.001" pos=" 0.1429 -0.0092 0.0008" rgba="0 1 0.5 0.6"/>
+
+      <!-- ROW 4 — Shift row (14 keys) -->
+      <site name="sock_LShift"  type="cylinder" size="0.002 0.001" pos="-0.1310 -0.0282 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_Z"       type="cylinder" size="0.002 0.001" pos="-0.1000 -0.0282 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_X"       type="cylinder" size="0.002 0.001" pos="-0.0810 -0.0282 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_C"       type="cylinder" size="0.002 0.001" pos="-0.0619 -0.0282 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_V"       type="cylinder" size="0.002 0.001" pos="-0.0429 -0.0282 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_B"       type="cylinder" size="0.002 0.001" pos="-0.0238 -0.0282 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_N"       type="cylinder" size="0.002 0.001" pos="-0.0048 -0.0282 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_M"       type="cylinder" size="0.002 0.001" pos=" 0.0143 -0.0282 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_Comma"   type="cylinder" size="0.002 0.001" pos=" 0.0333 -0.0282 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_Period"  type="cylinder" size="0.002 0.001" pos=" 0.0524 -0.0282 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_Slash"   type="cylinder" size="0.002 0.001" pos=" 0.0714 -0.0282 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_RShift"  type="cylinder" size="0.002 0.001" pos=" 0.0976 -0.0282 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_Up"      type="cylinder" size="0.002 0.001" pos=" 0.1238 -0.0282 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_End"     type="cylinder" size="0.002 0.001" pos=" 0.1429 -0.0282 0.0008" rgba="0 1 0.5 0.6"/>
+
+      <!-- ROW 5 — Bottom row (10 keys) -->
+      <site name="sock_LCtrl"  type="cylinder" size="0.002 0.001" pos="-0.1405 -0.0473 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_LWin"   type="cylinder" size="0.002 0.001" pos="-0.1167 -0.0473 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_LAlt"   type="cylinder" size="0.002 0.001" pos="-0.0929 -0.0473 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_Space"  type="cylinder" size="0.002 0.001" pos="-0.0214 -0.0473 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_RAlt"   type="cylinder" size="0.002 0.001" pos=" 0.0476 -0.0473 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_Fn"     type="cylinder" size="0.002 0.001" pos=" 0.0667 -0.0473 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_Left"   type="cylinder" size="0.002 0.001" pos=" 0.0857 -0.0473 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_Down"   type="cylinder" size="0.002 0.001" pos=" 0.1048 -0.0473 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_Right"  type="cylinder" size="0.002 0.001" pos=" 0.1238 -0.0473 0.0008" rgba="0 1 0.5 0.6"/>
+      <site name="sock_End2"   type="cylinder" size="0.002 0.001" pos=" 0.1429 -0.0473 0.0008" rgba="0 1 0.5 0.6"/>
+
+      <!-- ══════════════════════════════════════════════════════════════
+           SCREW HOLE SITES (M3) — all 8 positions
+           All 4 corners + 4 center screws now within PCB footprint
+           Site Z = PCB top face = +0.0008m
+           ══════════════════════════════════════════════════════════════ -->
+
+      <!-- 4 corner screw holes -->
+      <site name="screw_FL" type="cylinder" size="0.0015 0.001" pos="-0.1515 -0.0495 0.0008" rgba="1 0.3 0.3 0.9"/>
+      <site name="screw_FR" type="cylinder" size="0.0015 0.001" pos=" 0.1545 -0.0495 0.0008" rgba="1 0.3 0.3 0.9"/>
+      <site name="screw_RL" type="cylinder" size="0.0015 0.001" pos="-0.1515  0.0495 0.0008" rgba="1 0.3 0.3 0.9"/>
+      <site name="screw_RR" type="cylinder" size="0.0015 0.001" pos=" 0.1545  0.0495 0.0008" rgba="1 0.3 0.3 0.9"/>
+
+      <!-- 4 center screw holes -->
+      <site name="screw_C1" type="cylinder" size="0.0015 0.001" pos="-0.0762  0.0495 0.0008" rgba="1 0.3 0.3 0.9"/>
+      <site name="screw_C2" type="cylinder" size="0.0015 0.001" pos=" 0.0381  0.0495 0.0008" rgba="1 0.3 0.3 0.9"/>
+      <site name="screw_C3" type="cylinder" size="0.0015 0.001" pos="-0.0762 -0.0495 0.0008" rgba="1 0.3 0.3 0.9"/>
+      <site name="screw_C4" type="cylinder" size="0.0015 0.001" pos=" 0.0381 -0.0495 0.0008" rgba="1 0.3 0.3 0.9"/>
 
     </body>
 
