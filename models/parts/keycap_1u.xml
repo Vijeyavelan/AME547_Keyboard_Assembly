@@ -1,0 +1,137 @@
+<mujoco model="keyboard_keycap_1u">
+  <!--
+    AME 547 - Keyboard Assembly Cell Simulation
+    Component: Keycap 1U (Cherry Profile, PBT)
+
+    Reference: Keychron K2 V3
+    Material: Double-shot PBT plastic
+
+    Real-world dimensions (Cherry profile, Row 3):
+      Base footprint : 18mm × 18mm
+      Base height    : 6mm
+      Top surface    : 13mm × 13mm
+      Top height     : 3mm
+      Total height   : 9mm (approximate, row 3)
+
+    Coordinate convention: matches bottom_case.xml
+      +X → keyboard length
+      +Y → keyboard width (front to back)
+      +Z → up
+
+    Body origin: BOTTOM FACE of keycap
+      Clips onto switch stem from above
+      Set body z = switch top z_world = 0.03100m
+
+    Stack position:
+      Switch top z_world  = 0.03100m
+      Keycap bottom       = 0.03100m
+      Keycap top          = 0.03100 + 0.009 = 0.04000m
+      Body pos z          = 0.03100m
+
+    Geometry (two box primitives):
+      Base box  : 18×18×6mm  half = 0.009, 0.009, 0.003
+                  center z_local = 0.003
+      Top box   : 13×13×3mm  half = 0.0065, 0.0065, 0.0015
+                  center z_local = 0.006 + 0.0015 = 0.0075
+
+    Material: PBT plastic
+      rgba    : light gray
+      density : 1300 kg/m³
+      Mass    : ~3g
+
+    Robot approach:
+      Station 3 (rotary dual-arm head)
+      Vacuum gripper on top surface
+      Pressed straight down onto switch stem
+  -->
+
+  <compiler angle="radian" autolimits="true"/>
+
+  <option gravity="0 0 -9.81" timestep="0.002"/>
+
+  <asset>
+    <material name="pbt_gray"
+              rgba="0.75 0.75 0.75 1"
+              specular="0.1"
+              shininess="0.2"
+              reflectance="0.02"/>
+  </asset>
+
+  <worldbody>
+
+    <geom name="ground" type="plane" size="1 1 0.1"
+          pos="0 0 0"
+          friction="0.8 0.005 0.0001"
+          rgba="0.4 0.4 0.4 1"/>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         KEYCAP 1U BODY
+         Solo validation: bottom face at z=0
+         Assembly position: body pos z = 0.03100m (switch top)
+         ══════════════════════════════════════════════════════════════════ -->
+    <body name="keycap_1u" pos="0 0 0">
+
+      <inertial pos="0 0 0.0045"
+                mass="0.003"
+                diaginertia="8.0e-8 8.0e-8 1.2e-7"/>
+
+      <!-- freejoint added in integration scene -->
+
+      <!-- ── BASE BOX ──────────────────────────────────────────────────
+           18×18×6mm — lower portion with side walls
+           Half-extents: 0.009, 0.009, 0.003
+           Center z_local = 0.003
+      -->
+      <geom name="keycap_base"
+            type="box"
+            size="0.009 0.009 0.003"
+            pos="0 0 0.003"
+            material="pbt_gray"
+            density="1300"
+            friction="0.6 0.005 0.0001"
+            condim="4"
+            priority="1"/>
+
+      <!-- ── TOP BOX ───────────────────────────────────────────────────
+           13×13×3mm — upper sculpted surface
+           Half-extents: 0.0065, 0.0065, 0.0015
+           Center z_local = 0.006 + 0.0015 = 0.0075
+      -->
+      <geom name="keycap_top"
+            type="box"
+            size="0.0065 0.0065 0.0015"
+            pos="0 0 0.0075"
+            material="pbt_gray"
+            density="1300"
+            friction="0.6 0.005 0.0001"
+            condim="4"
+            priority="1"/>
+
+      <!-- ══════════════════════════════════════════════════════════════
+           REGISTRATION SITES
+           ══════════════════════════════════════════════════════════════ -->
+
+      <!-- Bottom face center — stem clip point -->
+      <!-- Aligns to switch vacuum_grasp site (stem top) -->
+      <site name="stem_clip"
+            type="sphere" size="0.001"
+            pos="0 0 0"
+            rgba="1 0.2 0.2 0.8"/>
+
+      <!-- Top surface center — vacuum grasp point -->
+      <site name="vacuum_grasp"
+            type="sphere" size="0.001"
+            pos="0 0 0.009"
+            rgba="0 0.6 0.8 0.8"/>
+
+      <!-- Keycap center reference -->
+      <site name="keycap_center"
+            type="sphere" size="0.001"
+            pos="0 0 0.0045"
+            rgba="1 1 0 0.4"/>
+
+    </body>
+
+  </worldbody>
+
+</mujoco>
