@@ -1,0 +1,127 @@
+<mujoco model="keyboard_screw">
+  <!--
+    AME 547 - Keyboard Assembly Cell Simulation
+    Component: M3 Pan Head Screw (plate-to-case mounting)
+
+    Reference: Keychron K2 V3
+    Type: M3 x 10mm pan head machine screw
+
+    Real-world dimensions:
+      Shaft diameter : 3mm   → radius = 0.0015m
+      Shaft length   : 10mm  → half-height = 0.005m
+      Head diameter  : 6mm   → radius = 0.003m
+      Head height    : 2mm   → half-height = 0.001m
+      Total height   : 12mm
+
+    Coordinate convention: matches bottom_case.xml
+      +X → keyboard length
+      +Y → keyboard width (front to back)
+      +Z → up
+
+    Body origin: SHAFT TIP (bottom, z=0)
+      Head sits on top at z=0.010 to z=0.012
+      Shaft runs from z=0 (tip) to z=0.010 (base)
+
+    Layout (bottom to top):
+      z=0.000  shaft tip     ← body origin, insertion point
+      z=0.005  shaft center
+      z=0.010  shaft top / head bottom
+      z=0.011  head center
+      z=0.012  head top      ← screwdriver engages here
+
+    Stack position in assembly:
+      Plate top z_world = 0.01460m
+      Screw body z      = 0.01460m (shaft tip at plate top)
+      Shaft drives into boss below plate
+
+    Material: steel
+      rgba    : dark metallic gray
+      density : 7800 kg/m³
+      Mass    : ~0.5g
+
+    Robot approach:
+      Station 1.5 (pneumatic screw station)
+      Magnetic bit grips head, drives straight down (-Z)
+  -->
+
+  <compiler angle="radian" autolimits="true"/>
+
+  <option gravity="0 0 -9.81" timestep="0.002"/>
+
+  <asset>
+    <material name="steel_dark"
+              rgba="0.30 0.30 0.32 1"
+              specular="0.9"
+              shininess="0.8"
+              reflectance="0.4"/>
+  </asset>
+
+  <worldbody>
+
+    <geom name="ground" type="plane" size="1 1 0.1"
+          pos="0 0 0"
+          friction="0.8 0.005 0.0001"
+          rgba="0.4 0.4 0.4 1"/>
+
+    <body name="screw_m3" pos="0 0 0">
+
+      <inertial pos="0 0 0.006"
+                mass="0.0005"
+                diaginertia="1.0e-9 1.0e-9 5.0e-10"/>
+
+      <!-- freejoint added in integration scene -->
+
+      <!-- ── SHAFT ──────────────────────────────────────────────────────
+           Runs from z=0 (tip) to z=0.010 (base)
+           Center = 0.005, half-height = 0.005
+      -->
+      <geom name="screw_shaft"
+            type="cylinder"
+            size="0.0015 0.005"
+            pos="0 0 0.005"
+            material="steel_dark"
+            density="7800"
+            friction="0.3 0.005 0.0001"
+            condim="4"
+            priority="1"/>
+
+      <!-- ── HEAD ───────────────────────────────────────────────────────
+           Sits on top of shaft
+           Bottom = 0.010, top = 0.012
+           Center = 0.011, half-height = 0.001
+      -->
+      <geom name="screw_head"
+            type="cylinder"
+            size="0.003 0.001"
+            pos="0 0 0.011"
+            material="steel_dark"
+            density="7800"
+            friction="0.3 0.005 0.0001"
+            condim="4"
+            priority="1"/>
+
+      <!-- ── SITES ─────────────────────────────────────────────────── -->
+
+      <!-- Shaft tip — insertion point -->
+      <site name="shaft_tip"
+            type="sphere" size="0.001"
+            pos="0 0 0"
+            rgba="1 0.2 0.2 0.8"/>
+
+      <!-- Head top — screwdriver bit engagement -->
+      <site name="driver_engage"
+            type="sphere" size="0.001"
+            pos="0 0 0.012"
+            rgba="0 0.6 0.8 0.8"/>
+
+      <!-- Head center — magnetic pickup -->
+      <site name="magnetic_grasp"
+            type="sphere" size="0.001"
+            pos="0 0 0.011"
+            rgba="1 1 0 0.6"/>
+
+    </body>
+
+  </worldbody>
+
+</mujoco>
