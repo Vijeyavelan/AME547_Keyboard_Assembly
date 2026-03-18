@@ -1,0 +1,248 @@
+<mujoco model="keyboard_aluminum_plate">
+  <!--
+    AME 547 - Keyboard Assembly Cell Simulation
+    Component: Aluminum Switch Plate (75% Layout, 84-key)
+
+    Reference: Keychron K2 V3
+    Material: Aluminum (6061-T6)
+
+    Dimensions:
+      317mm × 107mm × 1.5mm
+      Fits inside case interior (319mm × 109mm) with 1mm tolerance each side
+      Tight fit for robot placement — easy insertion, no slop
+
+    Coordinate convention: matches bottom_case.xml
+      +X → keyboard length (left to right)
+      +Y → keyboard width (front to back, rear = +Y)
+      +Z → up
+
+    Body origin: BOTTOM FACE of plate
+      Stack position:
+        Sound foam top z_world  = 0.01310m
+        Plate bottom z_world    = 0.01310m
+        Plate center z_world    = 0.01310 + 0.00075 = 0.01385m
+        Plate top z_world       = 0.01310 + 0.00150 = 0.01460m
+        Body pos z              = 0.01310m
+
+    Geometry strategy: Option C (primitive solid box, no cutouts)
+      - Plate collision geom: contype=0, conaffinity=0 (non-colliding)
+      - Switch insertion driven by site coordinates only
+      - Upgrade to Option A (tiled box with real gaps) post April 18
+      - Upgrade to mesh visual post April 18
+
+    Switch cutout sites:
+      - 84 sites representing Cherry MX switch hole centers
+      - Standard MX grid: 19.05mm per U
+      - Grid centered on plate: left margin = 6.1mm each side
+      - Site type: cylinder, radius=0.003m
+      - Site Z = plate top face = +0.00150m (body local)
+      - Named by key function
+
+    Screw hole sites:
+      - 4 corner holes matching case screw boss positions
+      - 4 additional center holes
+      - Site type: cylinder, radius=0.0015m (M3 screw)
+
+    Material properties:
+      rgba    : brushed aluminum silver
+      density : 2700 kg/m³
+      Mass    : 317×107×1.5mm × 2.7g/cm³ ≈ 138g
+
+    Robot placement:
+      Robot 1 (UR5e, Station 1)
+      Vacuum gripper on top face, centered
+      Lowered straight down into case interior
+  -->
+
+  <compiler angle="radian" autolimits="true"/>
+
+  <option gravity="0 0 -9.81" timestep="0.002"/>
+
+  <asset>
+    <material name="aluminum_silver"
+              rgba="0.75 0.75 0.78 1"
+              specular="0.8"
+              shininess="0.7"
+              reflectance="0.3"/>
+
+    <material name="plate_col"
+              rgba="0.75 0.75 0.78 0.0"/>
+  </asset>
+
+  <worldbody>
+
+    <geom name="ground" type="plane" size="1 1 0.1"
+          pos="0 0 0"
+          friction="0.8 0.005 0.0001"
+          rgba="0.4 0.4 0.4 1"/>
+
+    <body name="aluminum_plate" pos="0 0 0">
+
+      <inertial pos="0 0 0.00075"
+                mass="0.138"
+                diaginertia="1.4e-4 1.3e-3 1.4e-3"/>
+
+      <!-- freejoint added in integration scene -->
+
+      <geom name="plate_visual"
+            type="box"
+            size="0.1585 0.0535 0.00075"
+            pos="0 0 0.00075"
+            material="aluminum_silver"
+            contype="0"
+            conaffinity="0"/>
+
+      <geom name="plate_col"
+            type="box"
+            size="0.1585 0.0535 0.00075"
+            pos="0 0 0.00075"
+            material="plate_col"
+            contype="0"
+            conaffinity="0"
+            density="2700"
+            friction="0.4 0.005 0.0001"/>
+
+      <!-- ══════════════════════════════════════════════════════════════
+           SWITCH CUTOUT SITES — 84 keys, centered grid
+           Grid origin X = -152.4mm, grid spacing = 19.05mm per U
+           +X = right, +Y = rear, site Z = plate top = +0.0015m
+           ══════════════════════════════════════════════════════════════ -->
+
+      <!-- ROW 0 — Function row (16 keys) -->
+      <site name="sw_Esc"     type="cylinder" size="0.003 0.001" pos="-0.1429  0.0480 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_F1"      type="cylinder" size="0.003 0.001" pos="-0.1238  0.0480 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_F2"      type="cylinder" size="0.003 0.001" pos="-0.1048  0.0480 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_F3"      type="cylinder" size="0.003 0.001" pos="-0.0857  0.0480 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_F4"      type="cylinder" size="0.003 0.001" pos="-0.0667  0.0480 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_F5"      type="cylinder" size="0.003 0.001" pos="-0.0476  0.0480 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_F6"      type="cylinder" size="0.003 0.001" pos="-0.0286  0.0480 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_F7"      type="cylinder" size="0.003 0.001" pos="-0.0095  0.0480 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_F8"      type="cylinder" size="0.003 0.001" pos=" 0.0095  0.0480 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_F9"      type="cylinder" size="0.003 0.001" pos=" 0.0286  0.0480 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_F10"     type="cylinder" size="0.003 0.001" pos=" 0.0476  0.0480 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_F11"     type="cylinder" size="0.003 0.001" pos=" 0.0667  0.0480 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_F12"     type="cylinder" size="0.003 0.001" pos=" 0.0857  0.0480 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_PrtSc"   type="cylinder" size="0.003 0.001" pos=" 0.1048  0.0480 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_Pause"   type="cylinder" size="0.003 0.001" pos=" 0.1238  0.0480 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_Del"     type="cylinder" size="0.003 0.001" pos=" 0.1429  0.0480 0.0015" rgba="0.2 0.6 1 0.6"/>
+
+      <!-- ROW 1 — Number row (15 keys) -->
+      <site name="sw_Grave"   type="cylinder" size="0.003 0.001" pos="-0.1429  0.0290 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_1"       type="cylinder" size="0.003 0.001" pos="-0.1238  0.0290 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_2"       type="cylinder" size="0.003 0.001" pos="-0.1048  0.0290 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_3"       type="cylinder" size="0.003 0.001" pos="-0.0857  0.0290 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_4"       type="cylinder" size="0.003 0.001" pos="-0.0667  0.0290 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_5"       type="cylinder" size="0.003 0.001" pos="-0.0476  0.0290 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_6"       type="cylinder" size="0.003 0.001" pos="-0.0286  0.0290 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_7"       type="cylinder" size="0.003 0.001" pos="-0.0095  0.0290 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_8"       type="cylinder" size="0.003 0.001" pos=" 0.0095  0.0290 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_9"       type="cylinder" size="0.003 0.001" pos=" 0.0286  0.0290 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_0"       type="cylinder" size="0.003 0.001" pos=" 0.0476  0.0290 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_Minus"   type="cylinder" size="0.003 0.001" pos=" 0.0667  0.0290 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_Equal"   type="cylinder" size="0.003 0.001" pos=" 0.0857  0.0290 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_Bksp"    type="cylinder" size="0.003 0.001" pos=" 0.1143  0.0290 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_PgUp"    type="cylinder" size="0.003 0.001" pos=" 0.1429  0.0290 0.0015" rgba="0.2 0.6 1 0.6"/>
+
+      <!-- ROW 2 — QWERTY row (15 keys) -->
+      <site name="sw_Tab"     type="cylinder" size="0.003 0.001" pos="-0.1381  0.0099 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_Q"       type="cylinder" size="0.003 0.001" pos="-0.1143  0.0099 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_W"       type="cylinder" size="0.003 0.001" pos="-0.0953  0.0099 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_E"       type="cylinder" size="0.003 0.001" pos="-0.0762  0.0099 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_R"       type="cylinder" size="0.003 0.001" pos="-0.0572  0.0099 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_T"       type="cylinder" size="0.003 0.001" pos="-0.0381  0.0099 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_Y"       type="cylinder" size="0.003 0.001" pos="-0.0191  0.0099 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_U"       type="cylinder" size="0.003 0.001" pos=" 0.0000  0.0099 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_I"       type="cylinder" size="0.003 0.001" pos=" 0.0191  0.0099 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_O"       type="cylinder" size="0.003 0.001" pos=" 0.0381  0.0099 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_P"       type="cylinder" size="0.003 0.001" pos=" 0.0572  0.0099 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_LBrace"  type="cylinder" size="0.003 0.001" pos=" 0.0762  0.0099 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_RBrace"  type="cylinder" size="0.003 0.001" pos=" 0.0953  0.0099 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_Bkslash" type="cylinder" size="0.003 0.001" pos=" 0.1191  0.0099 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_PgDn"    type="cylinder" size="0.003 0.001" pos=" 0.1429  0.0099 0.0015" rgba="0.2 0.6 1 0.6"/>
+
+      <!-- ROW 3 — Home row (14 keys) -->
+      <site name="sw_Caps"    type="cylinder" size="0.003 0.001" pos="-0.1357 -0.0092 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_A"       type="cylinder" size="0.003 0.001" pos="-0.1095 -0.0092 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_S"       type="cylinder" size="0.003 0.001" pos="-0.0905 -0.0092 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_D"       type="cylinder" size="0.003 0.001" pos="-0.0714 -0.0092 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_F"       type="cylinder" size="0.003 0.001" pos="-0.0524 -0.0092 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_G"       type="cylinder" size="0.003 0.001" pos="-0.0333 -0.0092 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_H"       type="cylinder" size="0.003 0.001" pos="-0.0143 -0.0092 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_J"       type="cylinder" size="0.003 0.001" pos=" 0.0048 -0.0092 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_K"       type="cylinder" size="0.003 0.001" pos=" 0.0238 -0.0092 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_L"       type="cylinder" size="0.003 0.001" pos=" 0.0429 -0.0092 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_Semicol" type="cylinder" size="0.003 0.001" pos=" 0.0619 -0.0092 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_Quote"   type="cylinder" size="0.003 0.001" pos=" 0.0810 -0.0092 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_Enter"   type="cylinder" size="0.003 0.001" pos=" 0.1119 -0.0092 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_Home"    type="cylinder" size="0.003 0.001" pos=" 0.1429 -0.0092 0.0015" rgba="0.2 0.6 1 0.6"/>
+
+      <!-- ROW 4 — Shift row (14 keys) -->
+      <site name="sw_LShift"  type="cylinder" size="0.003 0.001" pos="-0.1310 -0.0282 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_Z"       type="cylinder" size="0.003 0.001" pos="-0.1000 -0.0282 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_X"       type="cylinder" size="0.003 0.001" pos="-0.0810 -0.0282 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_C"       type="cylinder" size="0.003 0.001" pos="-0.0619 -0.0282 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_V"       type="cylinder" size="0.003 0.001" pos="-0.0429 -0.0282 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_B"       type="cylinder" size="0.003 0.001" pos="-0.0238 -0.0282 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_N"       type="cylinder" size="0.003 0.001" pos="-0.0048 -0.0282 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_M"       type="cylinder" size="0.003 0.001" pos=" 0.0143 -0.0282 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_Comma"   type="cylinder" size="0.003 0.001" pos=" 0.0333 -0.0282 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_Period"  type="cylinder" size="0.003 0.001" pos=" 0.0524 -0.0282 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_Slash"   type="cylinder" size="0.003 0.001" pos=" 0.0714 -0.0282 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_RShift"  type="cylinder" size="0.003 0.001" pos=" 0.0976 -0.0282 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_Up"      type="cylinder" size="0.003 0.001" pos=" 0.1238 -0.0282 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_End"     type="cylinder" size="0.003 0.001" pos=" 0.1429 -0.0282 0.0015" rgba="0.2 0.6 1 0.6"/>
+
+      <!-- ROW 5 — Bottom row (10 keys) -->
+      <site name="sw_LCtrl"  type="cylinder" size="0.003 0.001" pos="-0.1405 -0.0473 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_LWin"   type="cylinder" size="0.003 0.001" pos="-0.1167 -0.0473 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_LAlt"   type="cylinder" size="0.003 0.001" pos="-0.0929 -0.0473 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_Space"  type="cylinder" size="0.003 0.001" pos="-0.0214 -0.0473 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_RAlt"   type="cylinder" size="0.003 0.001" pos=" 0.0476 -0.0473 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_Fn"     type="cylinder" size="0.003 0.001" pos=" 0.0667 -0.0473 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_Left"   type="cylinder" size="0.003 0.001" pos=" 0.0857 -0.0473 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_Down"   type="cylinder" size="0.003 0.001" pos=" 0.1048 -0.0473 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_Right"  type="cylinder" size="0.003 0.001" pos=" 0.1238 -0.0473 0.0015" rgba="0.2 0.6 1 0.6"/>
+      <site name="sw_End2"   type="cylinder" size="0.003 0.001" pos=" 0.1429 -0.0473 0.0015" rgba="0.2 0.6 1 0.6"/>
+
+      <!-- ══════════════════════════════════════════════════════════════
+           SCREW HOLE SITES (M3)
+           ══════════════════════════════════════════════════════════════ -->
+
+      <site name="screw_FL" type="cylinder" size="0.0015 0.001" pos="-0.1515 -0.0495 0.0015" rgba="1 0.3 0.3 0.9"/>
+      <site name="screw_RL" type="cylinder" size="0.0015 0.001" pos="-0.1515  0.0495 0.0015" rgba="1 0.3 0.3 0.9"/>
+      <site name="screw_FR" type="cylinder" size="0.0015 0.001" pos=" 0.1545 -0.0495 0.0015" rgba="1 0.3 0.3 0.9"/>
+      <site name="screw_RR" type="cylinder" size="0.0015 0.001" pos=" 0.1545  0.0495 0.0015" rgba="1 0.3 0.3 0.9"/>
+      <site name="screw_C1" type="cylinder" size="0.0015 0.001" pos="-0.0762  0.0495 0.0015" rgba="1 0.3 0.3 0.9"/>
+      <site name="screw_C2" type="cylinder" size="0.0015 0.001" pos=" 0.0381  0.0495 0.0015" rgba="1 0.3 0.3 0.9"/>
+      <site name="screw_C3" type="cylinder" size="0.0015 0.001" pos="-0.0762 -0.0495 0.0015" rgba="1 0.3 0.3 0.9"/>
+      <site name="screw_C4" type="cylinder" size="0.0015 0.001" pos=" 0.0381 -0.0495 0.0015" rgba="1 0.3 0.3 0.9"/>
+
+      <!-- ══════════════════════════════════════════════════════════════
+           PLATE REFERENCE SITES
+           ══════════════════════════════════════════════════════════════ -->
+
+      <site name="plate_center"
+            type="sphere" size="0.002"
+            pos="0 0 0.00075"
+            rgba="0 0.8 0.2 0.4"/>
+
+      <site name="vacuum_grasp_L"
+            type="sphere" size="0.002"
+            pos="-0.06 0 0.0015"
+            rgba="0 0.6 0.8 0.5"/>
+
+      <site name="vacuum_grasp_R"
+            type="sphere" size="0.002"
+            pos=" 0.06 0 0.0015"
+            rgba="0 0.6 0.8 0.5"/>
+
+      <site name="plate_bottom"
+            type="sphere" size="0.002"
+            pos="0 0 0"
+            rgba="1 0.5 0 0.4"/>
+
+    </body>
+
+  </worldbody>
+
+</mujoco>
