@@ -1,0 +1,30 @@
+<mujoco model="keyboard_keycap_225u">
+  <!--
+    AME 547 - Keyboard Assembly Cell Simulation
+    Component: Keycap 2.25U (Cherry Profile, PBT)
+    Used for: Left Shift, Enter
+    Width: 2.25U = 42.86mm → half = 0.02143m
+    Top box: 37.86mm → half = 0.01893m
+    Depth: 18mm → half = 0.009m
+    Height: 9mm total (6mm base + 3mm top)
+    Body origin: BOTTOM FACE
+    Assembly position: body z = 0.03100m (switch top)
+  -->
+  <compiler angle="radian" autolimits="true"/>
+  <option gravity="0 0 -9.81" timestep="0.002"/>
+  <asset>
+    <material name="pbt_gray" rgba="0.75 0.75 0.75 1" specular="0.1" shininess="0.2" reflectance="0.02"/>
+  </asset>
+  <worldbody>
+    <geom name="ground" type="plane" size="1 1 0.1" pos="0 0 0" friction="0.8 0.005 0.0001" rgba="0.4 0.4 0.4 1"/>
+    <body name="keycap_225u" pos="0 0 0">
+      <inertial pos="0 0 0.0045" mass="0.006" diaginertia="2.5e-7 8.0e-7 8.0e-7"/>
+      <!-- freejoint added in integration scene -->
+      <geom name="base" type="box" size="0.02143 0.009 0.003" pos="0 0 0.003" material="pbt_gray" density="1300" friction="0.6 0.005 0.0001" condim="4" priority="1"/>
+      <geom name="top"  type="box" size="0.01893 0.0065 0.0015" pos="0 0 0.0075" material="pbt_gray" density="1300" friction="0.6 0.005 0.0001" condim="4" priority="1"/>
+      <site name="stem_clip"     type="sphere" size="0.001" pos="0 0 0"       rgba="1 0.2 0.2 0.8"/>
+      <site name="vacuum_grasp"  type="sphere" size="0.001" pos="0 0 0.009"   rgba="0 0.6 0.8 0.8"/>
+      <site name="keycap_center" type="sphere" size="0.001" pos="0 0 0.0045"  rgba="1 1 0 0.4"/>
+    </body>
+  </worldbody>
+</mujoco>

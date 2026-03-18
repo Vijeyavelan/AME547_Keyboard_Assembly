@@ -1,0 +1,151 @@
+<mujoco model="keyboard_keycap_space">
+  <!--
+    AME 547 - Keyboard Assembly Cell Simulation
+    Component: Keycap Spacebar (6.25U, Cherry Profile, PBT)
+
+    Reference: Keychron K2 V3
+    Material: Double-shot PBT plastic
+
+    Real-world dimensions (Cherry profile):
+      Width          : 6.25U = 119.1mm → half = 0.05955m
+      Depth          : 18mm  → half = 0.009m
+      Base height    : 6mm
+      Top height     : 3mm
+      Total height   : 9mm
+
+    Coordinate convention: matches bottom_case.xml
+      +X → keyboard length (width of spacebar)
+      +Y → keyboard width (front to back)
+      +Z → up
+
+    Body origin: BOTTOM FACE of keycap
+      Set body z = switch top z_world = 0.03100m
+
+    Stack position:
+      Switch top z_world  = 0.03100m
+      Keycap bottom       = 0.03100m
+      Keycap top          = 0.03100 + 0.009 = 0.04000m
+
+    Geometry (two box primitives):
+      Base box : 119.1×18×6mm  half = 0.05955, 0.009, 0.003
+                 center z_local = 0.003
+      Top box  : 114.1×13×3mm  half = 0.05705, 0.0065, 0.0015
+                 center z_local = 0.0075
+      (top box slightly narrower on all sides — sculpted profile)
+
+    Two stabilizer clip sites at standard 6.25U spacing:
+      Stabilizer center spacing = 100mm = ±50mm from center
+      Clip site X = ±0.050m
+
+    Material: PBT plastic
+      rgba    : light gray
+      density : 1300 kg/m³
+      Mass    : ~18g
+
+    Robot approach:
+      Station 3 (rotary dual-arm head)
+      Dual vacuum pads on top surface (wide span)
+      Pressed straight down onto switch stem + stabilizer stems
+  -->
+
+  <compiler angle="radian" autolimits="true"/>
+
+  <option gravity="0 0 -9.81" timestep="0.002"/>
+
+  <asset>
+    <material name="pbt_gray"
+              rgba="0.75 0.75 0.75 1"
+              specular="0.1"
+              shininess="0.2"
+              reflectance="0.02"/>
+  </asset>
+
+  <worldbody>
+
+    <geom name="ground" type="plane" size="1 1 0.1"
+          pos="0 0 0"
+          friction="0.8 0.005 0.0001"
+          rgba="0.4 0.4 0.4 1"/>
+
+    <body name="keycap_space" pos="0 0 0">
+
+      <inertial pos="0 0 0.0045"
+                mass="0.018"
+                diaginertia="3.0e-6 3.0e-5 3.0e-5"/>
+
+      <!-- freejoint added in integration scene -->
+
+      <!-- ── BASE BOX ──────────────────────────────────────────────────
+           119.1×18×6mm
+           Half-extents: 0.05955, 0.009, 0.003
+           Center z_local = 0.003
+      -->
+      <geom name="space_base"
+            type="box"
+            size="0.05955 0.009 0.003"
+            pos="0 0 0.003"
+            material="pbt_gray"
+            density="1300"
+            friction="0.6 0.005 0.0001"
+            condim="4"
+            priority="1"/>
+
+      <!-- ── TOP BOX ───────────────────────────────────────────────────
+           114.1×13×3mm — slightly narrower sculpted top
+           Half-extents: 0.05705, 0.0065, 0.0015
+           Center z_local = 0.0075
+      -->
+      <geom name="space_top"
+            type="box"
+            size="0.05705 0.0065 0.0015"
+            pos="0 0 0.0075"
+            material="pbt_gray"
+            density="1300"
+            friction="0.6 0.005 0.0001"
+            condim="4"
+            priority="1"/>
+
+      <!-- ══════════════════════════════════════════════════════════════
+           REGISTRATION SITES
+           ══════════════════════════════════════════════════════════════ -->
+
+      <!-- Center stem clip — main switch insertion point -->
+      <site name="stem_clip"
+            type="sphere" size="0.001"
+            pos="0 0 0"
+            rgba="1 0.2 0.2 0.8"/>
+
+      <!-- Left stabilizer clip — 50mm left of center -->
+      <site name="stab_clip_L"
+            type="sphere" size="0.001"
+            pos="-0.050 0 0"
+            rgba="1 0.5 0 0.8"/>
+
+      <!-- Right stabilizer clip — 50mm right of center -->
+      <site name="stab_clip_R"
+            type="sphere" size="0.001"
+            pos=" 0.050 0 0"
+            rgba="1 0.5 0 0.8"/>
+
+      <!-- Vacuum grasp sites — dual pad, left and right of center -->
+      <site name="vacuum_grasp_L"
+            type="sphere" size="0.001"
+            pos="-0.025 0 0.009"
+            rgba="0 0.6 0.8 0.8"/>
+
+      <site name="vacuum_grasp_R"
+            type="sphere" size="0.001"
+            pos=" 0.025 0 0.009"
+            rgba="0 0.6 0.8 0.8"/>
+
+      <!-- Keycap center reference -->
+      <site name="keycap_center"
+            type="sphere" size="0.001"
+            pos="0 0 0.0045"
+            rgba="1 1 0 0.4"/>
+
+    </body>
+
+  </worldbody>
+
+</mujoco>
