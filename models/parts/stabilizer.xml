@@ -1,0 +1,169 @@
+<mujoco model="keyboard_stabilizer">
+  <!--
+    AME 547 - Keyboard Assembly Cell Simulation
+    Component: Stabilizer Housing (Cherry MX PCB-mount style)
+
+    Reference: Keychron K2 V3
+    Used for: Spacebar (x2), Left Shift, Enter, Backspace, Right Shift
+    One housing per instance — two housings per stabilizer assembly
+
+    Real-world dimensions (one housing):
+      Footprint : 6.8mm × 14.85mm
+      Height    : 19.2mm (pin bottom to stem top)
+
+    Coordinate convention: matches bottom_case.xml
+      +X → keyboard length
+      +Y → keyboard width (front to back)
+      +Z → up
+
+    Body origin: BOTTOM FACE of housing (pin tips)
+      Consistent with switch_1u.xml convention
+      Set body z = PCB top face z_world = 0.01210m
+
+    Stack position:
+      Stabilizer bottom z_world = 0.01210m (on PCB top face)
+      Stabilizer top z_world    = 0.01210 + 0.0148 = 0.02690m
+      Body pos z                = 0.01210m
+
+    Geometry strategy (Option B — single file):
+      - Mesh geom  : visual only (contype=0, conaffinity=0)
+      - Primitive  : collision only (invisible)
+      - Mesh asset : models/meshes/Stabilizer_Decimated.stl
+      - STL units  : mm → scale=0.001
+      - refpos     : "-23.958 0.000 -1.712" (centers mesh at origin)
+      - refquat    : "0.7071 -0.7071 0 0" (same as switch, stem +Y → +Z)
+      - geom pos z : -0.00650 (starting value, tune if needed)
+
+    Primitive collision geometry:
+      Single box approximating housing footprint + height
+      6.8 × 14.85 × 19.2mm → half = 0.0034, 0.007425, 0.0096
+      center z_local = 0.0096 (bottom face at z=0)
+
+    Material: ABS plastic, off-white
+      density : 1050 kg/m³
+      Mass    : ~3g per housing
+
+    Insertion approach:
+      Robot 2 (rotary dual-arm, Station 2)
+      PCB-mount: inserted straight down into PCB holes
+      Grasp site on top face of housing
+  -->
+
+  <compiler angle="radian" autolimits="true"/>
+
+  <option gravity="0 0 -9.81" timestep="0.002"/>
+
+  <asset>
+    <material name="stab_white"
+              rgba="0.92 0.92 0.90 1"
+              specular="0.3"
+              shininess="0.4"
+              reflectance="0.05"/>
+
+    <material name="stab_collision"
+              rgba="0.92 0.92 0.90 0.0"/>
+
+    <!--
+      Mesh asset: Stabilizer_Decimated.stl
+      scale=0.001  : converts mm → meters
+      refpos       : centers mesh at origin before rotation
+                     raw center: (23.958, 0.000, 1.712)
+      refquat      : same as switch — stem +Y → +Z via -90 around X
+    -->
+    <mesh name="stabilizer_mesh"
+          file="../../models/meshes/Stabilizer_Decimated.stl"
+          scale="0.001 0.001 0.001"
+          refpos="-23.958 0.000 -1.712"
+          refquat="0.7071 -0.7071 0 0"/>
+
+  </asset>
+
+  <worldbody>
+
+    <!-- Static ground plane -->
+    <geom name="ground" type="plane" size="1 1 0.1"
+          pos="0 0 0"
+          friction="0.8 0.005 0.0001"
+          rgba="0.4 0.4 0.4 1"/>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         STABILIZER BODY
+         Solo validation: bottom face at z=0 (ground level)
+         Assembly position: body pos z = 0.01210m (PCB top face)
+         ══════════════════════════════════════════════════════════════════ -->
+    <body name="stabilizer" pos="0 0 0">
+
+      <inertial pos="0 0 0.0074"
+                mass="0.003"
+                diaginertia="8.0e-8 2.5e-8 7.0e-8"/>
+
+      <freejoint name="stabilizer_free"/>
+
+      <!-- ── MESH GEOM (visual only) ───────────────────────────────────
+           contype=0, conaffinity=0 → no collision, rendering only
+           geom pos z = -0.00650 : starting value from Python calculation
+           Tune if mesh is buried or floating after viewer check
+      -->
+      <geom name="stabilizer_visual"
+            type="mesh"
+            mesh="stabilizer_mesh"
+            pos="-0.047852 0.0017 0.00650"
+            material="stab_white"
+            rgba="0.92 0.92 0.90 1"
+            contype="0"
+            conaffinity="0"/>
+
+      <!-- ── PRIMITIVE COLLISION GEOM ─────────────────────────────────
+           Single box approximating full housing
+           6.8 × 14.85 × 19.2mm → half = 0.0034, 0.007425, 0.0096
+           center z_local = 0.0096 (bottom face at z=0)
+      -->
+      <geom name="stabilizer_col"
+            type="box"
+            size="0.0034 0.007425 0.0096"
+            pos="0 0 0.0096"
+            material="stab_collision"
+            density="1050"
+            friction="0.6 0.005 0.0001"
+            condim="4"
+            priority="1"/>
+
+      <!-- ══════════════════════════════════════════════════════════════
+           REGISTRATION SITES
+           ══════════════════════════════════════════════════════════════ -->
+
+      <!-- Bottom face center — insertion target point -->
+      <!-- Robot aligns this to PCB stabilizer hole site -->
+      <site name="insertion_point"
+            type="sphere"
+            size="0.001"
+            pos="0 0 0"
+            rgba="1 0.2 0.2 0.8"/>
+
+      <!-- Top face center — vacuum/finger grasp point -->
+      <site name="grasp_top"
+            type="sphere"
+            size="0.001"
+            pos="0 0 0.0148"
+            rgba="0 0.6 0.8 0.8"/>
+
+      <!-- Housing center reference -->
+      <site name="stab_center"
+            type="sphere"
+            size="0.001"
+            pos="0 0 0.0074"
+            rgba="1 1 0 0.4"/>
+
+      <!-- Wire attachment point — center of housing side face -->
+      <!-- Wire runs parallel to X axis connecting two housings -->
+      <site name="wire_attach"
+            type="sphere"
+            size="0.001"
+            pos="0 0 0.005"
+            rgba="0.8 0.4 0 0.8"/>
+
+    </body>
+
+  </worldbody>
+
+</mujoco>
