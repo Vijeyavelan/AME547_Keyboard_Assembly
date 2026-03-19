@@ -1,0 +1,70 @@
+<mujoco model="assembly_pallet">
+  <!--
+    AME 547 - Keyboard Assembly Cell Simulation
+    Component: Assembly Pallet (Universal Carrier)
+
+    Purpose: Rigid platform that holds the bottom case at all stations.
+             Two diagonal dowel pins (FL and RR boss positions) provide
+             2-pin registration for the case.
+
+    Coordinate convention (matches all parts):
+      +X = keyboard length, +Y = width front-to-back, +Z = up
+      Body origin at top surface center of the base plate.
+
+    Dimensions:
+      Base plate : 340 x 130 x 8 mm  (aluminum, slightly larger than 325x115 case)
+      Dowel pins : 4mm dia x 8mm tall, at FL(-0.1515,-0.0495) and RR(+0.1545,+0.0495)
+
+    Usage:
+      In station scenes, position the pallet body at the desired world height.
+      The bottom case sits on the plate top surface (local z=0).
+      All part stack z values remain relative to case bottom face.
+  -->
+
+  <visual>
+    <headlight diffuse="0.6 0.6 0.6" ambient="0.3 0.3 0.3"/>
+  </visual>
+
+  <asset>
+    <material name="aluminum_plate" rgba="0.75 0.75 0.78 1"/>
+    <material name="steel_pin" rgba="0.6 0.6 0.65 1"/>
+    <texture name="grid" type="2d" builtin="checker" rgb1="0.3 0.3 0.3" rgb2="0.4 0.4 0.4" width="512" height="512"/>
+    <material name="floor_mat" texture="grid" texrepeat="5 5" reflectance="0.2"/>
+  </asset>
+
+  <worldbody>
+    <!-- Ground plane -->
+    <geom name="floor" type="plane" size="1 1 0.01" material="floor_mat"/>
+
+    <!-- Camera aimed at pallet -->
+    <camera name="pallet_view" pos="0.4 -0.4 1.1" xyaxes="0.707 0.707 0 -0.35 0.35 0.87"/>
+    <!-- Pallet body — origin at top surface center -->
+    <body name="pallet_base" pos="0 0 0.750">
+
+      <!-- Base plate: 340x130x8mm, origin at top surface so plate extends downward -->
+      <geom name="base_plate"
+            type="box"
+            size="0.170 0.065 0.004"
+            pos="0 0 -0.004"
+            material="aluminum_plate"
+            mass="1.5"/>
+
+      <!-- Dowel pin FL: at front-left boss position -->
+      <geom name="dowel_pin_FL"
+            type="cylinder"
+            size="0.002 0.004"
+            pos="-0.1515 -0.0495 0.004"
+            material="steel_pin"
+            mass="0.01"/>
+
+      <!-- Dowel pin RR: at rear-right boss position -->
+      <geom name="dowel_pin_RR"
+            type="cylinder"
+            size="0.002 0.004"
+            pos="0.1545 0.0495 0.004"
+            material="steel_pin"
+            mass="0.01"/>
+
+    </body>
+  </worldbody>
+</mujoco>
