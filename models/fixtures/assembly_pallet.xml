@@ -4,16 +4,26 @@
     Component: Assembly Pallet (Universal Carrier)
 
     Purpose: Rigid platform that holds the bottom case at all stations.
-             Two diagonal dowel pins (FL and RR boss positions) provide
-             2-pin registration for the case.
+             Four corner L-stops (yellow) form a cradle pocket that
+             registers the case by its outer walls. No modifications
+             required to bottom_case.xml.
 
     Coordinate convention (matches all parts):
       +X = keyboard length, +Y = width front-to-back, +Z = up
       Body origin at top surface center of the base plate.
 
     Dimensions:
-      Base plate : 340 x 130 x 8 mm  (aluminum, slightly larger than 325x115 case)
-      Dowel pins : 4mm dia x 8mm tall, at FL(-0.1515,-0.0495) and RR(+0.1545,+0.0495)
+      Base plate  : 340 x 130 x 8 mm  (aluminum, slightly larger than 325x115 case)
+      Case footprint registered: ±0.1625 X, ±0.0575 Y
+      Stop thickness : 5 mm
+      Stop height    : 6 mm above plate top surface
+      Stop arm length: 30 mm along each edge
+
+    Corner naming (looking down from +Z):
+      FL = -X, -Y (front-left)
+      FR = +X, -Y (front-right)
+      RL = -X, +Y (rear-left)
+      RR = +X, +Y (rear-right)
 
     Usage:
       In station scenes, position the pallet body at the desired world height.
@@ -27,7 +37,7 @@
 
   <asset>
     <material name="aluminum_plate" rgba="0.75 0.75 0.78 1"/>
-    <material name="steel_pin" rgba="0.6 0.6 0.65 1"/>
+    <material name="fixture_stop"   rgba="1.0 0.85 0.0 1"/>
     <texture name="grid" type="2d" builtin="checker" rgb1="0.3 0.3 0.3" rgb2="0.4 0.4 0.4" width="512" height="512"/>
     <material name="floor_mat" texture="grid" texrepeat="5 5" reflectance="0.2"/>
   </asset>
@@ -38,6 +48,7 @@
 
     <!-- Camera aimed at pallet -->
     <camera name="pallet_view" pos="0.4 -0.4 1.1" xyaxes="0.707 0.707 0 -0.35 0.35 0.87"/>
+
     <!-- Pallet body — origin at top surface center -->
     <body name="pallet_base" pos="0 0 0.750">
 
@@ -49,21 +60,89 @@
             material="aluminum_plate"
             mass="1.5"/>
 
-      <!-- Dowel pin FL: at front-left boss position -->
-      <geom name="dowel_pin_FL"
-            type="cylinder"
-            size="0.002 0.004"
-            pos="-0.1515 -0.0495 0.004"
-            material="steel_pin"
-            mass="0.01"/>
+      <!--
+        CORNER L-STOPS
+        Each corner = 2 box geoms (X-arm + Y-arm).
+        Case outer walls sit at ±0.1625 X, ±0.0575 Y.
+        Stops are placed just outside these walls (+ stop thickness 0.005m outward).
+        Stop half-height = 0.003m → geom center at z=+0.003 (sits on plate top surface).
+        Arm half-length along edge = 0.015m (30mm arm).
+        Arm half-thickness = 0.0025m (5mm thick).
+      -->
 
-      <!-- Dowel pin RR: at rear-right boss position -->
-      <geom name="dowel_pin_RR"
-            type="cylinder"
-            size="0.002 0.004"
-            pos="0.1545 0.0495 0.004"
-            material="steel_pin"
-            mass="0.01"/>
+      <!--
+        CORNER L-STOPS (corrected geometry)
+        Y-arm occupies the full corner tip (half-length 0.015m along Y).
+        X-arm is shortened by the Y-arm thickness (0.0025m) so it ends
+        flush with the Y-arm inner face — no overlap, clean L shape.
+
+        X-arm: size X=0.0125 (was 0.015), shifted inward 0.0025m in X
+        Y-arm: unchanged, sits at the corner tip
+      -->
+
+      <!-- === FL corner (-X, -Y) === -->
+      <!-- X-arm: along X at -Y wall, from Y-arm inner face inward -->
+      <geom name="stop_FL_x"
+            type="box"
+            size="0.0125 0.0025 0.003"
+            pos="-0.1500 -0.0600 0.003"
+            material="fixture_stop"
+            mass="0.02"/>
+      <!-- Y-arm: along Y at -X wall, from corner tip inward only -->
+      <geom name="stop_FL_y"
+            type="box"
+            size="0.0025 0.0125 0.003"
+            pos="-0.1650 -0.0475 0.003"
+            material="fixture_stop"
+            mass="0.02"/>
+
+      <!-- === FR corner (+X, -Y) === -->
+      <!-- X-arm: along X at -Y wall, from Y-arm inner face inward -->
+      <geom name="stop_FR_x"
+            type="box"
+            size="0.0125 0.0025 0.003"
+            pos="0.1500 -0.0600 0.003"
+            material="fixture_stop"
+            mass="0.02"/>
+      <!-- Y-arm: along Y at +X wall, from corner tip inward only -->
+      <geom name="stop_FR_y"
+            type="box"
+            size="0.0025 0.0125 0.003"
+            pos="0.1650 -0.0475 0.003"
+            material="fixture_stop"
+            mass="0.02"/>
+
+      <!-- === RL corner (-X, +Y) === -->
+      <!-- X-arm: along X at +Y wall, from Y-arm inner face inward -->
+      <geom name="stop_RL_x"
+            type="box"
+            size="0.0125 0.0025 0.003"
+            pos="-0.1500 0.0600 0.003"
+            material="fixture_stop"
+            mass="0.02"/>
+      <!-- Y-arm: along Y at -X wall, from corner tip inward only -->
+      <geom name="stop_RL_y"
+            type="box"
+            size="0.0025 0.0125 0.003"
+            pos="-0.1650 0.0475 0.003"
+            material="fixture_stop"
+            mass="0.02"/>
+
+      <!-- === RR corner (+X, +Y) === -->
+      <!-- X-arm: along X at +Y wall, from Y-arm inner face inward -->
+      <geom name="stop_RR_x"
+            type="box"
+            size="0.0125 0.0025 0.003"
+            pos="0.1500 0.0600 0.003"
+            material="fixture_stop"
+            mass="0.02"/>
+      <!-- Y-arm: along Y at +X wall, from corner tip inward only -->
+      <geom name="stop_RR_y"
+            type="box"
+            size="0.0025 0.0125 0.003"
+            pos="0.1650 0.0475 0.003"
+            material="fixture_stop"
+            mass="0.02"/>
 
     </body>
   </worldbody>
