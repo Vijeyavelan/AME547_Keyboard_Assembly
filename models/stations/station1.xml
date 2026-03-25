@@ -1,0 +1,281 @@
+<mujoco model="station1">
+  <!--
+    AME 547 - Keyboard Assembly Cell Simulation
+    Scene: Station 1 (S1)
+
+    Robot  : UR5e (MuJoCo Menagerie) — self-contained, no include
+    Task   : Structural assembly steps 1-6
+    Cycle  : ~79.5s
+
+    Layout:
+      - Work table top surface at z=0.800m (standard industrial height)
+      - Assembly pallet top surface at z=0.810m (sits on table)
+      - Bottom case center at z=0.822m (sitting on pallet)
+      - Robot raiser: 400x400x460mm steel pedestal at pos="0 -0.45 0"
+      - UR5e base at z=0.460m (on raiser) — shoulder at z=0.623m
+      - Work surface 350mm above robot base — optimal dexterous workspace
+      - Gripper clearance: 50mm gripper + 15% = 58mm buffer above case top
+
+    Coordinate convention:
+      +X = keyboard length, +Y = width front-to-back, +Z = up
+  -->
+
+  <compiler angle="radian"
+            meshdir="../robots/mujoco_menagerie/universal_robots_ur5e/assets"
+            autolimits="true"/>
+
+  <option integrator="implicitfast"/>
+
+  <default>
+    <default class="ur5e">
+      <material specular="0.5" shininess="0.25"/>
+      <joint axis="0 1 0" range="-6.28319 6.28319" armature="0.1"/>
+      <general gaintype="fixed" biastype="affine" ctrlrange="-6.2831 6.2831"
+               gainprm="2000" biasprm="0 -2000 -400" forcerange="-150 150"/>
+      <default class="size3">
+        <default class="size3_limited">
+          <joint range="-3.1415 3.1415"/>
+          <general ctrlrange="-3.1415 3.1415"/>
+        </default>
+      </default>
+      <default class="size1">
+        <general gainprm="500" biasprm="0 -500 -100" forcerange="-28 28"/>
+      </default>
+      <default class="visual">
+        <geom type="mesh" contype="0" conaffinity="0" group="2"/>
+      </default>
+      <default class="collision">
+        <geom type="capsule" group="3"/>
+        <default class="eef_collision">
+          <geom type="cylinder"/>
+        </default>
+      </default>
+      <site size="0.001" rgba="0.5 0.5 0.5 0.3" group="4"/>
+    </default>
+  </default>
+
+  <visual>
+    <headlight diffuse="0.6 0.6 0.6" ambient="0.3 0.3 0.3" specular="0 0 0"/>
+    <rgba haze="0.15 0.25 0.35 1"/>
+    <global azimuth="150" elevation="-25"/>
+  </visual>
+
+  <asset>
+    <texture type="skybox" builtin="gradient" rgb1="0.3 0.5 0.7" rgb2="0 0 0"
+             width="512" height="3072"/>
+    <texture name="grid" type="2d" builtin="checker"
+             rgb1="0.3 0.3 0.3" rgb2="0.4 0.4 0.4" width="512" height="512"/>
+    <material name="floor_mat"      texture="grid" texrepeat="5 5" reflectance="0.2"/>
+    <material name="aluminum_plate" rgba="0.75 0.75 0.78 1"/>
+    <material name="fixture_stop"   rgba="1.0 0.85 0.0 1"/>
+    <material name="abs_plastic"    rgba="0.15 0.15 0.15 1"/>
+    <material name="table_surface"  rgba="0.55 0.45 0.35 1"/>
+    <material name="table_leg_mat"  rgba="0.4 0.4 0.4 1"/>
+    <!-- UR5e materials -->
+    <material class="ur5e" name="black"     rgba="0.033 0.033 0.033 1"/>
+    <material class="ur5e" name="jointgray" rgba="0.278 0.278 0.278 1"/>
+    <material class="ur5e" name="linkgray"  rgba="0.82 0.82 0.82 1"/>
+    <material class="ur5e" name="urblue"    rgba="0.49 0.678 0.8 1"/>
+    <!-- UR5e meshes -->
+    <mesh file="base_0.obj"/>
+    <mesh file="base_1.obj"/>
+    <mesh file="shoulder_0.obj"/>
+    <mesh file="shoulder_1.obj"/>
+    <mesh file="shoulder_2.obj"/>
+    <mesh file="upperarm_0.obj"/>
+    <mesh file="upperarm_1.obj"/>
+    <mesh file="upperarm_2.obj"/>
+    <mesh file="upperarm_3.obj"/>
+    <mesh file="forearm_0.obj"/>
+    <mesh file="forearm_1.obj"/>
+    <mesh file="forearm_2.obj"/>
+    <mesh file="forearm_3.obj"/>
+    <mesh file="wrist1_0.obj"/>
+    <mesh file="wrist1_1.obj"/>
+    <mesh file="wrist1_2.obj"/>
+    <mesh file="wrist2_0.obj"/>
+    <mesh file="wrist2_1.obj"/>
+    <mesh file="wrist2_2.obj"/>
+    <mesh file="wrist3.obj"/>
+  </asset>
+
+  <worldbody>
+    <light name="main_light" pos="0 0 3" dir="0 0 -1" directional="true"/>
+    <light name="fill_light" pos="1 -1 2" dir="-0.5 0.5 -1" directional="true"
+           diffuse="0.3 0.3 0.3"/>
+    <light name="spotlight" mode="targetbodycom" target="wrist_2_link" pos="0 -1 2"/>
+
+    <geom name="floor" type="plane" size="3 3 0.05" material="floor_mat"/>
+
+    <!-- World frame axis indicator at origin (red=X, green=Y, blue=Z) -->
+    <!-- Each cylinder: 5mm radius, 100mm half-length = 200mm total -->
+    <body name="axis_indicator" pos="0 0 0">
+      <!-- X axis: red, points along +X -->
+      <geom name="axis_x" type="cylinder" size="0.0025 0.100"
+            pos="0.100 0 0.0025" euler="0 1.5708 0"
+            rgba="1 0 0 1" contype="0" conaffinity="0"/>
+      <!-- Y axis: green, points along +Y -->
+      <geom name="axis_y" type="cylinder" size="0.0025 0.100"
+            pos="0 0.100 0.0025" euler="1.5708 0 0"
+            rgba="0 0.8 0 1" contype="0" conaffinity="0"/>
+      <!-- Z axis: blue, points along +Z -->
+      <geom name="axis_z" type="cylinder" size="0.0025 0.100"
+            pos="0 0 0.100"
+            rgba="0 0 1 1" contype="0" conaffinity="0"/>
+      <!-- Origin marker: small white sphere -->
+      <geom name="axis_origin" type="sphere" size="0.008"
+            pos="0 0 0" rgba="1 1 1 1" contype="0" conaffinity="0"/>
+    </body>
+
+    <!-- Work table: top surface at z=0.800m, legs 390mm half-height -->
+    <body name="work_table" pos="0 0.030 0">
+      <geom name="table_top" type="box" size="0.350 0.230 0.010"
+            pos="0 0 0.800" material="table_surface" contype="1" conaffinity="1"/>
+      <geom name="table_leg_fl" type="box" size="0.020 0.020 0.395"
+            pos="-0.310 -0.190 0.395" material="table_leg_mat"/>
+      <geom name="table_leg_fr" type="box" size="0.020 0.020 0.395"
+            pos="0.310 -0.190 0.395"  material="table_leg_mat"/>
+      <geom name="table_leg_rl" type="box" size="0.020 0.020 0.395"
+            pos="-0.310 0.200 0.395"  material="table_leg_mat"/>
+      <geom name="table_leg_rr" type="box" size="0.020 0.020 0.395"
+            pos="0.310 0.200 0.395"   material="table_leg_mat"/>
+    </body>
+
+    <!-- Assembly pallet: top surface at z=0.810m (table top + 10mm plate) -->
+    <body name="pallet_base" pos="0 0.030 0.810">
+      <geom name="base_plate" type="box" size="0.170 0.065 0.004"
+            pos="0 0 -0.004" material="aluminum_plate" mass="1.5"/>
+      <geom name="stop_FL_x" type="box" size="0.0125 0.0025 0.003"
+            pos="-0.1500 -0.0600 0.003" material="fixture_stop" mass="0.02"/>
+      <geom name="stop_FL_y" type="box" size="0.0025 0.0125 0.003"
+            pos="-0.1650 -0.0475 0.003" material="fixture_stop" mass="0.02"/>
+      <geom name="stop_FR_x" type="box" size="0.0125 0.0025 0.003"
+            pos="0.1500 -0.0600 0.003" material="fixture_stop" mass="0.02"/>
+      <geom name="stop_FR_y" type="box" size="0.0025 0.0125 0.003"
+            pos="0.1650 -0.0475 0.003" material="fixture_stop" mass="0.02"/>
+      <geom name="stop_RL_x" type="box" size="0.0125 0.0025 0.003"
+            pos="-0.1500 0.0600 0.003" material="fixture_stop" mass="0.02"/>
+      <geom name="stop_RL_y" type="box" size="0.0025 0.0125 0.003"
+            pos="-0.1650 0.0475 0.003" material="fixture_stop" mass="0.02"/>
+      <geom name="stop_RR_x" type="box" size="0.0125 0.0025 0.003"
+            pos="0.1500 0.0600 0.003" material="fixture_stop" mass="0.02"/>
+      <geom name="stop_RR_y" type="box" size="0.0025 0.0125 0.003"
+            pos="0.1650 0.0475 0.003" material="fixture_stop" mass="0.02"/>
+    </body>
+
+    <!-- Bottom case: center at z=0.822m (pallet top + 12mm half-height) -->
+    <body name="bottom_case" pos="0 0.030 0.822">
+      <geom name="case_bottom" type="box" size="0.1625 0.0575 0.001"
+            pos="0 0 -0.011" material="abs_plastic" mass="0.15"/>
+      <geom name="case_wall_left"  type="box" size="0.001 0.0575 0.011"
+            pos="-0.1615 0 0" material="abs_plastic" mass="0.05"/>
+      <geom name="case_wall_right" type="box" size="0.001 0.0575 0.011"
+            pos="0.1615 0 0"  material="abs_plastic" mass="0.05"/>
+      <geom name="case_wall_front" type="box" size="0.1625 0.001 0.011"
+            pos="0 -0.0565 0" material="abs_plastic" mass="0.05"/>
+      <geom name="case_wall_rear"  type="box" size="0.1625 0.001 0.011"
+            pos="0 0.0565 0"  material="abs_plastic" mass="0.05"/>
+    </body>
+
+    <!-- Robot raiser: 400x400x460mm steel pedestal -->
+    <body name="robot_raiser" pos="0 -0.45 0">
+      <geom name="raiser_block" type="box" size="0.200 0.200 0.230"
+            pos="0 0 0.230" rgba="0.35 0.35 0.38 1"
+            contype="1" conaffinity="1" mass="50.0"/>
+    </body>
+
+    <!-- UR5e: base at z=0.460m on raiser, euler Z=pi rotates to face table -->
+    <body name="ur5e_mount" pos="0 -0.45 0.460" euler="0 0 3.1416">
+      <body name="base" childclass="ur5e">
+        <inertial mass="4.0" pos="0 0 0"
+                   diaginertia="0.00443333156 0.00443333156 0.0072"/>
+        <geom mesh="base_0" material="black"     class="visual"/>
+        <geom mesh="base_1" material="jointgray" class="visual"/>
+        <body name="shoulder_link" pos="0 0 0.163">
+          <inertial mass="3.7" pos="0 0 0"
+                     diaginertia="0.0102675 0.0102675 0.00666"/>
+          <joint name="shoulder_pan_joint" class="size3" axis="0 0 1"/>
+          <geom mesh="shoulder_0" material="urblue"    class="visual"/>
+          <geom mesh="shoulder_1" material="black"     class="visual"/>
+          <geom mesh="shoulder_2" material="jointgray" class="visual"/>
+          <geom class="collision" size="0.06 0.06" pos="0 0 -0.04"/>
+          <body name="upper_arm_link" pos="0 0.138 0" quat="1 0 1 0">
+            <inertial mass="8.393" pos="0 0 0.2125"
+                       diaginertia="0.133886 0.133886 0.0151074"/>
+            <joint name="shoulder_lift_joint" class="size3"/>
+            <geom mesh="upperarm_0" material="linkgray"  class="visual"/>
+            <geom mesh="upperarm_1" material="black"     class="visual"/>
+            <geom mesh="upperarm_2" material="jointgray" class="visual"/>
+            <geom mesh="upperarm_3" material="urblue"    class="visual"/>
+            <geom class="collision" pos="0 -0.04 0" quat="1 1 0 0" size="0.06 0.06"/>
+            <geom class="collision" size="0.05 0.2" pos="0 0 0.2"/>
+            <body name="forearm_link" pos="0 -0.131 0.425">
+              <inertial mass="2.275" pos="0 0 0.196"
+                         diaginertia="0.0311796 0.0311796 0.004095"/>
+              <joint name="elbow_joint" class="size3_limited"/>
+              <geom mesh="forearm_0" material="urblue"    class="visual"/>
+              <geom mesh="forearm_1" material="linkgray"  class="visual"/>
+              <geom mesh="forearm_2" material="black"     class="visual"/>
+              <geom mesh="forearm_3" material="jointgray" class="visual"/>
+              <geom class="collision" pos="0 0.08 0" quat="1 1 0 0" size="0.055 0.06"/>
+              <geom class="collision" size="0.038 0.19" pos="0 0 0.2"/>
+              <body name="wrist_1_link" pos="0 0 0.392" quat="1 0 1 0">
+                <inertial mass="1.219" pos="0 0.127 0"
+                           diaginertia="0.0025599 0.0025599 0.0021942"/>
+                <joint name="wrist_1_joint" class="size1"/>
+                <geom mesh="wrist1_0" material="black"     class="visual"/>
+                <geom mesh="wrist1_1" material="urblue"    class="visual"/>
+                <geom mesh="wrist1_2" material="jointgray" class="visual"/>
+                <geom class="collision" pos="0 0.05 0" quat="1 1 0 0" size="0.04 0.07"/>
+                <body name="wrist_2_link" pos="0 0.127 0">
+                  <inertial mass="1.219" pos="0 0 0.1"
+                             diaginertia="0.0025599 0.0025599 0.0021942"/>
+                  <joint name="wrist_2_joint" axis="0 0 1" class="size1"/>
+                  <geom mesh="wrist2_0" material="black"     class="visual"/>
+                  <geom mesh="wrist2_1" material="urblue"    class="visual"/>
+                  <geom mesh="wrist2_2" material="jointgray" class="visual"/>
+                  <geom class="collision" size="0.04 0.06" pos="0 0 0.04"/>
+                  <geom class="collision" pos="0 0.02 0.1" quat="1 1 0 0" size="0.04 0.04"/>
+                  <body name="wrist_3_link" pos="0 0 0.1">
+                    <inertial mass="0.1889" pos="0 0.0771683 0" quat="1 0 0 1"
+                               diaginertia="0.000132134 9.90863e-05 9.90863e-05"/>
+                    <joint name="wrist_3_joint" class="size1"/>
+                    <geom material="linkgray" mesh="wrist3" class="visual"/>
+                    <geom class="eef_collision" pos="0 0.08 0" quat="1 1 0 0"
+                          size="0.04 0.02"/>
+                    <site name="attachment_site" pos="0 0.1 0" quat="-1 1 0 0"/>
+                  </body>
+                </body>
+              </body>
+            </body>
+          </body>
+        </body>
+      </body>
+    </body>
+
+    <!-- Cameras -->
+    <camera name="station1_overview"
+            pos="1.2 -1.5 1.8"
+            xyaxes="0.8 0.6 0 -0.35 0.47 0.81"/>
+    <camera name="work_area_cam"
+            pos="0.0 -0.8 1.6"
+            xyaxes="1 0 0 0 0.6 0.8"/>
+
+  </worldbody>
+
+  <actuator>
+    <general class="size3"         name="shoulder_pan"  joint="shoulder_pan_joint"/>
+    <general class="size3"         name="shoulder_lift" joint="shoulder_lift_joint"/>
+    <general class="size3_limited" name="elbow"         joint="elbow_joint"/>
+    <general class="size1"         name="wrist_1"       joint="wrist_1_joint"/>
+    <general class="size1"         name="wrist_2"       joint="wrist_2_joint"/>
+    <general class="size1"         name="wrist_3"       joint="wrist_3_joint"/>
+  </actuator>
+
+  <keyframe>
+    <key name="home"
+         qpos="-1.5708 -1.5708 1.5708 -1.5708 -1.5708 0"
+         ctrl="-1.5708 -1.5708 1.5708 -1.5708 -1.5708 0"/>
+  </keyframe>
+
+</mujoco>
