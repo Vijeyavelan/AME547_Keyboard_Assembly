@@ -1,0 +1,526 @@
+<mujoco model="assembly_cell">
+  <!--
+    AME 547 - Keyboard Assembly Cell Simulation
+    Full cell static scene — all 4 stations
+
+    Layout (X axis):
+      S1  x=0.0m  — UR5e structural assembly
+      S2  x=1.8m  — Pneumatic screw + stabilizer
+      S3  x=3.6m  — Switch insertion (XY table + rotating head)
+      S4  x=5.4m  — Keycap installation (XY table + rotating head)
+
+    This is a static visual scene only.
+    Controller logic lives in individual station files.
+  -->
+
+  <compiler angle="radian"
+            meshdir="../../models/robots/mujoco_menagerie/universal_robots_ur5e/assets"
+            autolimits="true"/>
+  <option integrator="implicitfast"/>
+
+  <!-- UR5e defaults -->
+  <default>
+    <default class="ur5e">
+      <material specular="0.5" shininess="0.25"/>
+      <joint axis="0 1 0" range="-6.28319 6.28319" armature="0.1"/>
+      <general gaintype="fixed" biastype="affine" ctrlrange="-6.2831 6.2831"
+               gainprm="2000" biasprm="0 -2000 -400" forcerange="-150 150"/>
+      <default class="size3">
+        <default class="size3_limited">
+          <joint range="-3.1415 3.1415"/>
+          <general ctrlrange="-3.1415 3.1415"/>
+        </default>
+      </default>
+      <default class="size1">
+        <general gainprm="500" biasprm="0 -500 -100" forcerange="-28 28"/>
+      </default>
+      <default class="visual">
+        <geom type="mesh" contype="0" conaffinity="0" group="2"/>
+      </default>
+      <default class="collision">
+        <geom type="capsule" group="3"/>
+        <default class="eef_collision">
+          <geom type="cylinder"/>
+        </default>
+      </default>
+      <site size="0.001" rgba="0.5 0.5 0.5 0.3" group="4"/>
+    </default>
+  </default>
+
+  <visual>
+    <headlight diffuse="0.6 0.6 0.6" ambient="0.3 0.3 0.3" specular="0 0 0"/>
+    <rgba haze="0.15 0.25 0.35 1"/>
+    <global azimuth="160" elevation="-20"/>
+  </visual>
+
+  <asset>
+    <texture type="skybox" builtin="gradient" rgb1="0.3 0.5 0.7" rgb2="0 0 0"
+             width="512" height="3072"/>
+    <texture name="grid" type="2d" builtin="checker"
+             rgb1="0.3 0.3 0.3" rgb2="0.4 0.4 0.4" width="512" height="512"/>
+    <material name="floor_mat"      texture="grid" texrepeat="10 10" reflectance="0.2"/>
+    <material name="aluminum_plate" rgba="0.75 0.75 0.78 1"/>
+    <material name="fixture_stop"   rgba="1.0 0.85 0.0 1"/>
+    <material name="abs_plastic"    rgba="0.15 0.15 0.15 1"/>
+    <material name="table_surface"  rgba="0.55 0.45 0.35 1"/>
+    <material name="steel_dark"     rgba="0.25 0.25 0.28 1"/>
+    <material name="steel_mid"      rgba="0.40 0.40 0.43 1"/>
+    <material name="steel_light"    rgba="0.60 0.60 0.63 1"/>
+    <material name="gantry_mat"     rgba="0.30 0.30 0.32 1"/>
+    <material name="gantry_beam"    rgba="0.25 0.25 0.27 1"/>
+    <material name="column_mat"     rgba="0.35 0.35 0.38 1"/>
+    <material name="arm_mat"        rgba="0.50 0.50 0.53 1"/>
+    <material name="head_body"      rgba="0.55 0.55 0.58 1"/>
+    <material name="head_tip"       rgba="0.15 0.15 0.15 1"/>
+    <material name="tray_mat"       rgba="0.70 0.72 0.75 1"/>
+    <material name="slide_rail"     rgba="0.50 0.50 0.53 1"/>
+    <material name="screw_driver"   rgba="0.55 0.55 0.58 1"/>
+    <material name="stab_press"     rgba="0.18 0.38 0.55 1"/>
+    <!-- UR5e materials -->
+    <material class="ur5e" name="black"     rgba="0.033 0.033 0.033 1"/>
+    <material class="ur5e" name="jointgray" rgba="0.278 0.278 0.278 1"/>
+    <material class="ur5e" name="linkgray"  rgba="0.82 0.82 0.82 1"/>
+    <material class="ur5e" name="urblue"    rgba="0.49 0.678 0.8 1"/>
+    <!-- UR5e meshes -->
+    <mesh file="base_0.obj"/><mesh file="base_1.obj"/>
+    <mesh file="shoulder_0.obj"/><mesh file="shoulder_1.obj"/><mesh file="shoulder_2.obj"/>
+    <mesh file="upperarm_0.obj"/><mesh file="upperarm_1.obj"/>
+    <mesh file="upperarm_2.obj"/><mesh file="upperarm_3.obj"/>
+    <mesh file="forearm_0.obj"/><mesh file="forearm_1.obj"/>
+    <mesh file="forearm_2.obj"/><mesh file="forearm_3.obj"/>
+    <mesh file="wrist1_0.obj"/><mesh file="wrist1_1.obj"/><mesh file="wrist1_2.obj"/>
+    <mesh file="wrist2_0.obj"/><mesh file="wrist2_1.obj"/><mesh file="wrist2_2.obj"/>
+    <mesh file="wrist3.obj"/>
+  </asset>
+
+  <worldbody>
+    <light name="main_light"  pos="2.7 0 4"   dir="0 0 -1" directional="true"/>
+    <light name="fill_light1" pos="0 -2 3"    dir="0 0.5 -1" directional="true" diffuse="0.3 0.3 0.3"/>
+    <light name="fill_light2" pos="5.4 -2 3"  dir="0 0.5 -1" directional="true" diffuse="0.3 0.3 0.3"/>
+
+    <!-- Floor: large enough for full cell -->
+    <geom name="floor" type="plane" size="8 4 0.05" material="floor_mat"
+          pos="2.7 0 0"/>
+
+    <!-- Station labels (small box markers at floor level) -->
+    <geom name="s1_marker" type="box" size="0.05 0.05 0.01"
+          pos="0.0 -0.8 0.01" rgba="0.2 0.6 0.2 1" contype="0" conaffinity="0"/>
+    <geom name="s2_marker" type="box" size="0.05 0.05 0.01"
+          pos="1.8 -0.8 0.01" rgba="0.6 0.4 0.1 1" contype="0" conaffinity="0"/>
+    <geom name="s3_marker" type="box" size="0.05 0.05 0.01"
+          pos="3.6 -0.8 0.01" rgba="0.2 0.2 0.8 1" contype="0" conaffinity="0"/>
+    <geom name="s4_marker" type="box" size="0.05 0.05 0.01"
+          pos="5.4 -0.8 0.01" rgba="0.7 0.1 0.5 1" contype="0" conaffinity="0"/>
+
+    <!-- ================================================================
+         STATION 1 — UR5e structural assembly (x=0)
+         ================================================================ -->
+    <body name="s1_root" pos="0 0 0">
+
+      <!-- Work table -->
+      <body name="s1_table" pos="0 0.030 0">
+        <geom name="s1_table_top" type="box" size="0.350 0.230 0.010"
+              pos="0 0 0.800" material="table_surface"/>
+        <geom name="s1_leg_fl" type="box" size="0.020 0.020 0.395"
+              pos="-0.310 -0.190 0.395" material="steel_dark"/>
+        <geom name="s1_leg_fr" type="box" size="0.020 0.020 0.395"
+              pos="0.310 -0.190 0.395" material="steel_dark"/>
+        <geom name="s1_leg_rl" type="box" size="0.020 0.020 0.395"
+              pos="-0.310 0.200 0.395" material="steel_dark"/>
+        <geom name="s1_leg_rr" type="box" size="0.020 0.020 0.395"
+              pos="0.310 0.200 0.395" material="steel_dark"/>
+      </body>
+
+      <!-- Pallet on table -->
+      <body name="s1_pallet" pos="0 0.030 0.810">
+        <geom name="s1_base_plate" type="box" size="0.170 0.065 0.004"
+              pos="0 0 -0.004" material="aluminum_plate"/>
+        <geom name="s1_stop_fl_x" type="box" size="0.0125 0.0025 0.003"
+              pos="-0.1500 -0.0600 0.003" material="fixture_stop"/>
+        <geom name="s1_stop_fr_x" type="box" size="0.0125 0.0025 0.003"
+              pos="0.1500 -0.0600 0.003" material="fixture_stop"/>
+        <geom name="s1_stop_rl_x" type="box" size="0.0125 0.0025 0.003"
+              pos="-0.1500 0.0600 0.003" material="fixture_stop"/>
+        <geom name="s1_stop_rr_x" type="box" size="0.0125 0.0025 0.003"
+              pos="0.1500 0.0600 0.003" material="fixture_stop"/>
+      </body>
+
+      <!-- Bottom case -->
+      <body name="s1_case" pos="0 0.030 0.822">
+        <geom name="s1_case_bottom" type="box" size="0.1625 0.0575 0.001"
+              pos="0 0 -0.011" material="abs_plastic"/>
+        <geom name="s1_case_wl" type="box" size="0.001 0.0575 0.011"
+              pos="-0.1615 0 0" material="abs_plastic"/>
+        <geom name="s1_case_wr" type="box" size="0.001 0.0575 0.011"
+              pos="0.1615 0 0" material="abs_plastic"/>
+        <geom name="s1_case_wf" type="box" size="0.1625 0.001 0.011"
+              pos="0 -0.0565 0" material="abs_plastic"/>
+        <geom name="s1_case_wb" type="box" size="0.1625 0.001 0.011"
+              pos="0 0.0565 0" material="abs_plastic"/>
+      </body>
+
+      <!-- Robot raiser -->
+      <body name="s1_raiser" pos="0 -0.45 0">
+        <geom name="s1_raiser_block" type="box" size="0.200 0.200 0.230"
+              pos="0 0 0.230" rgba="0.35 0.35 0.38 1"/>
+      </body>
+
+      <!-- UR5e in home pose (static geometry, no joints) -->
+      <body name="s1_ur5e_mount" pos="0 -0.45 0.460" euler="0 0 3.1416">
+        <body name="s1_base" childclass="ur5e">
+          <inertial mass="4.0" pos="0 0 0" diaginertia="0.00443 0.00443 0.0072"/>
+          <geom mesh="base_0" material="black"     class="visual"/>
+          <geom mesh="base_1" material="jointgray" class="visual"/>
+          <body name="s1_shoulder" pos="0 0 0.163" quat="0.7071 0 0 -0.7071">
+            <geom mesh="shoulder_0" material="urblue"    class="visual"/>
+            <geom mesh="shoulder_1" material="black"     class="visual"/>
+            <geom mesh="shoulder_2" material="jointgray" class="visual"/>
+            <!-- Home pose: shoulder_pan=-1.5708 -->
+            <body name="s1_upper_arm" pos="0 0.138 0" quat="1.0 0.0 0.0 0.0">
+              <geom mesh="upperarm_0" material="linkgray"  class="visual"/>
+              <geom mesh="upperarm_1" material="black"     class="visual"/>
+              <geom mesh="upperarm_2" material="jointgray" class="visual"/>
+              <geom mesh="upperarm_3" material="urblue"    class="visual"/>
+              <body name="s1_forearm" pos="0 -0.131 0.425" quat="0.7071 0 0.7071 0">
+                <geom mesh="forearm_0" material="urblue"    class="visual"/>
+                <geom mesh="forearm_1" material="linkgray"  class="visual"/>
+                <geom mesh="forearm_2" material="black"     class="visual"/>
+                <geom mesh="forearm_3" material="jointgray" class="visual"/>
+                <body name="s1_wrist1" pos="0 0 0.392" quat="1.0 0.0 0.0 0.0">
+                  <geom mesh="wrist1_0" material="black"     class="visual"/>
+                  <geom mesh="wrist1_1" material="urblue"    class="visual"/>
+                  <geom mesh="wrist1_2" material="jointgray" class="visual"/>
+                  <body name="s1_wrist2" pos="0 0.127 0" quat="0.7071 0 0 -0.7071">
+                    <geom mesh="wrist2_0" material="black"     class="visual"/>
+                    <geom mesh="wrist2_1" material="urblue"    class="visual"/>
+                    <geom mesh="wrist2_2" material="jointgray" class="visual"/>
+                    <body name="s1_wrist3" pos="0 0 0.1">
+                      <geom material="linkgray" mesh="wrist3" class="visual"/>
+                      <!-- Vacuum gripper -->
+                      <body name="s1_gripper" pos="0 0.1 0">
+                        <geom name="s1_grip_flange" type="cylinder" size="0.030 0.005"
+                              pos="0 0.005 0" euler="1.5708 0 0"
+                              rgba="0.278 0.278 0.278 1" contype="0" conaffinity="0"/>
+                        <geom name="s1_grip_body" type="cylinder" size="0.020 0.015"
+                              pos="0 0.025 0" euler="1.5708 0 0"
+                              rgba="0.278 0.278 0.278 1" contype="0" conaffinity="0"/>
+                        <geom name="s1_grip_accent" type="cylinder" size="0.022 0.003"
+                              pos="0 0.043 0" euler="1.5708 0 0"
+                              rgba="0.49 0.678 0.8 1" contype="0" conaffinity="0"/>
+                        <geom name="s1_grip_cup" type="cylinder" size="0.015 0.005"
+                              pos="0 0.051 0" euler="1.5708 0 0"
+                              rgba="0.033 0.033 0.033 1" contype="0" conaffinity="0"/>
+                      </body>
+                    </body>
+                  </body>
+                </body>
+              </body>
+            </body>
+          </body>
+        </body>
+      </body>
+    </body>
+
+    <!-- ================================================================
+         STATION 2 — Pneumatic gantry (x=1.8)
+         ================================================================ -->
+    <body name="s2_root" pos="1.8 0 0">
+
+      <!-- Table -->
+      <body name="s2_table" pos="0 0.030 0">
+        <geom name="s2_table_top" type="box" size="0.350 0.230 0.010"
+              pos="0 0 0.800" material="table_surface"/>
+        <geom name="s2_leg_fl" type="box" size="0.020 0.020 0.395"
+              pos="-0.310 -0.190 0.395" material="steel_dark"/>
+        <geom name="s2_leg_fr" type="box" size="0.020 0.020 0.395"
+              pos="0.310 -0.190 0.395" material="steel_dark"/>
+        <geom name="s2_leg_rl" type="box" size="0.020 0.020 0.395"
+              pos="-0.310 0.200 0.395" material="steel_dark"/>
+        <geom name="s2_leg_rr" type="box" size="0.020 0.020 0.395"
+              pos="0.310 0.200 0.395" material="steel_dark"/>
+      </body>
+
+      <!-- Pallet + case -->
+      <body name="s2_pallet" pos="0 0.030 0.810">
+        <geom name="s2_base_plate" type="box" size="0.170 0.065 0.004"
+              pos="0 0 -0.004" material="aluminum_plate"/>
+      </body>
+      <body name="s2_case" pos="0 0.030 0.822">
+        <geom name="s2_case_b" type="box" size="0.1625 0.0575 0.001"
+              pos="0 0 -0.011" material="abs_plastic"/>
+        <geom name="s2_case_wl" type="box" size="0.001 0.0575 0.011"
+              pos="-0.1615 0 0" material="abs_plastic"/>
+        <geom name="s2_case_wr" type="box" size="0.001 0.0575 0.011"
+              pos="0.1615 0 0" material="abs_plastic"/>
+        <geom name="s2_case_wf" type="box" size="0.1625 0.001 0.011"
+              pos="0 -0.0565 0" material="abs_plastic"/>
+        <geom name="s2_case_wb" type="box" size="0.1625 0.001 0.011"
+              pos="0 0.0565 0" material="abs_plastic"/>
+      </body>
+
+      <!-- 4-post gantry -->
+      <body name="s2_gantry" pos="0 0 0">
+        <geom name="s2_post_fl" type="box" size="0.030 0.030 0.600"
+              pos="-0.420 -0.170 0.600" material="gantry_mat"/>
+        <geom name="s2_post_fr" type="box" size="0.030 0.030 0.600"
+              pos="0.420 -0.170 0.600" material="gantry_mat"/>
+        <geom name="s2_post_rl" type="box" size="0.030 0.030 0.600"
+              pos="-0.420 0.450 0.600" material="gantry_mat"/>
+        <geom name="s2_post_rr" type="box" size="0.030 0.030 0.600"
+              pos="0.420 0.450 0.600" material="gantry_mat"/>
+        <geom name="s2_beam_f"  type="box" size="0.420 0.025 0.025"
+              pos="0 -0.170 1.185" material="gantry_beam"/>
+        <geom name="s2_beam_r"  type="box" size="0.420 0.025 0.025"
+              pos="0 0.450 1.185" material="gantry_beam"/>
+        <geom name="s2_beam_l"  type="box" size="0.025 0.310 0.025"
+              pos="-0.420 0.140 1.185" material="gantry_beam"/>
+        <geom name="s2_beam_ri" type="box" size="0.025 0.310 0.025"
+              pos="0.420 0.140 1.185" material="gantry_beam"/>
+        <geom name="s2_carrier" type="box" size="0.390 0.030 0.020"
+              pos="0 0.140 1.150" material="gantry_beam"/>
+        <!-- Screw drivers (4) -->
+        <geom name="s2_drv_fl" type="cylinder" size="0.010 0.040"
+              pos="-0.1515 -0.0195 1.050" material="screw_driver"/>
+        <geom name="s2_drv_fr" type="cylinder" size="0.010 0.040"
+              pos="0.1545 -0.0195 1.050" material="screw_driver"/>
+        <geom name="s2_drv_rl" type="cylinder" size="0.010 0.040"
+              pos="-0.1515 0.0795 1.050" material="screw_driver"/>
+        <geom name="s2_drv_rr" type="cylinder" size="0.010 0.040"
+              pos="0.1545 0.0795 1.050" material="screw_driver"/>
+        <!-- Stab pins (6) -->
+        <geom name="s2_pin_bs" type="cylinder" size="0.006 0.030"
+              pos="0.1143 0.0590 1.060" material="stab_press"/>
+        <geom name="s2_pin_ls" type="cylinder" size="0.006 0.030"
+              pos="-0.1405 0.0018 1.060" material="stab_press"/>
+        <geom name="s2_pin_en" type="cylinder" size="0.006 0.030"
+              pos="0.1214 0.0208 1.060" material="stab_press"/>
+        <geom name="s2_pin_rs" type="cylinder" size="0.006 0.030"
+              pos="0.1262 0.0018 1.060" material="stab_press"/>
+        <geom name="s2_pin_sl" type="cylinder" size="0.006 0.030"
+              pos="-0.0785 -0.0173 1.060" material="stab_press"/>
+        <geom name="s2_pin_sr" type="cylinder" size="0.006 0.030"
+              pos="0.0358 -0.0173 1.060" material="stab_press"/>
+      </body>
+    </body>
+
+    <!-- ================================================================
+         STATION 3 — Switch insertion XY table (x=3.6)
+         ================================================================ -->
+    <body name="s3_root" pos="3.6 0 0">
+
+      <!-- XY table simplified (3 layers visible) -->
+      <body name="s3_table" pos="0 0.030 0">
+        <geom name="s3_leg_fl" type="box" size="0.020 0.020 0.375"
+              pos="-0.230 -0.180 0.375" material="steel_dark"/>
+        <geom name="s3_leg_fr" type="box" size="0.020 0.020 0.375"
+              pos="0.230 -0.180 0.375" material="steel_dark"/>
+        <geom name="s3_leg_rl" type="box" size="0.020 0.020 0.375"
+              pos="-0.230 0.180 0.375" material="steel_dark"/>
+        <geom name="s3_leg_rr" type="box" size="0.020 0.020 0.375"
+              pos="0.230 0.180 0.375" material="steel_dark"/>
+        <geom name="s3_base"   type="box" size="0.250 0.200 0.010"
+              pos="0 0 0.750" material="steel_dark"/>
+        <geom name="s3_yslide" type="box" size="0.230 0.170 0.008"
+              pos="0 0 0.768" material="steel_mid"/>
+        <geom name="s3_xslide" type="box" size="0.210 0.150 0.008"
+              pos="0 0 0.788" material="steel_light"/>
+        <geom name="s3_tabletop" type="box" size="0.200 0.140 0.005"
+              pos="0 0 0.805" material="table_surface"/>
+      </body>
+
+      <!-- Pallet + case -->
+      <body name="s3_pallet" pos="0 0.030 0.820">
+        <geom name="s3_base_plate" type="box" size="0.170 0.065 0.004"
+              pos="0 0 -0.004" material="aluminum_plate"/>
+        <geom name="s3_stop_fl" type="box" size="0.0125 0.0025 0.003"
+              pos="-0.1500 -0.0600 0.003" material="fixture_stop"/>
+        <geom name="s3_stop_fr" type="box" size="0.0125 0.0025 0.003"
+              pos="0.1500 -0.0600 0.003" material="fixture_stop"/>
+      </body>
+      <body name="s3_case" pos="0 0.030 0.832">
+        <geom name="s3_case_b"  type="box" size="0.1625 0.0575 0.001"
+              pos="0 0 -0.011" material="abs_plastic"/>
+        <geom name="s3_case_wl" type="box" size="0.001 0.0575 0.011"
+              pos="-0.1615 0 0" material="abs_plastic"/>
+        <geom name="s3_case_wr" type="box" size="0.001 0.0575 0.011"
+              pos="0.1615 0 0" material="abs_plastic"/>
+        <geom name="s3_case_wf" type="box" size="0.1625 0.001 0.011"
+              pos="0 -0.0565 0" material="abs_plastic"/>
+        <geom name="s3_case_wb" type="box" size="0.1625 0.001 0.011"
+              pos="0 0.0565 0" material="abs_plastic"/>
+      </body>
+
+      <!-- Gantry -->
+      <body name="s3_gantry" pos="0 0 0">
+        <geom name="s3_post_fl" type="box" size="0.030 0.030 0.519"
+              pos="-0.420 -0.110 0.519" material="gantry_mat"/>
+        <geom name="s3_post_fr" type="box" size="0.030 0.030 0.519"
+              pos="0.420 -0.110 0.519" material="gantry_mat"/>
+        <geom name="s3_post_rl" type="box" size="0.030 0.030 0.519"
+              pos="-0.420 0.450 0.519" material="gantry_mat"/>
+        <geom name="s3_post_rr" type="box" size="0.030 0.030 0.519"
+              pos="0.420 0.450 0.519" material="gantry_mat"/>
+        <geom name="s3_beam_f"  type="box" size="0.420 0.025 0.025"
+              pos="0 -0.110 1.039" material="gantry_beam"/>
+        <geom name="s3_beam_r"  type="box" size="0.420 0.025 0.025"
+              pos="0 0.450 1.039" material="gantry_beam"/>
+        <geom name="s3_beam_l"  type="box" size="0.025 0.280 0.025"
+              pos="-0.420 0.170 1.039" material="gantry_beam"/>
+        <geom name="s3_beam_ri" type="box" size="0.025 0.280 0.025"
+              pos="0.420 0.170 1.039" material="gantry_beam"/>
+      </body>
+
+      <!-- Rotating column + arms -->
+      <body name="s3_column" pos="0 0.170 0.914">
+        <geom name="s3_col_disc" type="cylinder" size="0.040 0.020"
+              pos="0 0 0" material="column_mat"/>
+        <geom name="s3_arm_1"   type="box" size="0.012 0.045 0.008"
+              pos="0 -0.085 -0.005" material="arm_mat"/>
+        <geom name="s3_head_1"  type="cylinder" size="0.010 0.025"
+              pos="0 -0.130 -0.005" material="head_body"/>
+        <geom name="s3_tip_1"   type="box" size="0.007 0.007 0.006"
+              pos="0 -0.130 -0.036" material="head_tip"/>
+        <geom name="s3_arm_2"   type="box" size="0.012 0.045 0.008"
+              pos="0 0.085 -0.005" material="arm_mat"/>
+        <geom name="s3_head_2"  type="cylinder" size="0.010 0.025"
+              pos="0 0.130 -0.005" material="head_body"/>
+        <geom name="s3_tip_2"   type="box" size="0.007 0.007 0.006"
+              pos="0 0.130 -0.036" material="head_tip"/>
+      </body>
+
+      <!-- Tray feeder -->
+      <body name="s3_feeder" pos="0 0.330 0">
+        <geom name="s3_feed_leg_l" type="box" size="0.015 0.015 0.410"
+              pos="-0.285 -0.030 0.410" material="steel_dark"
+              contype="0" conaffinity="0"/>
+        <geom name="s3_feed_leg_r" type="box" size="0.015 0.015 0.410"
+              pos="0.010 -0.030 0.410" material="steel_dark"
+              contype="0" conaffinity="0"/>
+        <geom name="s3_tray" type="box" size="0.155 0.015 0.004"
+              pos="-0.143 -0.030 0.830" material="tray_mat"
+              contype="0" conaffinity="0"/>
+      </body>
+    </body>
+
+    <!-- ================================================================
+         STATION 4 — Keycap installation (x=5.4)
+         ================================================================ -->
+    <body name="s4_root" pos="5.4 0 0">
+
+      <!-- XY table simplified -->
+      <body name="s4_table" pos="0 0.030 0">
+        <geom name="s4_leg_fl" type="box" size="0.020 0.020 0.375"
+              pos="-0.230 -0.180 0.375" material="steel_dark"/>
+        <geom name="s4_leg_fr" type="box" size="0.020 0.020 0.375"
+              pos="0.230 -0.180 0.375" material="steel_dark"/>
+        <geom name="s4_leg_rl" type="box" size="0.020 0.020 0.375"
+              pos="-0.230 0.180 0.375" material="steel_dark"/>
+        <geom name="s4_leg_rr" type="box" size="0.020 0.020 0.375"
+              pos="0.230 0.180 0.375" material="steel_dark"/>
+        <geom name="s4_base"    type="box" size="0.250 0.200 0.010"
+              pos="0 0 0.750" material="steel_dark"/>
+        <geom name="s4_yslide"  type="box" size="0.230 0.170 0.008"
+              pos="0 0 0.768" material="steel_mid"/>
+        <geom name="s4_xslide"  type="box" size="0.210 0.150 0.008"
+              pos="0 0 0.788" material="steel_light"/>
+        <geom name="s4_tabletop" type="box" size="0.200 0.140 0.005"
+              pos="0 0 0.805" material="table_surface"/>
+      </body>
+
+      <!-- Pallet + case with keycaps (show as thin layer on top) -->
+      <body name="s4_pallet" pos="0 0.030 0.820">
+        <geom name="s4_base_plate" type="box" size="0.170 0.065 0.004"
+              pos="0 0 -0.004" material="aluminum_plate"/>
+        <geom name="s4_stop_fl" type="box" size="0.0125 0.0025 0.003"
+              pos="-0.1500 -0.0600 0.003" material="fixture_stop"/>
+        <geom name="s4_stop_fr" type="box" size="0.0125 0.0025 0.003"
+              pos="0.1500 -0.0600 0.003" material="fixture_stop"/>
+      </body>
+      <body name="s4_case" pos="0 0.030 0.832">
+        <geom name="s4_case_b"  type="box" size="0.1625 0.0575 0.001"
+              pos="0 0 -0.011" material="abs_plastic"/>
+        <geom name="s4_case_wl" type="box" size="0.001 0.0575 0.011"
+              pos="-0.1615 0 0" material="abs_plastic"/>
+        <geom name="s4_case_wr" type="box" size="0.001 0.0575 0.011"
+              pos="0.1615 0 0" material="abs_plastic"/>
+        <geom name="s4_case_wf" type="box" size="0.1625 0.001 0.011"
+              pos="0 -0.0565 0" material="abs_plastic"/>
+        <geom name="s4_case_wb" type="box" size="0.1625 0.001 0.011"
+              pos="0 0.0565 0" material="abs_plastic"/>
+        <!-- Keycaps layer (shows assembly progress) -->
+        <geom name="s4_keycaps_layer" type="box" size="0.150 0.050 0.004"
+              pos="0 0 0.016" rgba="0.85 0.85 0.85 1"
+              contype="0" conaffinity="0"/>
+      </body>
+
+      <!-- Gantry -->
+      <body name="s4_gantry" pos="0 0 0">
+        <geom name="s4_post_fl" type="box" size="0.030 0.030 0.519"
+              pos="-0.420 -0.110 0.519" material="gantry_mat"/>
+        <geom name="s4_post_fr" type="box" size="0.030 0.030 0.519"
+              pos="0.420 -0.110 0.519" material="gantry_mat"/>
+        <geom name="s4_post_rl" type="box" size="0.030 0.030 0.519"
+              pos="-0.420 0.450 0.519" material="gantry_mat"/>
+        <geom name="s4_post_rr" type="box" size="0.030 0.030 0.519"
+              pos="0.420 0.450 0.519" material="gantry_mat"/>
+        <geom name="s4_beam_f"  type="box" size="0.420 0.025 0.025"
+              pos="0 -0.110 1.039" material="gantry_beam"/>
+        <geom name="s4_beam_r"  type="box" size="0.420 0.025 0.025"
+              pos="0 0.450 1.039" material="gantry_beam"/>
+        <geom name="s4_beam_l"  type="box" size="0.025 0.280 0.025"
+              pos="-0.420 0.170 1.039" material="gantry_beam"/>
+        <geom name="s4_beam_ri" type="box" size="0.025 0.280 0.025"
+              pos="0.420 0.170 1.039" material="gantry_beam"/>
+      </body>
+
+      <!-- Rotating column + arms (vacuum cups) -->
+      <body name="s4_column" pos="0 0.170 0.914">
+        <geom name="s4_col_disc" type="cylinder" size="0.040 0.020"
+              pos="0 0 0" material="column_mat"/>
+        <geom name="s4_arm_1"   type="box" size="0.012 0.045 0.008"
+              pos="0 -0.085 -0.005" material="arm_mat"/>
+        <geom name="s4_head_1"  type="cylinder" size="0.010 0.025"
+              pos="0 -0.130 -0.005" material="head_body"/>
+        <geom name="s4_cup_1"   type="cylinder" size="0.010 0.006"
+              pos="0 -0.130 -0.036" material="head_tip"/>
+        <geom name="s4_arm_2"   type="box" size="0.012 0.045 0.008"
+              pos="0 0.085 -0.005" material="arm_mat"/>
+        <geom name="s4_head_2"  type="cylinder" size="0.010 0.025"
+              pos="0 0.130 -0.005" material="head_body"/>
+        <geom name="s4_cup_2"   type="cylinder" size="0.010 0.006"
+              pos="0 0.130 -0.036" material="head_tip"/>
+      </body>
+
+      <!-- Tray feeder (wider for keycaps) -->
+      <body name="s4_feeder" pos="0 0.330 0">
+        <geom name="s4_feed_leg_l" type="box" size="0.015 0.015 0.410"
+              pos="-0.285 -0.030 0.410" material="steel_dark"
+              contype="0" conaffinity="0"/>
+        <geom name="s4_feed_leg_r" type="box" size="0.015 0.015 0.410"
+              pos="0.062 -0.030 0.410" material="steel_dark"
+              contype="0" conaffinity="0"/>
+        <geom name="s4_tray" type="box" size="0.173 0.015 0.004"
+              pos="-0.113 -0.030 0.830" material="tray_mat"
+              contype="0" conaffinity="0"/>
+        <!-- Keycaps in tray (white) -->
+        <geom name="s4_kc_row" type="box" size="0.130 0.008 0.004"
+              pos="-0.100 -0.030 0.838" rgba="0.85 0.85 0.85 1"
+              contype="0" conaffinity="0"/>
+      </body>
+    </body>
+
+    <!-- Overview cameras -->
+    <camera name="cell_overview"
+            pos="2.7 -3.5 3.5"
+            xyaxes="1 0 0 0 0.6 0.8"/>
+    <camera name="cell_top"
+            pos="2.7 0.5 6.0"
+            xyaxes="1 0 0 0 1 0"/>
+    <camera name="s1_view" pos="0 -1.5 1.8"
+            xyaxes="1 0 0 0 0.6 0.8"/>
+    <camera name="s3s4_view" pos="4.5 -1.5 1.8"
+            xyaxes="1 0 0 0 0.6 0.8"/>
+
+  </worldbody>
+
+</mujoco>
