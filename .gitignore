@@ -219,3 +219,6 @@ logs/*.txt
 # Jupyter
 .ipynb_checkpoints/
 models/robots/mujoco_menagerie/
+
+#VS Code Workspace
+*.code-workspace
