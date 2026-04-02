@@ -221,4 +221,4 @@ logs/*.txt
 models/robots/mujoco_menagerie/
 
 #VS Code Workspace
-*.code-workspace
+*.code-workspaceMUJOCO_LOG.TXT
