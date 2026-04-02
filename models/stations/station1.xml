@@ -174,18 +174,202 @@
             pos="0.1650 0.0475 0.003" material="fixture_stop" mass="0.02"/>
     </body>
 
-    <!-- Bottom case: center at z=0.822m (pallet top + 12mm half-height) -->
-    <body name="bottom_case" pos="0 0.030 0.822">
-      <geom name="case_bottom" type="box" size="0.1625 0.0575 0.001"
-            pos="0 0 -0.011" material="abs_plastic" mass="0.15"/>
-      <geom name="case_wall_left"  type="box" size="0.001 0.0575 0.011"
-            pos="-0.1615 0 0" material="abs_plastic" mass="0.05"/>
-      <geom name="case_wall_right" type="box" size="0.001 0.0575 0.011"
-            pos="0.1615 0 0"  material="abs_plastic" mass="0.05"/>
-      <geom name="case_wall_front" type="box" size="0.1625 0.001 0.011"
-            pos="0 -0.0565 0" material="abs_plastic" mass="0.05"/>
-      <geom name="case_wall_rear"  type="box" size="0.1625 0.001 0.011"
-            pos="0 0.0565 0"  material="abs_plastic" mass="0.05"/>
+    <!-- Bottom case — detailed geometry, s1_ prefixed -->
+    <body name="s1_bottom_case" pos="0 0.030 0.822">
+
+      <inertial pos="0 0 0" mass="0.085" diaginertia="3.2e-5 2.4e-4 2.5e-4"/>
+
+      <!-- ── FLOOR SLAB ──────────────────────────────────────────────── -->
+      <geom name="s1_floor_slab"
+            type="box" size="0.1625 0.0575 0.0015"
+            pos="0 0 -0.0095"
+            material="abs_plastic" density="1050"
+            friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+
+      <!-- ── LEFT WALL (−X) with USB-C, Power, OS cutouts ────────────── -->
+      <geom name="s1_wall_left_A"
+            type="box" size="0.0015 0.0125 0.0095"
+            pos="-0.161 0.045 0.0015"
+            material="abs_plastic" density="1050"
+            friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+
+      <geom name="s1_wall_left_usbc_below"
+            type="box" size="0.0015 0.0045 0.0045"
+            pos="-0.161 0.028 -0.0035"
+            material="abs_plastic" density="1050"
+            friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+
+      <geom name="s1_wall_left_usbc_above"
+            type="box" size="0.0015 0.0045 0.003"
+            pos="-0.161 0.028 0.008"
+            material="abs_plastic" density="1050"
+            friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+
+      <geom name="s1_wall_left_B"
+            type="box" size="0.0015 0.005 0.0095"
+            pos="-0.161 0.0185 0.0015"
+            material="abs_plastic" density="1050"
+            friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+
+      <geom name="s1_wall_left_pwr_below"
+            type="box" size="0.0015 0.007 0.004"
+            pos="-0.161 0.0105 -0.004"
+            material="abs_plastic" density="1050"
+            friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+
+      <geom name="s1_wall_left_pwr_above"
+            type="box" size="0.0015 0.007 0.0025"
+            pos="-0.161 0.0105 0.0085"
+            material="abs_plastic" density="1050"
+            friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+
+      <geom name="s1_wall_left_C"
+            type="box" size="0.0015 0.005 0.0095"
+            pos="-0.161 -0.0005 0.0015"
+            material="abs_plastic" density="1050"
+            friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+
+      <geom name="s1_wall_left_os_below"
+            type="box" size="0.0015 0.007 0.004"
+            pos="-0.161 -0.0095 -0.004"
+            material="abs_plastic" density="1050"
+            friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+
+      <geom name="s1_wall_left_os_above"
+            type="box" size="0.0015 0.007 0.0025"
+            pos="-0.161 -0.0095 0.0085"
+            material="abs_plastic" density="1050"
+            friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+
+      <geom name="s1_wall_left_D"
+            type="box" size="0.0015 0.0205 0.0095"
+            pos="-0.161 -0.037 0.0015"
+            material="abs_plastic" density="1050"
+            friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+
+      <!-- ── CUTOUT INDICATOR SITES ──────────────────────────────────── -->
+      <site name="s1_usbc_cutout"
+            type="box" size="0.001 0.0045 0.002"
+            pos="-0.162 0.028 0.003"
+            rgba="0 0.5 1 0.9"/>
+
+      <site name="s1_led_indicator"
+            type="sphere" size="0.0008"
+            pos="-0.163 -0.0245 0.003"
+            rgba="1 1 0 1.0"/>
+
+      <site name="s1_power_switch_cutout"
+            type="box" size="0.001 0.007 0.003"
+            pos="-0.162 0.0105 0.003"
+            rgba="1 0.5 0 0.9"/>
+
+      <site name="s1_os_switch_cutout"
+            type="box" size="0.001 0.007 0.003"
+            pos="-0.162 -0.0095 0.003"
+            rgba="1 0.5 0 0.9"/>
+
+      <!-- ── RIGHT WALL (+X) ─────────────────────────────────────────── -->
+      <geom name="s1_wall_right"
+            type="box" size="0.0015 0.0575 0.0095"
+            pos="0.161 0 0.0015"
+            material="abs_plastic" density="1050"
+            friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+
+      <!-- ── FRONT WALL ─────────────────────────────────────────────── -->
+      <geom name="s1_wall_front"
+            type="box" size="0.1595 0.0015 0.0095"
+            pos="0 -0.056 0.0015"
+            material="abs_plastic" density="1050"
+            friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+
+      <!-- ── REAR WALL ──────────────────────────────────────────────── -->
+      <geom name="s1_wall_rear"
+            type="box" size="0.1595 0.0015 0.0095"
+            pos="0 0.056 0.0015"
+            material="abs_plastic" density="1050"
+            friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+
+      <!-- ── BATTERY LOCATING RIBS ──────────────────────────────────── -->
+      <geom name="s1_battery_rib_left"
+            type="box" size="0.045 0.00075 0.002"
+            pos="0.025 -0.03075 -0.006"
+            material="abs_plastic" density="1050"
+            friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+
+      <geom name="s1_battery_rib_right"
+            type="box" size="0.045 0.00075 0.002"
+            pos="0.025 0.03075 -0.006"
+            material="abs_plastic" density="1050"
+            friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+
+      <geom name="s1_battery_rib_front_left"
+            type="box" size="0.00075 0.0125 0.002"
+            pos="-0.02025 -0.0175 -0.006"
+            material="abs_plastic" density="1050"
+            friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+
+      <geom name="s1_battery_rib_front_right"
+            type="box" size="0.00075 0.0125 0.002"
+            pos="-0.02025 0.0175 -0.006"
+            material="abs_plastic" density="1050"
+            friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+
+      <geom name="s1_battery_rib_rear"
+            type="box" size="0.00075 0.030 0.002"
+            pos="0.07025 0 -0.006"
+            material="abs_plastic" density="1050"
+            friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+
+      <!-- ── SCREW BOSSES ────────────────────────────────────────────── -->
+      <geom name="s1_screw_boss_geom_FL"
+            type="cylinder" size="0.003 0.004"
+            pos="-0.1515 -0.0495 -0.004"
+            material="abs_plastic" density="1050"
+            friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+
+      <geom name="s1_screw_boss_geom_FR"
+            type="cylinder" size="0.003 0.004"
+            pos="0.1545 -0.0495 -0.004"
+            material="abs_plastic" density="1050"
+            friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+
+      <geom name="s1_screw_boss_geom_RL"
+            type="cylinder" size="0.003 0.004"
+            pos="-0.1515 0.0495 -0.004"
+            material="abs_plastic" density="1050"
+            friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+
+      <geom name="s1_screw_boss_geom_RR"
+            type="cylinder" size="0.003 0.004"
+            pos="0.1545 0.0495 -0.004"
+            material="abs_plastic" density="1050"
+            friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+
+      <!-- ── REGISTRATION SITES ─────────────────────────────────────── -->
+      <site name="s1_fixture_dowel_center"
+            type="cylinder" size="0.002 0.001"
+            pos="0 0 -0.0095" rgba="1 0.8 0 1"/>
+
+      <site name="s1_screw_boss_FL"
+            type="cylinder" size="0.003 0.001"
+            pos="-0.1545 -0.0495 -0.0085" rgba="0.8 0.2 0.2 1"/>
+
+      <site name="s1_screw_boss_FR"
+            type="cylinder" size="0.003 0.001"
+            pos="0.1545 -0.0495 -0.0085" rgba="0.8 0.2 0.2 1"/>
+
+      <site name="s1_screw_boss_RL"
+            type="cylinder" size="0.003 0.001"
+            pos="-0.1545 0.0495 -0.0085" rgba="0.8 0.2 0.2 1"/>
+
+      <site name="s1_screw_boss_RR"
+            type="cylinder" size="0.003 0.001"
+            pos="0.1545 0.0495 -0.0085" rgba="0.8 0.2 0.2 1"/>
+
+      <site name="s1_grasp_top_center"
+            type="sphere" size="0.002"
+            pos="0 0 0.011" rgba="0 0.6 0.8 0.4"/>
+
     </body>
 
     <!-- Robot raiser: 400x400x460mm steel pedestal -->
@@ -470,8 +654,6 @@
     </body>
 
     <!-- Pick point: world pos gripper_tip targets for every pick -->
-    <site name="s1_pick_pt" pos="-0.06 0.28 0.8265"
-          size="0.008" rgba="1 0 1 0.9"/>
 
     <!-- Cameras -->
     <camera name="station1_overview"
