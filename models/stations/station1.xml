@@ -71,6 +71,17 @@
     <material name="abs_plastic"    rgba="0.15 0.15 0.15 1"/>
     <material name="table_surface"  rgba="0.55 0.45 0.35 1"/>
     <material name="table_leg_mat"  rgba="0.4 0.4 0.4 1"/>
+    <!-- Feeder conveyor -->
+    <material name="conveyor_belt"  rgba="0.20 0.20 0.20 1"/>
+    <material name="conveyor_rail"  rgba="0.45 0.45 0.48 1"/>
+    <!-- Part materials — exact from part XMLs -->
+    <material name="mat_epdm"       rgba="0.18 0.18 0.20 1" specular="0.05" shininess="0.1"/>
+    <material name="mat_lipo"       rgba="0.75 0.75 0.78 1" specular="0.8"  shininess="0.6"/>
+    <material name="mat_connector"  rgba="0.85 0.85 0.88 1" specular="0.9"  shininess="0.7"/>
+    <material name="mat_fr4"        rgba="0.08 0.35 0.08 1" specular="0.2"  shininess="0.3"/>
+    <material name="mat_conn_dark"  rgba="0.15 0.15 0.15 1" specular="0.4"  shininess="0.5"/>
+    <material name="mat_pe_foam"    rgba="0.18 0.18 0.18 1" specular="0.05" shininess="0.1"/>
+    <material name="mat_alu_silver" rgba="0.75 0.75 0.78 1" specular="0.8"  shininess="0.7"/>
     <!-- UR5e materials -->
     <material class="ur5e" name="black"     rgba="0.033 0.033 0.033 1"/>
     <material class="ur5e" name="jointgray" rgba="0.278 0.278 0.278 1"/>
@@ -129,16 +140,16 @@
 
     <!-- Work table: top surface at z=0.800m, legs 390mm half-height -->
     <body name="work_table" pos="0 0.030 0">
-      <geom name="table_top" type="box" size="0.350 0.230 0.010"
+      <geom name="table_top" type="box" size="0.350 0.150 0.010"
             pos="0 0 0.800" material="table_surface" contype="1" conaffinity="1"/>
       <geom name="table_leg_fl" type="box" size="0.020 0.020 0.395"
-            pos="-0.310 -0.190 0.395" material="table_leg_mat"/>
+            pos="-0.330 -0.130 0.395" material="table_leg_mat"/>
       <geom name="table_leg_fr" type="box" size="0.020 0.020 0.395"
-            pos="0.310 -0.190 0.395"  material="table_leg_mat"/>
+            pos="0.330 -0.130 0.395"  material="table_leg_mat"/>
       <geom name="table_leg_rl" type="box" size="0.020 0.020 0.395"
-            pos="-0.310 0.200 0.395"  material="table_leg_mat"/>
+            pos="-0.330 0.130 0.395"  material="table_leg_mat"/>
       <geom name="table_leg_rr" type="box" size="0.020 0.020 0.395"
-            pos="0.310 0.200 0.395"   material="table_leg_mat"/>
+            pos="0.330 0.130 0.395"   material="table_leg_mat"/>
     </body>
 
     <!-- Assembly pallet: top surface at z=0.810m (table top + 10mm plate) -->
@@ -178,14 +189,14 @@
     </body>
 
     <!-- Robot raiser: 400x400x460mm steel pedestal -->
-    <body name="robot_raiser" pos="0 -0.45 0">
-      <geom name="raiser_block" type="box" size="0.200 0.200 0.230"
-            pos="0 0 0.230" rgba="0.35 0.35 0.38 1"
+    <body name="robot_raiser" pos="0 -0.35 0">
+      <geom name="raiser_block" type="box" size="0.200 0.200 0.300"
+            pos="0 0 0.300" rgba="0.35 0.35 0.38 1"
             contype="1" conaffinity="1" mass="50.0"/>
     </body>
 
     <!-- UR5e: base at z=0.460m on raiser, euler Z=pi rotates to face table -->
-    <body name="ur5e_mount" pos="0 -0.45 0.460" euler="0 0 3.1416">
+    <body name="ur5e_mount" pos="0 -0.35 0.600" euler="0 0 3.1416">
       <body name="base" childclass="ur5e">
         <inertial mass="4.0" pos="0 0 0"
                    diaginertia="0.00443333156 0.00443333156 0.0072"/>
@@ -290,6 +301,178 @@
       </body>
     </body>
 
+    <!--
+      ═══════════════════════════════════════════════════════════════
+      FEEDER CONVEYOR — runs parallel to work table along X axis
+      Belt center: x=-0.50, y=0.40, z=0.800 (flush with table top)
+      Belt spans x=-1.15 to x=+0.15 (half-length=0.65)
+      Belt width: y=0.33 to y=0.47 (half-width=0.075 → 150mm)
+      Side rails at y ± 0.082 (32mm above belt face)
+      4 support legs at corners
+
+      Parts queue from right (pick end x=0.0) toward left (-X):
+        EPDM foam    x= 0.00  (pick here first)
+        Battery      x=-0.22
+        PCB          x=-0.44
+        Sound foam   x=-0.66
+        Alu plate    x=-0.88
+      Pick point: (0.0, 0.40, 0.805)
+      ═══════════════════════════════════════════════════════════════
+    -->
+    <!-- Feeder center at x=-0.60 so pick end is at x=0.0,
+         belt spans x=-1.45 to x=+0.25 (half-length=0.85).
+         Rails sit BELOW belt top surface so gripper picks freely.
+         Rail top face flush with belt top (z=0.800):
+           belt half-z=0.005 → belt top at z=0.805 from body origin=0
+           rail half-z=0.010 → rail top at z=0.790 (15mm below belt top)
+           rail pos z = 0.790 - 0.010 = 0.780 ... 
+           Simpler: belt top=0.805, rail top=0.795 (10mm below belt top)
+           rail half-z=0.012, rail center z = 0.800 - 0.012 = 0.788
+           So rails are recessed 10mm below belt surface — gripper clears. -->
+    <!-- Belt center x=-0.70, spans x=-1.50 to x=+0.10 (half=0.80)
+         Pick end at x=0.0, queue extends to x=-1.43 -->
+    <body name="s1_feeder" pos="-0.72 0.28 0">
+      <!-- Belt surface: 1.6m long, 150mm wide -->
+      <geom name="s1_belt" type="box" size="1.070 0.075 0.005"
+            pos="0 0 0.820" material="conveyor_belt"
+            contype="1" conaffinity="1"/>
+      <!-- Front guide rail — recessed 10mm below belt top -->
+      <geom name="s1_rail_front" type="box" size="1.070 0.008 0.012"
+            pos="0 -0.083 0.803" material="conveyor_rail"
+            contype="0" conaffinity="0"/>
+      <!-- Rear guide rail -->
+      <geom name="s1_rail_rear" type="box" size="1.070 0.008 0.012"
+            pos="0  0.083 0.803" material="conveyor_rail"
+            contype="0" conaffinity="0"/>
+      <!-- End cap right (+X, pick end) -->
+      <geom name="s1_cap_r" type="box" size="0.008 0.075 0.012"
+            pos="1.078 0 0.803" material="conveyor_rail"
+            contype="0" conaffinity="0"/>
+      <!-- End cap left (-X, feed end) -->
+      <geom name="s1_cap_l" type="box" size="0.008 0.075 0.012"
+            pos="-1.078 0 0.803" material="conveyor_rail"
+            contype="0" conaffinity="0"/>
+      <!-- Structural cross-beam -->
+      <geom name="s1_crossbeam" type="box" size="0.820 0.008 0.008"
+            pos="0 0 0.783" material="conveyor_rail"
+            contype="0" conaffinity="0"/>
+      <!-- 4 support legs -->
+      <geom name="s1_feed_leg_fl" type="box" size="0.015 0.015 0.408"
+            pos="-1.040 -0.060 0.408" material="conveyor_rail"/>
+      <geom name="s1_feed_leg_fr" type="box" size="0.015 0.015 0.408"
+            pos=" 1.040 -0.060 0.408" material="conveyor_rail"/>
+      <geom name="s1_feed_leg_rl" type="box" size="0.015 0.015 0.408"
+            pos="-1.040  0.060 0.408" material="conveyor_rail"/>
+      <geom name="s1_feed_leg_rr" type="box" size="0.015 0.015 0.408"
+            pos=" 1.040  0.060 0.408" material="conveyor_rail"/>
+    </body>
+
+    <!--
+      ═══════════════════════════════════════════════════════════════
+      PARTS ON FEEDER
+      All at y=0.40, x spaced 0.22m apart, belt top z=0.805
+      Part sits at z = 0.805 + half_height
+
+      Place Z inside case (case floor world z=0.811):
+        EPDM foam    z = 0.811 + 0.00375 = 0.81475
+        Battery      z = 0.811 + 0.00750 = 0.81850  (x+0.025 offset)
+        PCB          z = 0.811 + 0.01130 = 0.82230
+        Sound foam   z = 0.811 + 0.01260 = 0.82360
+        Alu plate    z = 0.811 + 0.01385 = 0.82485
+      ═══════════════════════════════════════════════════════════════
+    -->
+
+    <!-- STEP 1: EPDM FOAM — 319x109x1.5mm, 4-geom around battery cutout -->
+    <!-- Belt top z=0.805, foam half-height=0.00075, body z=0.80575 -->
+    <body name="s1_epdm" pos="0.00 0.28 0.82575">
+      <freejoint name="s1_epdm_jnt"/>
+      <inertial pos="0 0 0" mass="0.008" diaginertia="1.2e-5 3.8e-5 5.0e-5"/>
+      <geom name="s1_epdm_front" type="box" size="0.1515 0.01225 0.00075"
+            pos="0 -0.04225 0" material="mat_epdm"
+            density="200" friction="0.8 0.005 0.0001" condim="4"/>
+      <geom name="s1_epdm_rear"  type="box" size="0.1515 0.01225 0.00075"
+            pos="0  0.04225 0" material="mat_epdm"
+            density="200" friction="0.8 0.005 0.0001" condim="4"/>
+      <geom name="s1_epdm_left"  type="box" size="0.06975 0.030 0.00075"
+            pos="-0.08975 0 0" material="mat_epdm"
+            density="200" friction="0.8 0.005 0.0001" condim="4"/>
+      <geom name="s1_epdm_right" type="box" size="0.04475 0.030 0.00075"
+            pos=" 0.11475 0 0" material="mat_epdm"
+            density="200" friction="0.8 0.005 0.0001" condim="4"/>
+      <site name="s1_epdm_grasp" type="sphere" size="0.003"
+            pos="-0.06 0 0.00075" rgba="0 0.6 0.8 0.6"/>
+    </body>
+
+    <!-- STEP 2: BATTERY — 90x60x6mm LiPo -->
+    <!-- body z = 0.805 + 0.003 = 0.808 -->
+    <body name="s1_battery" pos="-0.43 0.28 0.828">  <!-- x=-0.25 -->
+      <freejoint name="s1_battery_jnt"/>
+      <inertial pos="0 0 0" mass="0.080" diaginertia="3.6e-5 1.6e-4 1.8e-4"/>
+      <geom name="s1_battery_body" type="box" size="0.045 0.030 0.003"
+            pos="0 0 0" material="mat_lipo"
+            density="2400" friction="0.6 0.005 0.0001" condim="4"/>
+      <geom name="s1_jst" type="box" size="0.001 0.004 0.002"
+            pos="-0.046 0 -0.001" material="mat_connector"
+            contype="0" conaffinity="0"/>
+      <site name="s1_battery_grasp" type="sphere" size="0.003"
+            pos="0 0 0.003" rgba="0 0.6 0.8 0.6"/>
+      <site name="s1_jst_face" type="sphere" size="0.002"
+            pos="-0.045 0 0" rgba="1 0.4 0 0.6"/>
+    </body>
+
+    <!-- STEP 3: PCB — 313x107x1.6mm FR4 with left-edge connectors -->
+    <!-- body z = 0.805 + 0.0008 = 0.8058 -->
+    <body name="s1_pcb" pos="-0.68 0.28 0.8258">  <!-- x=-0.50 -->
+      <freejoint name="s1_pcb_jnt"/>
+      <inertial pos="0 0 0" mass="0.099" diaginertia="9.3e-5 8.1e-4 8.9e-4"/>
+      <geom name="s1_pcb_board" type="box" size="0.1565 0.0535 0.0008"
+            pos="0 0 0" material="mat_fr4"
+            density="1850" friction="0.6 0.005 0.0001" condim="4"/>
+      <geom name="s1_usbc" type="box" size="0.0015 0.0045 0.002"
+            pos="-0.154 0.028 0.001" material="mat_conn_dark"
+            contype="0" conaffinity="0"/>
+      <geom name="s1_pwr_sw" type="box" size="0.0015 0.007 0.003"
+            pos="-0.154 0.0105 0.002" material="mat_conn_dark"
+            contype="0" conaffinity="0"/>
+      <geom name="s1_os_sw" type="box" size="0.0015 0.007 0.003"
+            pos="-0.154 -0.0095 0.002" material="mat_conn_dark"
+            contype="0" conaffinity="0"/>
+      <site name="s1_pcb_grasp_l" type="sphere" size="0.003"
+            pos="0.05 0 0.0008" rgba="0 0.6 0.8 0.6"/>
+      <site name="s1_pcb_grasp_r" type="sphere" size="0.003"
+            pos="0.12 0 0.0008" rgba="0 0.6 0.8 0.6"/>
+    </body>
+
+    <!-- STEP 4: SOUND FOAM — 305x107x1mm PE foam -->
+    <!-- body z = 0.805 + 0.0005 = 0.8055 -->
+    <body name="s1_sound_foam" pos="-1.04 0.28 0.8255">  <!-- x=-0.86 -->
+      <freejoint name="s1_sound_foam_jnt"/>
+      <inertial pos="0 0 0" mass="0.002" diaginertia="2.5e-6 2.1e-5 2.3e-5"/>
+      <geom name="s1_sound_foam_body" type="box" size="0.1480 0.0535 0.0005"
+            pos="0 0 0" material="mat_pe_foam"
+            density="60" friction="0.5 0.005 0.0001" condim="4"/>
+      <site name="s1_sound_foam_grasp" type="sphere" size="0.003"
+            pos="0 0 0.0005" rgba="0 0.6 0.8 0.6"/>
+    </body>
+
+    <!-- STEP 5: ALUMINUM PLATE — 317x107x1.5mm -->
+    <!-- body z = 0.805 + 0.00075 = 0.80575 -->
+    <body name="s1_alu_plate" pos="-1.40 0.28 0.82575">  <!-- x=-1.22 -->
+      <freejoint name="s1_alu_plate_jnt"/>
+      <inertial pos="0 0 0.00075" mass="0.138" diaginertia="1.4e-4 1.3e-3 1.4e-3"/>
+      <geom name="s1_alu_visual" type="box" size="0.1585 0.0535 0.00075"
+            pos="0 0 0.00075" material="mat_alu_silver"
+            density="2700" friction="0.4 0.005 0.0001" condim="4"/>
+      <site name="s1_alu_grasp_l" type="sphere" size="0.003"
+            pos="-0.06 0 0.0015" rgba="0 0.6 0.8 0.6"/>
+      <site name="s1_alu_grasp_r" type="sphere" size="0.003"
+            pos=" 0.06 0 0.0015" rgba="0 0.6 0.8 0.6"/>
+    </body>
+
+    <!-- Pick point: world pos gripper_tip targets for every pick -->
+    <site name="s1_pick_pt" pos="-0.06 0.28 0.8265"
+          size="0.008" rgba="1 0 1 0.9"/>
+
     <!-- Cameras -->
     <camera name="station1_overview"
             pos="1.2 -1.5 1.8"
@@ -310,9 +493,54 @@
   </actuator>
 
   <keyframe>
+
     <key name="home"
-         qpos="-1.5708 -1.5708 1.5708 -1.5708 -1.5708 0"
+         qpos="-1.5708 -1.5708 1.5708 -1.5708 -1.5708 0  0.00 0.28 0.82575 1 0 0 0  -0.43 0.28 0.828 1 0 0 0  -0.68 0.28 0.8258 1 0 0 0  -1.04 0.28 0.8255 1 0 0 0  -1.40 0.28 0.82575 1 0 0 0"
          ctrl="-1.5708 -1.5708 1.5708 -1.5708 -1.5708 0"/>
+
+    <key name="pick_ready"
+         qpos="-1.6828 -1.2975 1.676 -2.2389 -1.5961 0.0  0.00 0.28 0.82575 1 0 0 0  -0.43 0.28 0.828 1 0 0 0  -0.68 0.28 0.8258 1 0 0 0  -1.04 0.28 0.8255 1 0 0 0  -1.40 0.28 0.82575 1 0 0 0"
+         ctrl="-1.6828 -1.2975 1.676 -2.2389 -1.5961 0.0"/>
+
+    <key name="pick_down"
+         qpos="-1.684 -1.1889 1.7115 -2.2357 -1.5915 0.0  0.00 0.28 0.82575 1 0 0 0  -0.43 0.28 0.828 1 0 0 0  -0.68 0.28 0.8258 1 0 0 0  -1.04 0.28 0.8255 1 0 0 0  -1.40 0.28 0.82575 1 0 0 0"
+         ctrl="-1.684 -1.1889 1.7115 -2.2357 -1.5915 0.0"/>
+
+    <key name="place_ready"
+         qpos="-1.7112 -1.8214 2.1684 -1.9483 -1.7086 0.0  0.00 0.28 0.82575 1 0 0 0  -0.43 0.28 0.828 1 0 0 0  -0.68 0.28 0.8258 1 0 0 0  -1.04 0.28 0.8255 1 0 0 0  -1.40 0.28 0.82575 1 0 0 0"
+         ctrl="-1.7112 -1.8214 2.1684 -1.9483 -1.7086 0.0"/>
+
+    <key name="place_1"
+         qpos="-1.7185 -1.6733 2.2192 -1.9653 -1.6912 0.0  0.00 0.28 0.82575 1 0 0 0  -0.43 0.28 0.828 1 0 0 0  -0.68 0.28 0.8258 1 0 0 0  -1.04 0.28 0.8255 1 0 0 0  -1.40 0.28 0.82575 1 0 0 0"
+         ctrl="-1.7185 -1.6733 2.2192 -1.9653 -1.6912 0.0"/>
+
+    <key name="place_2"
+         qpos="-1.7181 -1.6819 2.2172 -1.9639 -1.6922 0.0  0.00 0.28 0.82575 1 0 0 0  -0.43 0.28 0.828 1 0 0 0  -0.68 0.28 0.8258 1 0 0 0  -1.04 0.28 0.8255 1 0 0 0  -1.40 0.28 0.82575 1 0 0 0"
+         ctrl="-1.7181 -1.6819 2.2172 -1.9639 -1.6922 0.0"/>
+
+    <key name="place_3"
+         qpos="-1.7176 -1.6906 2.2151 -1.9625 -1.6932 0.0  0.00 0.28 0.82575 1 0 0 0  -0.43 0.28 0.828 1 0 0 0  -0.68 0.28 0.8258 1 0 0 0  -1.04 0.28 0.8255 1 0 0 0  -1.40 0.28 0.82575 1 0 0 0"
+         ctrl="-1.7176 -1.6906 2.2151 -1.9625 -1.6932 0.0"/>
+
+    <key name="place_4"
+         qpos="-1.7175 -1.6928 2.2145 -1.9622 -1.6935 0.0  0.00 0.28 0.82575 1 0 0 0  -0.43 0.28 0.828 1 0 0 0  -0.68 0.28 0.8258 1 0 0 0  -1.04 0.28 0.8255 1 0 0 0  -1.40 0.28 0.82575 1 0 0 0"
+         ctrl="-1.7175 -1.6928 2.2145 -1.9622 -1.6935 0.0"/>
+
+    <key name="place_5"
+         qpos="-1.7174 -1.695 2.214 -1.9618 -1.6938 0.0  0.00 0.28 0.82575 1 0 0 0  -0.43 0.28 0.828 1 0 0 0  -0.68 0.28 0.8258 1 0 0 0  -1.04 0.28 0.8255 1 0 0 0  -1.40 0.28 0.82575 1 0 0 0"
+         ctrl="-1.7174 -1.695 2.214 -1.9618 -1.6938 0.0"/>
+
   </keyframe>
+
+
+  <equality>
+    <!-- Vacuum gripper weld constraints — one per part, all inactive at start -->
+    <!-- Activated in Python controller at pick_down, deactivated at place_N   -->
+    <weld name="weld_epdm"       body1="gripper" body2="s1_epdm"       active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="weld_battery"    body1="gripper" body2="s1_battery"    active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="weld_pcb"        body1="gripper" body2="s1_pcb"        active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="weld_sound_foam" body1="gripper" body2="s1_sound_foam" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="weld_alu_plate"  body1="gripper" body2="s1_alu_plate"  active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+  </equality>
 
 </mujoco>
