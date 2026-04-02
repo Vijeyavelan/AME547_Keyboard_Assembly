@@ -115,6 +115,83 @@ def solve_ik(m, d, target_xyz, seed_joints, max_iter=500, tol=5e-4):
         print(f"    IK did not converge (err={err*1000:.2f}mm)")
     return d_ik.qpos[:6].copy()
 
+
+def slerp_quat(q0, q1, t):
+    """Spherical linear interpolation between two unit quaternions."""
+    dot = np.clip(np.dot(q0, q1), -1.0, 1.0)
+    if dot < 0:          # ensure shortest path
+        q1 = -q1; dot = -dot
+    if dot > 0.9995:     # nearly identical — linear interpolation is fine
+        return q0 + t * (q1 - q0)
+    theta0 = np.arccos(dot)
+    theta  = theta0 * t
+    sin0   = np.sin(theta0)
+    return (np.sin(theta0 - theta) / sin0) * q0 + (np.sin(theta) / sin0) * q1
+
+
+def pcb_tilt_and_insert(m, d, v, fj_adr, fv_adr, carry_offset,
+                         hover_ctrl, place_ctrl, slides=None):
+    """
+    PCB-specific placement:
+      1. Carry to hover pose (100mm above case, flat)
+      2. Tilt PCB 20° around Y (-X edge down) over 60 steps
+      3. Dwell 5s for JST connector handoff
+      4. Insert: simultaneously descend arm + rotate PCB back to flat (200 steps)
+    carry_offset held constant throughout (Option A).
+    """
+    Q_FLAT = np.array([1.0, 0.0, 0.0, 0.0])
+    Q_TILT = np.array([0.9962, 0.0, -0.0872, 0.0])   # -10° around Y
+
+    # ── Phase 1: carry flat to hover pose ─────────────────────────────
+    carry_to(m, d, v, fj_adr, fv_adr, carry_offset,
+             hover_ctrl, "  carry → PCB hover (flat)", slides=slides)
+
+    # ── Phase 2: tilt PCB to 20° while arm holds at hover ─────────────
+    print("  Tilting PCB 20° (-X edge down)...")
+    for i in range(60):
+        t      = (i + 1) / 60
+        t_ease = t * t * (3 - 2 * t)
+        q      = slerp_quat(Q_FLAT, Q_TILT, t_ease)
+        d.ctrl[:] = hover_ctrl
+        tip = get_tip(m, d)
+        d.qpos[fj_adr:fj_adr+3]   = tip + carry_offset
+        d.qpos[fj_adr+3:fj_adr+7] = q
+        d.qvel[fv_adr:fv_adr+6]   = 0
+        mujoco.mj_step(m, d); v.sync()
+    print("  ✓ PCB tilted")
+
+    # ── Phase 3: dwell 5 seconds ───────────────────────────────────────
+    DWELL = 2500
+    print(f"  [HOLD] Waiting for JST connector — 5s dwell ({DWELL} steps)...")
+    for _ in range(DWELL):
+        d.ctrl[:] = hover_ctrl
+        tip = get_tip(m, d)
+        d.qpos[fj_adr:fj_adr+3]   = tip + carry_offset
+        d.qpos[fj_adr+3:fj_adr+7] = Q_TILT
+        d.qvel[fv_adr:fv_adr+6]   = 0
+        mujoco.mj_step(m, d); v.sync()
+    print("  ✓ JST dwell complete")
+
+    # ── Phase 4: insertion — descend + rotate to flat simultaneously ───
+    INSERT = 200
+    print(f"  Inserting PCB ({INSERT} steps, tilt → flat + descend)...")
+    start_joints = d.qpos[:6].copy()
+    end_joints   = place_ctrl[:6]
+    for i in range(INSERT):
+        t      = (i + 1) / INSERT
+        t_ease = t * t * (3 - 2 * t)
+        # Interpolate arm joints
+        interp_joints = start_joints + (end_joints - start_joints) * t_ease
+        d.ctrl[:6] = interp_joints
+        tip = get_tip(m, d)
+        d.qpos[fj_adr:fj_adr+3]   = tip + carry_offset
+        # Rotate PCB from tilt back to flat
+        q = slerp_quat(Q_TILT, Q_FLAT, t_ease)
+        d.qpos[fj_adr+3:fj_adr+7] = q
+        d.qvel[fv_adr:fv_adr+6]   = 0
+        mujoco.mj_step(m, d); v.sync()
+    print("  ✓ PCB inserted flat")
+
 def move_to(m, d, v, ctrl, label, slides=None):
     d.ctrl[:] = ctrl; consecutive = 0; steps = 0
     while consecutive < SETTLE_STEPS:
@@ -272,8 +349,21 @@ def main():
             place_joints = solve_ik(m, d, place_tgt, seed_joints=kf[kf_idx[part["place_kf"]]][:6])
             place_ctrl   = np.zeros(m.nu); place_ctrl[:6] = place_joints
 
-            carry_to(m, d, v, fj_adr, fv_adr, carry_offset,
-                     place_ctrl, f"  descend → place_{step_idx+1}", slides=slides)
+            if part["name"] == "PCB":
+                # Hover 100mm above place, +20mm X for -X edge clearance during tilt
+                hover_tgt = np.array([place_tgt[0] + 0.02, place_tgt[1], ref_z + 0.05])
+                print(f"  IK hover tip → {np.round(hover_tgt, 4)}")
+                hover_joints = solve_ik(m, d, hover_tgt,
+                                        seed_joints=kf[kf_idx["place_ready"]][:6])
+                hover_ctrl   = np.zeros(m.nu); hover_ctrl[:6] = hover_joints
+
+                pcb_tilt_and_insert(m, d, v, fj_adr, fv_adr, carry_offset,
+                                    hover_ctrl=hover_ctrl,
+                                    place_ctrl=place_ctrl,
+                                    slides=slides)
+            else:
+                carry_to(m, d, v, fj_adr, fv_adr, carry_offset,
+                         place_ctrl, f"  descend → place_{step_idx+1}", slides=slides)
 
             # ── RELEASE ───────────────────────────────────────────────────
             release_and_retract(m, d, v, fj_adr, fv_adr, carry_offset,
