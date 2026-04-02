@@ -221,5 +221,6 @@ logs/*.txt
 models/robots/mujoco_menagerie/
 
 #VS Code Workspace
-*.code-workspaceMUJOCO_LOG.TXT
+*.code-workspace
+MUJOCO_LOG.TXT
 AME547_Keyboard_Assembly.code-workspace
