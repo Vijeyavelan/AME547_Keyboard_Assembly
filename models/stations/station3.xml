@@ -60,6 +60,17 @@
     <material name="head_tip"       rgba="0.15 0.15 0.15 1"/>
     <material name="tray_mat"       rgba="0.70 0.72 0.75 1"/>
     <material name="slide_rail"     rgba="0.50 0.50 0.53 1"/>
+    <!-- Switch mesh and materials (from switch_1u.xml) -->
+    <material name="abs_dark"
+              rgba="0.95 0.95 0.95 1"
+              specular="0.3" shininess="0.4" reflectance="0.05"/>
+    <material name="abs_dark_collision"
+              rgba="0.12 0.12 0.12 0.0"/>
+    <mesh name="switch_mesh"
+          file="../meshes/Switch_Decimated.stl"
+          scale="0.001 0.001 0.001"
+          refpos="-7.350 0.053 -7.350"
+          refquat="0.7071 -0.7071 0 0"/>
   </asset>
 
   <worldbody>
@@ -323,11 +334,11 @@
     <body name="tray_feeder" pos="0 0.330 0">
 
       <!-- Fixture stand: 2 legs supporting the tray at both X ends -->
-      <geom name="feeder_leg_FL" type="box" size="0.015 0.015 0.410"
-            pos="-0.285 -0.030 0.410" material="steel_dark" mass="2.0"
+      <geom name="feeder_leg_FL" type="box" size="0.015 0.015 0.4056"
+            pos="-0.285 -0.030 0.4056" material="steel_dark" mass="2.0"
             contype="0" conaffinity="0"/>
-      <geom name="feeder_leg_FR" type="box" size="0.015 0.015 0.410"
-            pos="0.010 -0.030 0.410"  material="steel_dark" mass="2.0"
+      <geom name="feeder_leg_FR" type="box" size="0.015 0.015 0.4056"
+            pos="0.010 -0.030 0.4056"  material="steel_dark" mass="2.0"
             contype="0" conaffinity="0"/>
       <!-- Base plate connecting legs -->
       <geom name="feeder_base" type="box" size="0.155 0.040 0.008"
@@ -335,46 +346,30 @@
             contype="0" conaffinity="0"/>
       <!-- Tray support shelf -->
       <geom name="tray_shelf" type="box" size="0.155 0.035 0.005"
-            pos="-0.143 -0.025 0.824" material="steel_mid" mass="1.0"
+            pos="-0.143 -0.025 0.8161" material="steel_mid" mass="1.0"
             contype="0" conaffinity="0"/>
 
       <!-- Tray body: covers x=0 to x=-0.286, center at x=-0.143, half=0.155 -->
       <geom name="tray_body" type="box" size="0.155 0.015 0.004"
-            pos="-0.143 -0.030 0.830" material="tray_mat" mass="1.5"
+            pos="-0.143 -0.030 0.8221" material="tray_mat" mass="1.5"
             contype="0" conaffinity="0"/>
       <!-- Tray side rails -->
       <geom name="tray_rail_F" type="box" size="0.155 0.002 0.006"
-            pos="-0.143 -0.043 0.837" material="steel_mid" mass="0.2"
+            pos="-0.143 -0.043 0.8291" material="steel_mid" mass="0.2"
             contype="0" conaffinity="0"/>
       <geom name="tray_rail_R" type="box" size="0.155 0.002 0.006"
-            pos="-0.143 -0.017 0.837" material="steel_mid" mass="0.2"
+            pos="-0.143 -0.017 0.8291" material="steel_mid" mass="0.2"
             contype="0" conaffinity="0"/>
       <!-- Back stop rail at +X end (x=0 side) -->
       <geom name="tray_rail_back" type="box" size="0.002 0.015 0.008"
-            pos="0.014 -0.030 0.836" material="steel_mid" mass="0.1"
+            pos="0.014 -0.030 0.8281" material="steel_mid" mass="0.1"
             contype="0" conaffinity="0"/>
 
-      <!-- Switches in tray slots (16, spaced 1U=19.05mm, surface at z=0.840+0.006=0.846) -->
 
-      <geom name="ts_1"  type="box" size="0.007 0.007 0.003" pos="0.0000 -0.030 0.837" rgba="0.15 0.15 0.15 1" contype="0" conaffinity="0"/>
-      <geom name="ts_2"  type="box" size="0.007 0.007 0.003" pos="-0.0191 -0.030 0.837" rgba="0.15 0.15 0.15 1" contype="0" conaffinity="0"/>
-      <geom name="ts_3"  type="box" size="0.007 0.007 0.003" pos="-0.0381 -0.030 0.837" rgba="0.15 0.15 0.15 1" contype="0" conaffinity="0"/>
-      <geom name="ts_4"  type="box" size="0.007 0.007 0.003" pos="-0.0572 -0.030 0.837" rgba="0.15 0.15 0.15 1" contype="0" conaffinity="0"/>
-      <geom name="ts_5"  type="box" size="0.007 0.007 0.003" pos="-0.0762 -0.030 0.837" rgba="0.15 0.15 0.15 1" contype="0" conaffinity="0"/>
-      <geom name="ts_6"  type="box" size="0.007 0.007 0.003" pos="-0.0953 -0.030 0.837" rgba="0.15 0.15 0.15 1" contype="0" conaffinity="0"/>
-      <geom name="ts_7"  type="box" size="0.007 0.007 0.003" pos="-0.1143 -0.030 0.837" rgba="0.15 0.15 0.15 1" contype="0" conaffinity="0"/>
-      <geom name="ts_8"  type="box" size="0.007 0.007 0.003" pos="-0.1333 -0.030 0.837" rgba="0.15 0.15 0.15 1" contype="0" conaffinity="0"/>
-      <geom name="ts_9"  type="box" size="0.007 0.007 0.003" pos="-0.1524 -0.030 0.837" rgba="0.15 0.15 0.15 1" contype="0" conaffinity="0"/>
-      <geom name="ts_10"  type="box" size="0.007 0.007 0.003" pos="-0.1715 -0.030 0.837" rgba="0.15 0.15 0.15 1" contype="0" conaffinity="0"/>
-      <geom name="ts_11"  type="box" size="0.007 0.007 0.003" pos="-0.1905 -0.030 0.837" rgba="0.15 0.15 0.15 1" contype="0" conaffinity="0"/>
-      <geom name="ts_12"  type="box" size="0.007 0.007 0.003" pos="-0.2096 -0.030 0.837" rgba="0.15 0.15 0.15 1" contype="0" conaffinity="0"/>
-      <geom name="ts_13"  type="box" size="0.007 0.007 0.003" pos="-0.2286 -0.030 0.837" rgba="0.15 0.15 0.15 1" contype="0" conaffinity="0"/>
-      <geom name="ts_14"  type="box" size="0.007 0.007 0.003" pos="-0.2477 -0.030 0.837" rgba="0.15 0.15 0.15 1" contype="0" conaffinity="0"/>
-      <geom name="ts_15"  type="box" size="0.007 0.007 0.003" pos="-0.2667 -0.030 0.837" rgba="0.15 0.15 0.15 1" contype="0" conaffinity="0"/>
-      <geom name="ts_16"  type="box" size="0.007 0.007 0.003" pos="-0.2858 -0.030 0.837" rgba="0.15 0.15 0.15 1" contype="0" conaffinity="0"/>
+
       <!-- Sensor detection site at pick position (x=0, y=0.310 world) -->
       <!-- Pick position site -->
-      <site name="pick_position" pos="0 -0.030 0.840"
+      <site name="pick_position" pos="0 -0.030 0.8261"
             size="0.006" rgba="0 1 0 0.9"/>
     </body>
 
@@ -391,6 +386,155 @@
     <camera name="feeder_side"
             pos="0.6 0.4 1.2"
             xyaxes="-0.6 0.8 0 -0.4 -0.3 0.87"/>
+
+    <!--
+      TRAY SWITCH POOL — worldbody level (freejoints must be top-level).
+      16 real switch bodies, initially placed at tray slot positions.
+      Controller slides them via qpos writes each step.
+    -->
+    <body name="tray_sw_1" pos="0.0000 0.3 0.8261">
+      <freejoint name="tray_swj_1"/>
+      <geom name="tray_swg_1"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="tray_sw_2" pos="-0.0191 0.3 0.8261">
+      <freejoint name="tray_swj_2"/>
+      <geom name="tray_swg_2"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="tray_sw_3" pos="-0.0381 0.3 0.8261">
+      <freejoint name="tray_swj_3"/>
+      <geom name="tray_swg_3"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="tray_sw_4" pos="-0.0572 0.3 0.8261">
+      <freejoint name="tray_swj_4"/>
+      <geom name="tray_swg_4"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="tray_sw_5" pos="-0.0762 0.3 0.8261">
+      <freejoint name="tray_swj_5"/>
+      <geom name="tray_swg_5"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="tray_sw_6" pos="-0.0953 0.3 0.8261">
+      <freejoint name="tray_swj_6"/>
+      <geom name="tray_swg_6"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="tray_sw_7" pos="-0.1143 0.3 0.8261">
+      <freejoint name="tray_swj_7"/>
+      <geom name="tray_swg_7"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="tray_sw_8" pos="-0.1333 0.3 0.8261">
+      <freejoint name="tray_swj_8"/>
+      <geom name="tray_swg_8"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="tray_sw_9" pos="-0.1524 0.3 0.8261">
+      <freejoint name="tray_swj_9"/>
+      <geom name="tray_swg_9"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="tray_sw_10" pos="-0.1715 0.3 0.8261">
+      <freejoint name="tray_swj_10"/>
+      <geom name="tray_swg_10"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="tray_sw_11" pos="-0.1905 0.3 0.8261">
+      <freejoint name="tray_swj_11"/>
+      <geom name="tray_swg_11"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="tray_sw_12" pos="-0.2096 0.3 0.8261">
+      <freejoint name="tray_swj_12"/>
+      <geom name="tray_swg_12"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="tray_sw_13" pos="-0.2286 0.3 0.8261">
+      <freejoint name="tray_swj_13"/>
+      <geom name="tray_swg_13"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="tray_sw_14" pos="-0.2477 0.3 0.8261">
+      <freejoint name="tray_swj_14"/>
+      <geom name="tray_swg_14"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="tray_sw_15" pos="-0.2667 0.3 0.8261">
+      <freejoint name="tray_swj_15"/>
+      <geom name="tray_swg_15"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="tray_sw_16" pos="-0.2858 0.3 0.8261">
+      <freejoint name="tray_swj_16"/>
+      <geom name="tray_swg_16"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
 
   </worldbody>
 
