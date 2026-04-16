@@ -32,7 +32,7 @@
 
   <compiler angle="radian" autolimits="true"/>
   <option integrator="implicitfast"/>
-
+<option integrator="implicitfast" solver="CG" iterations="20" ls_iterations="10"/>
   <visual>
     <headlight diffuse="0.6 0.6 0.6" ambient="0.3 0.3 0.3" specular="0 0 0"/>
     <rgba haze="0.15 0.25 0.35 1"/>
@@ -124,7 +124,7 @@
       <!-- Y SLIDE: 15mm thick, top at z=0.775 -->
       <body name="y_slide" pos="0 0 0.7675">
         <joint name="y_joint" type="slide" axis="0 1 0"
-               range="-0.115 0.115" damping="500" stiffness="0"/>
+               range="-0.115 0.115" damping="10" stiffness="0"/>
         <geom name="y_slide_plate" type="box" size="0.230 0.170 0.0075"
               pos="0 0 0" material="steel_mid" mass="4.0"/>
         <!-- X-axis rails -->
@@ -136,7 +136,7 @@
         <!-- X SLIDE: 15mm thick, top at z=0.790 -->
         <body name="x_slide" pos="0 0 0.020">
           <joint name="x_joint" type="slide" axis="1 0 0"
-                 range="-0.160 0.160" damping="500" stiffness="0"/>
+                 range="-0.160 0.160" damping="10" stiffness="0"/>
           <geom name="x_slide_plate" type="box" size="0.210 0.150 0.0075"
                 pos="0 0 0" material="steel_light" mass="3.0"/>
 
@@ -168,7 +168,7 @@
               <geom name="stop_RR_y" type="box" size="0.0025 0.0125 0.003"
                     pos="0.1650 0.0475 0.010"   material="fixture_stop" mass="0.02"/>
 
-              <!-- BOTTOM CASE -->
+              <!-- BOTTOM CASE + S1 OUTPUT STACK -->
               <body name="bottom_case" pos="0 0 0.020">
                 <geom name="case_bottom" type="box" size="0.1625 0.0575 0.001"
                       pos="0 0 -0.011" material="abs_plastic" mass="0.15"/>
@@ -180,6 +180,147 @@
                       pos="0 -0.0565 0" material="abs_plastic" mass="0.05"/>
                 <geom name="case_wall_rear"  type="box" size="0.1625 0.001 0.011"
                       pos="0 0.0565 0"  material="abs_plastic" mass="0.05"/>
+
+                <!--
+                  S1 OUTPUT STACK
+                  Case interior floor = bottom_case z=0 + case_bottom top = -0.010
+                  Case rim            = bottom_case z=0 + wall top        = +0.011
+                  Stack placed near case rim (2mm gap):
+                    EPDM frame  rel_ctr=+0.00620
+                    PCB         rel_ctr=+0.00695
+                    Sound foam  rel_ctr=+0.00775
+                  Alu plate body pos  = +0.00750  (bottom face of plate)
+                  Plate top face      = +0.00750 + 0.00150 = +0.00900
+                  PLATE_Z world       = 0.825 + 0.00900 = 0.834
+                  TRAY_WORLD_Z        = 0.834
+                -->
+                <geom name="s3_epdm_front" type="box" size="0.1515 0.01225 0.00075"
+                      pos="0 -0.04075 0.00620" mass="0" rgba="0.08 0.08 0.08 1"
+                      contype="0" conaffinity="0"/>
+                <geom name="s3_epdm_rear"  type="box" size="0.1515 0.01225 0.00075"
+                      pos="0  0.04075 0.00620" mass="0" rgba="0.08 0.08 0.08 1"
+                      contype="0" conaffinity="0"/>
+                <geom name="s3_epdm_left"  type="box" size="0.00975 0.030 0.00075"
+                      pos="-0.15275 0 0.00620" mass="0" rgba="0.08 0.08 0.08 1"
+                      contype="0" conaffinity="0"/>
+                <geom name="s3_epdm_right" type="box" size="0.00975 0.030 0.00075"
+                      pos=" 0.15275 0 0.00620" mass="0" rgba="0.08 0.08 0.08 1"
+                      contype="0" conaffinity="0"/>
+                <geom name="s3_battery" type="box" size="0.045 0.030 0.003"
+                      pos="-0.060 0 -0.00700" mass="0" rgba="0.15 0.25 0.15 1"
+                      contype="0" conaffinity="0"/>
+                <geom name="s3_pcb" type="box" size="0.1565 0.0535 0.0008"
+                      pos="0 0 0.00695" mass="0" rgba="0.10 0.30 0.10 1"
+                      contype="0" conaffinity="0"/>
+                <geom name="s3_sound_foam" type="box" size="0.1480 0.0535 0.0005"
+                      pos="0 0 0.00775" mass="0" rgba="0.18 0.18 0.18 1"
+                      contype="0" conaffinity="0"/>
+
+                <!--
+                  ALUMINUM PLATE BODY — origin at bottom face
+                  pos z=+0.00750 → plate top = +0.00750+0.0015 = +0.00900
+                  Site world Z = 0.825 + 0.009 = 0.834 = PLATE_Z
+                  All 84 switch socket sites as children — MuJoCo FK
+                  propagates their world position automatically with table motion.
+                -->
+                <body name="alu_plate" pos="0 0 0.00750">
+                  <geom name="s3_alu_plate" type="box"
+                        size="0.1585 0.0535 0.00075"
+                        pos="0 0 0.00075" mass="0"
+                        material="aluminum_plate"
+                        contype="0" conaffinity="0"/>
+                  <!-- ROW 0 — Function row -->
+                  <site name="sw_Esc"     type="cylinder" size="0.003 0.001" pos="-0.1429  0.0480 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_F1"      type="cylinder" size="0.003 0.001" pos="-0.1238  0.0480 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_F2"      type="cylinder" size="0.003 0.001" pos="-0.1048  0.0480 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_F3"      type="cylinder" size="0.003 0.001" pos="-0.0857  0.0480 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_F4"      type="cylinder" size="0.003 0.001" pos="-0.0667  0.0480 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_F5"      type="cylinder" size="0.003 0.001" pos="-0.0476  0.0480 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_F6"      type="cylinder" size="0.003 0.001" pos="-0.0286  0.0480 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_F7"      type="cylinder" size="0.003 0.001" pos="-0.0095  0.0480 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_F8"      type="cylinder" size="0.003 0.001" pos=" 0.0095  0.0480 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_F9"      type="cylinder" size="0.003 0.001" pos=" 0.0286  0.0480 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_F10"     type="cylinder" size="0.003 0.001" pos=" 0.0476  0.0480 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_F11"     type="cylinder" size="0.003 0.001" pos=" 0.0667  0.0480 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_F12"     type="cylinder" size="0.003 0.001" pos=" 0.0857  0.0480 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_PrtSc"   type="cylinder" size="0.003 0.001" pos=" 0.1048  0.0480 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_Pause"   type="cylinder" size="0.003 0.001" pos=" 0.1238  0.0480 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_Del"     type="cylinder" size="0.003 0.001" pos=" 0.1429  0.0480 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <!-- ROW 1 — Number row -->
+                  <site name="sw_Grave"   type="cylinder" size="0.003 0.001" pos="-0.1429  0.0290 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_1"       type="cylinder" size="0.003 0.001" pos="-0.1238  0.0290 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_2"       type="cylinder" size="0.003 0.001" pos="-0.1048  0.0290 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_3"       type="cylinder" size="0.003 0.001" pos="-0.0857  0.0290 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_4"       type="cylinder" size="0.003 0.001" pos="-0.0667  0.0290 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_5"       type="cylinder" size="0.003 0.001" pos="-0.0476  0.0290 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_6"       type="cylinder" size="0.003 0.001" pos="-0.0286  0.0290 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_7"       type="cylinder" size="0.003 0.001" pos="-0.0095  0.0290 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_8"       type="cylinder" size="0.003 0.001" pos=" 0.0095  0.0290 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_9"       type="cylinder" size="0.003 0.001" pos=" 0.0286  0.0290 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_0"       type="cylinder" size="0.003 0.001" pos=" 0.0476  0.0290 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_Minus"   type="cylinder" size="0.003 0.001" pos=" 0.0667  0.0290 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_Equal"   type="cylinder" size="0.003 0.001" pos=" 0.0857  0.0290 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_Bksp"    type="cylinder" size="0.003 0.001" pos=" 0.1143  0.0290 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_PgUp"    type="cylinder" size="0.003 0.001" pos=" 0.1429  0.0290 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <!-- ROW 2 — QWERTY row -->
+                  <site name="sw_Tab"     type="cylinder" size="0.003 0.001" pos="-0.1381  0.0099 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_Q"       type="cylinder" size="0.003 0.001" pos="-0.1143  0.0099 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_W"       type="cylinder" size="0.003 0.001" pos="-0.0953  0.0099 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_E"       type="cylinder" size="0.003 0.001" pos="-0.0762  0.0099 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_R"       type="cylinder" size="0.003 0.001" pos="-0.0572  0.0099 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_T"       type="cylinder" size="0.003 0.001" pos="-0.0381  0.0099 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_Y"       type="cylinder" size="0.003 0.001" pos="-0.0191  0.0099 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_U"       type="cylinder" size="0.003 0.001" pos=" 0.0000  0.0099 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_I"       type="cylinder" size="0.003 0.001" pos=" 0.0191  0.0099 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_O"       type="cylinder" size="0.003 0.001" pos=" 0.0381  0.0099 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_P"       type="cylinder" size="0.003 0.001" pos=" 0.0572  0.0099 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_LBrace"  type="cylinder" size="0.003 0.001" pos=" 0.0762  0.0099 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_RBrace"  type="cylinder" size="0.003 0.001" pos=" 0.0953  0.0099 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_Bkslash" type="cylinder" size="0.003 0.001" pos=" 0.1191  0.0099 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_PgDn"    type="cylinder" size="0.003 0.001" pos=" 0.1429  0.0099 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <!-- ROW 3 — Home row -->
+                  <site name="sw_Caps"    type="cylinder" size="0.003 0.001" pos="-0.1357 -0.0092 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_A"       type="cylinder" size="0.003 0.001" pos="-0.1095 -0.0092 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_S"       type="cylinder" size="0.003 0.001" pos="-0.0905 -0.0092 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_D"       type="cylinder" size="0.003 0.001" pos="-0.0714 -0.0092 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_F"       type="cylinder" size="0.003 0.001" pos="-0.0524 -0.0092 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_G"       type="cylinder" size="0.003 0.001" pos="-0.0333 -0.0092 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_H"       type="cylinder" size="0.003 0.001" pos="-0.0143 -0.0092 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_J"       type="cylinder" size="0.003 0.001" pos=" 0.0048 -0.0092 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_K"       type="cylinder" size="0.003 0.001" pos=" 0.0238 -0.0092 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_L"       type="cylinder" size="0.003 0.001" pos=" 0.0429 -0.0092 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_Semicol" type="cylinder" size="0.003 0.001" pos=" 0.0619 -0.0092 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_Quote"   type="cylinder" size="0.003 0.001" pos=" 0.0810 -0.0092 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_Enter"   type="cylinder" size="0.003 0.001" pos=" 0.1119 -0.0092 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_Home"    type="cylinder" size="0.003 0.001" pos=" 0.1429 -0.0092 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <!-- ROW 4 — Shift row -->
+                  <site name="sw_LShift"  type="cylinder" size="0.003 0.001" pos="-0.1310 -0.0282 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_Z"       type="cylinder" size="0.003 0.001" pos="-0.1000 -0.0282 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_X"       type="cylinder" size="0.003 0.001" pos="-0.0810 -0.0282 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_C"       type="cylinder" size="0.003 0.001" pos="-0.0619 -0.0282 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_V"       type="cylinder" size="0.003 0.001" pos="-0.0429 -0.0282 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_B"       type="cylinder" size="0.003 0.001" pos="-0.0238 -0.0282 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_N"       type="cylinder" size="0.003 0.001" pos="-0.0048 -0.0282 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_M"       type="cylinder" size="0.003 0.001" pos=" 0.0143 -0.0282 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_Comma"   type="cylinder" size="0.003 0.001" pos=" 0.0333 -0.0282 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_Period"  type="cylinder" size="0.003 0.001" pos=" 0.0524 -0.0282 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_Slash"   type="cylinder" size="0.003 0.001" pos=" 0.0714 -0.0282 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_RShift"  type="cylinder" size="0.003 0.001" pos=" 0.0976 -0.0282 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_Up"      type="cylinder" size="0.003 0.001" pos=" 0.1238 -0.0282 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_End"     type="cylinder" size="0.003 0.001" pos=" 0.1429 -0.0282 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <!-- ROW 5 — Bottom row -->
+                  <site name="sw_LCtrl"  type="cylinder" size="0.003 0.001" pos="-0.1405 -0.0473 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_LWin"   type="cylinder" size="0.003 0.001" pos="-0.1167 -0.0473 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_LAlt"   type="cylinder" size="0.003 0.001" pos="-0.0929 -0.0473 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_Space"  type="cylinder" size="0.003 0.001" pos="-0.0214 -0.0473 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_RAlt"   type="cylinder" size="0.003 0.001" pos=" 0.0476 -0.0473 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_Fn"     type="cylinder" size="0.003 0.001" pos=" 0.0667 -0.0473 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_Left"   type="cylinder" size="0.003 0.001" pos=" 0.0857 -0.0473 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_Down"   type="cylinder" size="0.003 0.001" pos=" 0.1048 -0.0473 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_Right"  type="cylinder" size="0.003 0.001" pos=" 0.1238 -0.0473 0.0015" rgba="0.2 0.6 1 0.6"/>
+                  <site name="sw_End2"   type="cylinder" size="0.003 0.001" pos=" 0.1429 -0.0473 0.0015" rgba="0.2 0.6 1 0.6"/>
+                </body>
+
               </body>
             </body>
           </body>
@@ -235,92 +376,70 @@
     -->
     <body name="rotating_column" pos="0 0.170 0.914">
       <joint name="column_rotation" type="hinge" axis="0 0 1"
-             range="-3.1416 3.1416" damping="10" stiffness="0"/>
+             range="-3.1416 3.1416" damping="2" stiffness="0"/>
 
       <!-- Main column disc: 80mm dia, 40mm tall -->
       <geom name="column_disc" type="cylinder" size="0.040 0.020"
             pos="0 0 0" material="column_mat" mass="3.0"/>
 
       <!-- === ARM 1: extends in -Y direction toward keyboard === -->
-      <!-- Arm 1 bar: 30mm long, connecting column edge to head -->
       <geom name="arm_1" type="box" size="0.012 0.045 0.010"
             pos="0 -0.085 -0.005" material="arm_mat" mass="0.3"/>
 
-      <!-- Head 1 body: 20mm dia cylinder -->
-      <geom name="head_1_body" type="cylinder" size="0.010 0.025"
-            pos="0 -0.130 -0.005" material="head_body" mass="0.5"/>
-      <!-- Head 1 guide rods (spring-loaded visual) -->
-      <geom name="rod_1_L" type="cylinder" size="0.003 0.030"
-            pos="-0.012 -0.130 -0.010" material="steel_light" mass="0.05"
-            contype="0" conaffinity="0"/>
-      <geom name="rod_1_R" type="cylinder" size="0.003 0.030"
-            pos="0.012 -0.130 -0.010"  material="steel_light" mass="0.05"
-            contype="0" conaffinity="0"/>
-      <!-- Head 1 gripper tip: 14x14mm switch footprint -->
-      <geom name="head_1_tip" type="box" size="0.007 0.007 0.012"
-            pos="0 -0.130 -0.042" material="head_tip" mass="0.1"/>
-      <!-- Switch in Head 1 (dark — ready to insert) -->
-      <geom name="switch_1" type="box" size="0.007 0.007 0.006"
-            pos="0 -0.130 -0.060" rgba="0.15 0.15 0.15 1"
-            contype="0" conaffinity="0"/>
-      <!-- Head 1 pneumatic hose (runs up to column) -->
-      <geom name="hose_1" type="cylinder" size="0.003 0.020"
-            pos="0.010 -0.085 0.018"
-            rgba="0.7 0.15 0.10 1" contype="0" conaffinity="0"/>
-      <!-- Head 1 insertion target site -->
-      <site name="head_1_tip_site" pos="0 -0.130 -0.066"
-            size="0.004" rgba="1 1 0 0.9"/>
-
       <!-- === ARM 2: extends in +Y direction toward feeder === -->
-      <!-- Arm 2 bar -->
       <geom name="arm_2" type="box" size="0.012 0.045 0.010"
             pos="0 0.085 -0.005" material="arm_mat" mass="0.3"/>
 
-      <!-- Head 2 body -->
-      <geom name="head_2_body" type="cylinder" size="0.010 0.025"
-            pos="0 0.130 -0.005" material="head_body" mass="0.5"/>
-      <!-- Head 2 guide rods -->
-      <geom name="rod_2_L" type="cylinder" size="0.003 0.030"
-            pos="-0.012 0.130 -0.010" material="steel_light" mass="0.05"
-            contype="0" conaffinity="0"/>
-      <geom name="rod_2_R" type="cylinder" size="0.003 0.030"
-            pos="0.012 0.130 -0.010"  material="steel_light" mass="0.05"
-            contype="0" conaffinity="0"/>
-      <!-- Head 2 gripper tip -->
-      <geom name="head_2_tip" type="box" size="0.007 0.007 0.012"
-            pos="0 0.130 -0.042" material="head_tip" mass="0.1"/>
-      <!-- Switch in Head 2 (yellow — just picked from feeder) -->
-      <geom name="switch_2" type="box" size="0.007 0.007 0.006"
-            pos="0 0.130 -0.060" rgba="0.9 0.75 0.1 1"
-            contype="0" conaffinity="0"/>
-      <!-- Head 2 pneumatic hose -->
-      <geom name="hose_2" type="cylinder" size="0.003 0.020"
-            pos="0.010 0.085 0.018"
-            rgba="0.7 0.15 0.10 1" contype="0" conaffinity="0"/>
-      <!-- Head 2 pick site -->
-      <site name="head_2_tip_site" pos="0 0.130 -0.066"
-            size="0.004" rgba="0 1 0 0.9"/>
+      <!-- HEAD 1 SLIDE: Z motion toward keyboard (-Y arm) -->
+      <body name="head_1_slide" pos="0 0 0">
+        <inertial pos="0 0 0" mass="0.01" diaginertia="1e-6 1e-6 1e-6"/>
+        <joint name="head_1_z" type="slide" axis="0 0 1"
+               range="-0.150 0" damping="50" stiffness="0"/>
+        <geom name="head_1_body" type="cylinder" size="0.010 0.025"
+              pos="0 -0.130 -0.005" material="head_body" mass="0.5"/>
+        <geom name="rod_1_L" type="cylinder" size="0.003 0.030"
+              pos="-0.012 -0.130 -0.010" material="steel_light" mass="0.05"
+              contype="0" conaffinity="0"/>
+        <geom name="rod_1_R" type="cylinder" size="0.003 0.030"
+              pos="0.012 -0.130 -0.010" material="steel_light" mass="0.05"
+              contype="0" conaffinity="0"/>
+        <geom name="head_1_tip" type="box" size="0.007 0.007 0.012"
+              pos="0 -0.130 -0.042" material="head_tip" mass="0.1"/>
+        <geom name="switch_1" type="box" size="0.007 0.007 0.006"
+              pos="0 -0.130 -0.060" rgba="0.15 0.15 0.15 1"
+              contype="0" conaffinity="0"/>
+        <geom name="hose_1" type="cylinder" size="0.003 0.020"
+              pos="0.010 -0.085 0.018"
+              rgba="0.7 0.15 0.10 1" contype="0" conaffinity="0"/>
+        <site name="head_1_tip_site" pos="0 -0.130 -0.066"
+              size="0.004" rgba="1 1 0 0.9"/>
+      </body>
 
-    </body>
+      <!-- HEAD 2 SLIDE: Z motion toward feeder (+Y arm) -->
+      <body name="head_2_slide" pos="0 0 0">
+        <inertial pos="0 0 0" mass="0.01" diaginertia="1e-6 1e-6 1e-6"/>
+        <joint name="head_2_z" type="slide" axis="0 0 1"
+               range="-0.150 0" damping="50" stiffness="0"/>
+        <geom name="head_2_body" type="cylinder" size="0.010 0.025"
+              pos="0 0.130 -0.005" material="head_body" mass="0.5"/>
+        <geom name="rod_2_L" type="cylinder" size="0.003 0.030"
+              pos="-0.012 0.130 -0.010" material="steel_light" mass="0.05"
+              contype="0" conaffinity="0"/>
+        <geom name="rod_2_R" type="cylinder" size="0.003 0.030"
+              pos="0.012 0.130 -0.010" material="steel_light" mass="0.05"
+              contype="0" conaffinity="0"/>
+        <geom name="head_2_tip" type="box" size="0.007 0.007 0.012"
+              pos="0 0.130 -0.042" material="head_tip" mass="0.1"/>
+        <geom name="switch_2" type="box" size="0.007 0.007 0.006"
+              pos="0 0.130 -0.060" rgba="0.9 0.75 0.1 1"
+              contype="0" conaffinity="0"/>
+        <geom name="hose_2" type="cylinder" size="0.003 0.020"
+              pos="0.010 0.085 0.018"
+              rgba="0.7 0.15 0.10 1" contype="0" conaffinity="0"/>
+        <site name="head_2_tip_site" pos="0 0.130 -0.066"
+              size="0.004" rgba="0 1 0 0.9"/>
+      </body>
 
-    <!--
-      HEAD Z ACTUATORS
-      Each head needs independent Z motion (press down to insert/pick)
-      In MuJoCo we model these as separate child bodies of rotating_column
-      with slide joints along Z.
-      NOTE: These bodies inherit the column rotation, so their Z axis
-      always points up regardless of rotation angle — correct behavior.
-    -->
-    <body name="head_1_slide" pos="0 0.170 0.914">
-      <inertial pos="0 0 0" mass="0.01" diaginertia="1e-6 1e-6 1e-6"/>
-      <joint name="head_1_z" type="slide" axis="0 0 1"
-             range="-0.150 0" damping="200" stiffness="500"/>
-    </body>
-
-    <body name="head_2_slide" pos="0 0.170 0.914">
-      <inertial pos="0 0 0" mass="0.01" diaginertia="1e-6 1e-6 1e-6"/>
-      <joint name="head_2_z" type="slide" axis="0 0 1"
-             range="-0.150 0" damping="200" stiffness="500"/>
     </body>
 
     <!--
@@ -350,19 +469,25 @@
             contype="0" conaffinity="0"/>
 
       <!-- Tray body: covers x=0 to x=-0.286, center at x=-0.143, half=0.155 -->
-      <geom name="tray_body" type="box" size="0.155 0.015 0.004"
-            pos="-0.143 -0.030 0.8221" material="tray_mat" mass="1.5"
+      <!--
+        Tray extended for 84 switches at 19.05mm pitch:
+        Total length = 84 × 0.01905 = 1.600m
+        half = 0.800, center at x = -0.800 (from x=0 to x=-1.600)
+        Tray surface Z = 0.8221, pick position at x=0
+      -->
+      <geom name="tray_body" type="box" size="0.800 0.015 0.004"
+            pos="-0.800 -0.030 0.8221" material="tray_mat" mass="6.0"
             contype="0" conaffinity="0"/>
-      <!-- Tray side rails -->
-      <geom name="tray_rail_F" type="box" size="0.155 0.002 0.006"
-            pos="-0.143 -0.043 0.8291" material="steel_mid" mass="0.2"
+      <!-- Tray side rails (full length) -->
+      <geom name="tray_rail_F" type="box" size="0.800 0.002 0.006"
+            pos="-0.800 -0.043 0.8291" material="steel_mid" mass="0.8"
             contype="0" conaffinity="0"/>
-      <geom name="tray_rail_R" type="box" size="0.155 0.002 0.006"
-            pos="-0.143 -0.017 0.8291" material="steel_mid" mass="0.2"
+      <geom name="tray_rail_R" type="box" size="0.800 0.002 0.006"
+            pos="-0.800 -0.017 0.8291" material="steel_mid" mass="0.8"
             contype="0" conaffinity="0"/>
-      <!-- Back stop rail at +X end (x=0 side) -->
+      <!-- Far end stop at x=-1.600 -->
       <geom name="tray_rail_back" type="box" size="0.002 0.015 0.008"
-            pos="0.014 -0.030 0.8281" material="steel_mid" mass="0.1"
+            pos="-1.614 -0.030 0.8281" material="steel_mid" mass="0.1"
             contype="0" conaffinity="0"/>
 
 
@@ -388,170 +513,780 @@
             xyaxes="-0.6 0.8 0 -0.4 -0.3 0.87"/>
 
     <!--
-      TRAY SWITCH POOL — worldbody level (freejoints must be top-level).
-      16 real switch bodies, initially placed at tray slot positions.
-      Controller slides them via qpos writes each step.
+    <!--
+      TRAY SWITCH POOL — 84 switch bodies at worldbody level.
+      Each body is the actual plate switch (sw_Esc etc).
+      Placed in tray at start, picked exactly once, then welded to plate.
+      Body Z = TRAY_Z - MESH_OFFSET_Z so mesh sits on tray surface.
     -->
-    <body name="tray_sw_1" pos="0.0000 0.3 0.8261">
-      <freejoint name="tray_swj_1"/>
-      <geom name="tray_swg_1"
+    <body name="sw_Esc" pos="0.0000 0.3 0.82455">
+      <freejoint name="swj_Esc"/>
+      <geom name="swg_Esc"
             type="mesh" mesh="switch_mesh"
             pos="-0.01475 0 0.00945"
             material="abs_dark"
             contype="0" conaffinity="0"/>
     </body>
 
-    <body name="tray_sw_2" pos="-0.0191 0.3 0.8261">
-      <freejoint name="tray_swj_2"/>
-      <geom name="tray_swg_2"
+    <body name="sw_F1" pos="-0.0191 0.3 0.82455">
+      <freejoint name="swj_F1"/>
+      <geom name="swg_F1"
             type="mesh" mesh="switch_mesh"
             pos="-0.01475 0 0.00945"
             material="abs_dark"
             contype="0" conaffinity="0"/>
     </body>
 
-    <body name="tray_sw_3" pos="-0.0381 0.3 0.8261">
-      <freejoint name="tray_swj_3"/>
-      <geom name="tray_swg_3"
+    <body name="sw_F2" pos="-0.0381 0.3 0.82455">
+      <freejoint name="swj_F2"/>
+      <geom name="swg_F2"
             type="mesh" mesh="switch_mesh"
             pos="-0.01475 0 0.00945"
             material="abs_dark"
             contype="0" conaffinity="0"/>
     </body>
 
-    <body name="tray_sw_4" pos="-0.0572 0.3 0.8261">
-      <freejoint name="tray_swj_4"/>
-      <geom name="tray_swg_4"
+    <body name="sw_F3" pos="-0.0572 0.3 0.82455">
+      <freejoint name="swj_F3"/>
+      <geom name="swg_F3"
             type="mesh" mesh="switch_mesh"
             pos="-0.01475 0 0.00945"
             material="abs_dark"
             contype="0" conaffinity="0"/>
     </body>
 
-    <body name="tray_sw_5" pos="-0.0762 0.3 0.8261">
-      <freejoint name="tray_swj_5"/>
-      <geom name="tray_swg_5"
+    <body name="sw_F4" pos="-0.0762 0.3 0.82455">
+      <freejoint name="swj_F4"/>
+      <geom name="swg_F4"
             type="mesh" mesh="switch_mesh"
             pos="-0.01475 0 0.00945"
             material="abs_dark"
             contype="0" conaffinity="0"/>
     </body>
 
-    <body name="tray_sw_6" pos="-0.0953 0.3 0.8261">
-      <freejoint name="tray_swj_6"/>
-      <geom name="tray_swg_6"
+    <body name="sw_F5" pos="-0.0953 0.3 0.82455">
+      <freejoint name="swj_F5"/>
+      <geom name="swg_F5"
             type="mesh" mesh="switch_mesh"
             pos="-0.01475 0 0.00945"
             material="abs_dark"
             contype="0" conaffinity="0"/>
     </body>
 
-    <body name="tray_sw_7" pos="-0.1143 0.3 0.8261">
-      <freejoint name="tray_swj_7"/>
-      <geom name="tray_swg_7"
+    <body name="sw_F6" pos="-0.1143 0.3 0.82455">
+      <freejoint name="swj_F6"/>
+      <geom name="swg_F6"
             type="mesh" mesh="switch_mesh"
             pos="-0.01475 0 0.00945"
             material="abs_dark"
             contype="0" conaffinity="0"/>
     </body>
 
-    <body name="tray_sw_8" pos="-0.1333 0.3 0.8261">
-      <freejoint name="tray_swj_8"/>
-      <geom name="tray_swg_8"
+    <body name="sw_F7" pos="-0.1333 0.3 0.82455">
+      <freejoint name="swj_F7"/>
+      <geom name="swg_F7"
             type="mesh" mesh="switch_mesh"
             pos="-0.01475 0 0.00945"
             material="abs_dark"
             contype="0" conaffinity="0"/>
     </body>
 
-    <body name="tray_sw_9" pos="-0.1524 0.3 0.8261">
-      <freejoint name="tray_swj_9"/>
-      <geom name="tray_swg_9"
+    <body name="sw_F8" pos="-0.1524 0.3 0.82455">
+      <freejoint name="swj_F8"/>
+      <geom name="swg_F8"
             type="mesh" mesh="switch_mesh"
             pos="-0.01475 0 0.00945"
             material="abs_dark"
             contype="0" conaffinity="0"/>
     </body>
 
-    <body name="tray_sw_10" pos="-0.1715 0.3 0.8261">
-      <freejoint name="tray_swj_10"/>
-      <geom name="tray_swg_10"
+    <body name="sw_F9" pos="-0.1715 0.3 0.82455">
+      <freejoint name="swj_F9"/>
+      <geom name="swg_F9"
             type="mesh" mesh="switch_mesh"
             pos="-0.01475 0 0.00945"
             material="abs_dark"
             contype="0" conaffinity="0"/>
     </body>
 
-    <body name="tray_sw_11" pos="-0.1905 0.3 0.8261">
-      <freejoint name="tray_swj_11"/>
-      <geom name="tray_swg_11"
+    <body name="sw_F10" pos="-0.1905 0.3 0.82455">
+      <freejoint name="swj_F10"/>
+      <geom name="swg_F10"
             type="mesh" mesh="switch_mesh"
             pos="-0.01475 0 0.00945"
             material="abs_dark"
             contype="0" conaffinity="0"/>
     </body>
 
-    <body name="tray_sw_12" pos="-0.2096 0.3 0.8261">
-      <freejoint name="tray_swj_12"/>
-      <geom name="tray_swg_12"
+    <body name="sw_F11" pos="-0.2096 0.3 0.82455">
+      <freejoint name="swj_F11"/>
+      <geom name="swg_F11"
             type="mesh" mesh="switch_mesh"
             pos="-0.01475 0 0.00945"
             material="abs_dark"
             contype="0" conaffinity="0"/>
     </body>
 
-    <body name="tray_sw_13" pos="-0.2286 0.3 0.8261">
-      <freejoint name="tray_swj_13"/>
-      <geom name="tray_swg_13"
+    <body name="sw_F12" pos="-0.2286 0.3 0.82455">
+      <freejoint name="swj_F12"/>
+      <geom name="swg_F12"
             type="mesh" mesh="switch_mesh"
             pos="-0.01475 0 0.00945"
             material="abs_dark"
             contype="0" conaffinity="0"/>
     </body>
 
-    <body name="tray_sw_14" pos="-0.2477 0.3 0.8261">
-      <freejoint name="tray_swj_14"/>
-      <geom name="tray_swg_14"
+    <body name="sw_PrtSc" pos="-0.2477 0.3 0.82455">
+      <freejoint name="swj_PrtSc"/>
+      <geom name="swg_PrtSc"
             type="mesh" mesh="switch_mesh"
             pos="-0.01475 0 0.00945"
             material="abs_dark"
             contype="0" conaffinity="0"/>
     </body>
 
-    <body name="tray_sw_15" pos="-0.2667 0.3 0.8261">
-      <freejoint name="tray_swj_15"/>
-      <geom name="tray_swg_15"
+    <body name="sw_Pause" pos="-0.2667 0.3 0.82455">
+      <freejoint name="swj_Pause"/>
+      <geom name="swg_Pause"
             type="mesh" mesh="switch_mesh"
             pos="-0.01475 0 0.00945"
             material="abs_dark"
             contype="0" conaffinity="0"/>
     </body>
 
-    <body name="tray_sw_16" pos="-0.2858 0.3 0.8261">
-      <freejoint name="tray_swj_16"/>
-      <geom name="tray_swg_16"
+    <body name="sw_Del" pos="-0.2858 0.3 0.82455">
+      <freejoint name="swj_Del"/>
+      <geom name="swg_Del"
             type="mesh" mesh="switch_mesh"
             pos="-0.01475 0 0.00945"
             material="abs_dark"
             contype="0" conaffinity="0"/>
     </body>
 
+    <body name="sw_Grave" pos="-0.3048 0.3 0.82455">
+      <freejoint name="swj_Grave"/>
+      <geom name="swg_Grave"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="sw_1" pos="-0.3239 0.3 0.82455">
+      <freejoint name="swj_1"/>
+      <geom name="swg_1"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="sw_2" pos="-0.3429 0.3 0.82455">
+      <freejoint name="swj_2"/>
+      <geom name="swg_2"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="sw_3" pos="-0.3619 0.3 0.82455">
+      <freejoint name="swj_3"/>
+      <geom name="swg_3"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="sw_4" pos="-0.3810 0.3 0.82455">
+      <freejoint name="swj_4"/>
+      <geom name="swg_4"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="sw_5" pos="-0.4001 0.3 0.82455">
+      <freejoint name="swj_5"/>
+      <geom name="swg_5"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="sw_6" pos="-0.4191 0.3 0.82455">
+      <freejoint name="swj_6"/>
+      <geom name="swg_6"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="sw_7" pos="-0.4382 0.3 0.82455">
+      <freejoint name="swj_7"/>
+      <geom name="swg_7"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="sw_8" pos="-0.4572 0.3 0.82455">
+      <freejoint name="swj_8"/>
+      <geom name="swg_8"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="sw_9" pos="-0.4763 0.3 0.82455">
+      <freejoint name="swj_9"/>
+      <geom name="swg_9"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="sw_0" pos="-0.4953 0.3 0.82455">
+      <freejoint name="swj_0"/>
+      <geom name="swg_0"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="sw_Minus" pos="-0.5143 0.3 0.82455">
+      <freejoint name="swj_Minus"/>
+      <geom name="swg_Minus"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="sw_Equal" pos="-0.5334 0.3 0.82455">
+      <freejoint name="swj_Equal"/>
+      <geom name="swg_Equal"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="sw_Bksp" pos="-0.5524 0.3 0.82455">
+      <freejoint name="swj_Bksp"/>
+      <geom name="swg_Bksp"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="sw_PgUp" pos="-0.5715 0.3 0.82455">
+      <freejoint name="swj_PgUp"/>
+      <geom name="swg_PgUp"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="sw_Tab" pos="-0.5906 0.3 0.82455">
+      <freejoint name="swj_Tab"/>
+      <geom name="swg_Tab"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="sw_Q" pos="-0.6096 0.3 0.82455">
+      <freejoint name="swj_Q"/>
+      <geom name="swg_Q"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="sw_W" pos="-0.6287 0.3 0.82455">
+      <freejoint name="swj_W"/>
+      <geom name="swg_W"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="sw_E" pos="-0.6477 0.3 0.82455">
+      <freejoint name="swj_E"/>
+      <geom name="swg_E"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="sw_R" pos="-0.6668 0.3 0.82455">
+      <freejoint name="swj_R"/>
+      <geom name="swg_R"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="sw_T" pos="-0.6858 0.3 0.82455">
+      <freejoint name="swj_T"/>
+      <geom name="swg_T"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="sw_Y" pos="-0.7049 0.3 0.82455">
+      <freejoint name="swj_Y"/>
+      <geom name="swg_Y"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="sw_U" pos="-0.7239 0.3 0.82455">
+      <freejoint name="swj_U"/>
+      <geom name="swg_U"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="sw_I" pos="-0.7429 0.3 0.82455">
+      <freejoint name="swj_I"/>
+      <geom name="swg_I"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="sw_O" pos="-0.7620 0.3 0.82455">
+      <freejoint name="swj_O"/>
+      <geom name="swg_O"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="sw_P" pos="-0.7811 0.3 0.82455">
+      <freejoint name="swj_P"/>
+      <geom name="swg_P"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="sw_LBrace" pos="-0.8001 0.3 0.82455">
+      <freejoint name="swj_LBrace"/>
+      <geom name="swg_LBrace"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="sw_RBrace" pos="-0.8192 0.3 0.82455">
+      <freejoint name="swj_RBrace"/>
+      <geom name="swg_RBrace"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="sw_Bkslash" pos="-0.8382 0.3 0.82455">
+      <freejoint name="swj_Bkslash"/>
+      <geom name="swg_Bkslash"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="sw_PgDn" pos="-0.8573 0.3 0.82455">
+      <freejoint name="swj_PgDn"/>
+      <geom name="swg_PgDn"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="sw_Caps" pos="-0.8763 0.3 0.82455">
+      <freejoint name="swj_Caps"/>
+      <geom name="swg_Caps"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="sw_A" pos="-0.8954 0.3 0.82455">
+      <freejoint name="swj_A"/>
+      <geom name="swg_A"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="sw_S" pos="-0.9144 0.3 0.82455">
+      <freejoint name="swj_S"/>
+      <geom name="swg_S"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="sw_D" pos="-0.9335 0.3 0.82455">
+      <freejoint name="swj_D"/>
+      <geom name="swg_D"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="sw_F" pos="-0.9525 0.3 0.82455">
+      <freejoint name="swj_F"/>
+      <geom name="swg_F"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="sw_G" pos="-0.9716 0.3 0.82455">
+      <freejoint name="swj_G"/>
+      <geom name="swg_G"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="sw_H" pos="-0.9906 0.3 0.82455">
+      <freejoint name="swj_H"/>
+      <geom name="swg_H"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="sw_J" pos="-1.0097 0.3 0.82455">
+      <freejoint name="swj_J"/>
+      <geom name="swg_J"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="sw_K" pos="-1.0287 0.3 0.82455">
+      <freejoint name="swj_K"/>
+      <geom name="swg_K"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="sw_L" pos="-1.0477 0.3 0.82455">
+      <freejoint name="swj_L"/>
+      <geom name="swg_L"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="sw_Semicol" pos="-1.0668 0.3 0.82455">
+      <freejoint name="swj_Semicol"/>
+      <geom name="swg_Semicol"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="sw_Quote" pos="-1.0858 0.3 0.82455">
+      <freejoint name="swj_Quote"/>
+      <geom name="swg_Quote"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="sw_Enter" pos="-1.1049 0.3 0.82455">
+      <freejoint name="swj_Enter"/>
+      <geom name="swg_Enter"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="sw_Home" pos="-1.1240 0.3 0.82455">
+      <freejoint name="swj_Home"/>
+      <geom name="swg_Home"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="sw_LShift" pos="-1.1430 0.3 0.82455">
+      <freejoint name="swj_LShift"/>
+      <geom name="swg_LShift"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="sw_Z" pos="-1.1621 0.3 0.82455">
+      <freejoint name="swj_Z"/>
+      <geom name="swg_Z"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="sw_X" pos="-1.1811 0.3 0.82455">
+      <freejoint name="swj_X"/>
+      <geom name="swg_X"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="sw_C" pos="-1.2002 0.3 0.82455">
+      <freejoint name="swj_C"/>
+      <geom name="swg_C"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="sw_V" pos="-1.2192 0.3 0.82455">
+      <freejoint name="swj_V"/>
+      <geom name="swg_V"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="sw_B" pos="-1.2383 0.3 0.82455">
+      <freejoint name="swj_B"/>
+      <geom name="swg_B"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="sw_N" pos="-1.2573 0.3 0.82455">
+      <freejoint name="swj_N"/>
+      <geom name="swg_N"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="sw_M" pos="-1.2764 0.3 0.82455">
+      <freejoint name="swj_M"/>
+      <geom name="swg_M"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="sw_Comma" pos="-1.2954 0.3 0.82455">
+      <freejoint name="swj_Comma"/>
+      <geom name="swg_Comma"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="sw_Period" pos="-1.3145 0.3 0.82455">
+      <freejoint name="swj_Period"/>
+      <geom name="swg_Period"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="sw_Slash" pos="-1.3335 0.3 0.82455">
+      <freejoint name="swj_Slash"/>
+      <geom name="swg_Slash"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="sw_RShift" pos="-1.3526 0.3 0.82455">
+      <freejoint name="swj_RShift"/>
+      <geom name="swg_RShift"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="sw_Up" pos="-1.3716 0.3 0.82455">
+      <freejoint name="swj_Up"/>
+      <geom name="swg_Up"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="sw_End" pos="-1.3907 0.3 0.82455">
+      <freejoint name="swj_End"/>
+      <geom name="swg_End"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="sw_LCtrl" pos="-1.4097 0.3 0.82455">
+      <freejoint name="swj_LCtrl"/>
+      <geom name="swg_LCtrl"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="sw_LWin" pos="-1.4287 0.3 0.82455">
+      <freejoint name="swj_LWin"/>
+      <geom name="swg_LWin"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="sw_LAlt" pos="-1.4478 0.3 0.82455">
+      <freejoint name="swj_LAlt"/>
+      <geom name="swg_LAlt"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="sw_Space" pos="-1.4668 0.3 0.82455">
+      <freejoint name="swj_Space"/>
+      <geom name="swg_Space"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="sw_RAlt" pos="-1.4859 0.3 0.82455">
+      <freejoint name="swj_RAlt"/>
+      <geom name="swg_RAlt"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="sw_Fn" pos="-1.5050 0.3 0.82455">
+      <freejoint name="swj_Fn"/>
+      <geom name="swg_Fn"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="sw_Left" pos="-1.5240 0.3 0.82455">
+      <freejoint name="swj_Left"/>
+      <geom name="swg_Left"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="sw_Down" pos="-1.5431 0.3 0.82455">
+      <freejoint name="swj_Down"/>
+      <geom name="swg_Down"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="sw_Right" pos="-1.5621 0.3 0.82455">
+      <freejoint name="swj_Right"/>
+      <geom name="swg_Right"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="sw_End2" pos="-1.5812 0.3 0.82455">
+      <freejoint name="swj_End2"/>
+      <geom name="swg_End2"
+            type="mesh" mesh="switch_mesh"
+            pos="-0.01475 0 0.00945"
+            material="abs_dark"
+            contype="0" conaffinity="0"/>
+    </body>
   </worldbody>
 
   <actuator>
-    <!-- XY table -->
-    <motor name="x_drive" joint="x_joint" gear="1"
-           ctrllimited="true" ctrlrange="-160 160"/>
-    <motor name="y_drive" joint="y_joint" gear="1"
-           ctrllimited="true" ctrlrange="-115 115"/>
-    <!-- Column rotation -->
-    <motor name="col_rotate" joint="column_rotation" gear="1"
-           ctrllimited="true" ctrlrange="-3.1416 3.1416"/>
-    <!-- Head Z actuators -->
-    <motor name="head_1_drive" joint="head_1_z" gear="1"
-           ctrllimited="true" ctrlrange="-150 0"/>
-    <motor name="head_2_drive" joint="head_2_z" gear="1"
-           ctrllimited="true" ctrlrange="-150 0"/>
+    <position name="x_drive"      joint="x_joint"         kp="50000" kv="2000"
+          ctrllimited="true" ctrlrange="-0.160 0.160"/>
+    <position name="y_drive"      joint="y_joint"         kp="50000" kv="2000"
+          ctrllimited="true" ctrlrange="-0.115 0.115"/>
+    <position name="col_rotate"   joint="column_rotation" kp="500"   kv="50"
+          ctrllimited="true" ctrlrange="-3.1416 3.1416"/>
+    <position name="head_1_drive" joint="head_1_z"        kp="5000"  kv="200"
+          ctrllimited="true" ctrlrange="-0.150 0"/>
+    <position name="head_2_drive" joint="head_2_z"        kp="5000"  kv="200"
+          ctrllimited="true" ctrlrange="-0.150 0"/>
   </actuator>
 
   <keyframe>
@@ -559,4 +1294,262 @@
     <key name="home" qpos="0 0 0 0 0" ctrl="0 0 0 0 0"/>
   </keyframe>
 
+
+  <equality>
+    <!-- pick1: head_1_slide carries switch -->
+    <weld name="pick1_Esc" body1="head_1_slide" body2="sw_Esc" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_F1" body1="head_1_slide" body2="sw_F1" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_F2" body1="head_1_slide" body2="sw_F2" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_F3" body1="head_1_slide" body2="sw_F3" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_F4" body1="head_1_slide" body2="sw_F4" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_F5" body1="head_1_slide" body2="sw_F5" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_F6" body1="head_1_slide" body2="sw_F6" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_F7" body1="head_1_slide" body2="sw_F7" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_F8" body1="head_1_slide" body2="sw_F8" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_F9" body1="head_1_slide" body2="sw_F9" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_F10" body1="head_1_slide" body2="sw_F10" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_F11" body1="head_1_slide" body2="sw_F11" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_F12" body1="head_1_slide" body2="sw_F12" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_PrtSc" body1="head_1_slide" body2="sw_PrtSc" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_Pause" body1="head_1_slide" body2="sw_Pause" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_Del" body1="head_1_slide" body2="sw_Del" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_Grave" body1="head_1_slide" body2="sw_Grave" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_1" body1="head_1_slide" body2="sw_1" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_2" body1="head_1_slide" body2="sw_2" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_3" body1="head_1_slide" body2="sw_3" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_4" body1="head_1_slide" body2="sw_4" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_5" body1="head_1_slide" body2="sw_5" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_6" body1="head_1_slide" body2="sw_6" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_7" body1="head_1_slide" body2="sw_7" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_8" body1="head_1_slide" body2="sw_8" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_9" body1="head_1_slide" body2="sw_9" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_0" body1="head_1_slide" body2="sw_0" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_Minus" body1="head_1_slide" body2="sw_Minus" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_Equal" body1="head_1_slide" body2="sw_Equal" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_Bksp" body1="head_1_slide" body2="sw_Bksp" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_PgUp" body1="head_1_slide" body2="sw_PgUp" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_Tab" body1="head_1_slide" body2="sw_Tab" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_Q" body1="head_1_slide" body2="sw_Q" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_W" body1="head_1_slide" body2="sw_W" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_E" body1="head_1_slide" body2="sw_E" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_R" body1="head_1_slide" body2="sw_R" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_T" body1="head_1_slide" body2="sw_T" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_Y" body1="head_1_slide" body2="sw_Y" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_U" body1="head_1_slide" body2="sw_U" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_I" body1="head_1_slide" body2="sw_I" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_O" body1="head_1_slide" body2="sw_O" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_P" body1="head_1_slide" body2="sw_P" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_LBrace" body1="head_1_slide" body2="sw_LBrace" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_RBrace" body1="head_1_slide" body2="sw_RBrace" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_Bkslash" body1="head_1_slide" body2="sw_Bkslash" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_PgDn" body1="head_1_slide" body2="sw_PgDn" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_Caps" body1="head_1_slide" body2="sw_Caps" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_A" body1="head_1_slide" body2="sw_A" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_S" body1="head_1_slide" body2="sw_S" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_D" body1="head_1_slide" body2="sw_D" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_F" body1="head_1_slide" body2="sw_F" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_G" body1="head_1_slide" body2="sw_G" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_H" body1="head_1_slide" body2="sw_H" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_J" body1="head_1_slide" body2="sw_J" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_K" body1="head_1_slide" body2="sw_K" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_L" body1="head_1_slide" body2="sw_L" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_Semicol" body1="head_1_slide" body2="sw_Semicol" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_Quote" body1="head_1_slide" body2="sw_Quote" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_Enter" body1="head_1_slide" body2="sw_Enter" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_Home" body1="head_1_slide" body2="sw_Home" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_LShift" body1="head_1_slide" body2="sw_LShift" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_Z" body1="head_1_slide" body2="sw_Z" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_X" body1="head_1_slide" body2="sw_X" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_C" body1="head_1_slide" body2="sw_C" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_V" body1="head_1_slide" body2="sw_V" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_B" body1="head_1_slide" body2="sw_B" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_N" body1="head_1_slide" body2="sw_N" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_M" body1="head_1_slide" body2="sw_M" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_Comma" body1="head_1_slide" body2="sw_Comma" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_Period" body1="head_1_slide" body2="sw_Period" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_Slash" body1="head_1_slide" body2="sw_Slash" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_RShift" body1="head_1_slide" body2="sw_RShift" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_Up" body1="head_1_slide" body2="sw_Up" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_End" body1="head_1_slide" body2="sw_End" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_LCtrl" body1="head_1_slide" body2="sw_LCtrl" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_LWin" body1="head_1_slide" body2="sw_LWin" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_LAlt" body1="head_1_slide" body2="sw_LAlt" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_Space" body1="head_1_slide" body2="sw_Space" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_RAlt" body1="head_1_slide" body2="sw_RAlt" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_Fn" body1="head_1_slide" body2="sw_Fn" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_Left" body1="head_1_slide" body2="sw_Left" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_Down" body1="head_1_slide" body2="sw_Down" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_Right" body1="head_1_slide" body2="sw_Right" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick1_End2" body1="head_1_slide" body2="sw_End2" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <!-- pick2: head_2_slide carries switch -->
+    <weld name="pick2_Esc" body1="head_2_slide" body2="sw_Esc" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_F1" body1="head_2_slide" body2="sw_F1" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_F2" body1="head_2_slide" body2="sw_F2" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_F3" body1="head_2_slide" body2="sw_F3" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_F4" body1="head_2_slide" body2="sw_F4" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_F5" body1="head_2_slide" body2="sw_F5" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_F6" body1="head_2_slide" body2="sw_F6" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_F7" body1="head_2_slide" body2="sw_F7" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_F8" body1="head_2_slide" body2="sw_F8" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_F9" body1="head_2_slide" body2="sw_F9" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_F10" body1="head_2_slide" body2="sw_F10" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_F11" body1="head_2_slide" body2="sw_F11" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_F12" body1="head_2_slide" body2="sw_F12" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_PrtSc" body1="head_2_slide" body2="sw_PrtSc" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_Pause" body1="head_2_slide" body2="sw_Pause" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_Del" body1="head_2_slide" body2="sw_Del" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_Grave" body1="head_2_slide" body2="sw_Grave" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_1" body1="head_2_slide" body2="sw_1" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_2" body1="head_2_slide" body2="sw_2" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_3" body1="head_2_slide" body2="sw_3" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_4" body1="head_2_slide" body2="sw_4" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_5" body1="head_2_slide" body2="sw_5" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_6" body1="head_2_slide" body2="sw_6" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_7" body1="head_2_slide" body2="sw_7" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_8" body1="head_2_slide" body2="sw_8" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_9" body1="head_2_slide" body2="sw_9" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_0" body1="head_2_slide" body2="sw_0" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_Minus" body1="head_2_slide" body2="sw_Minus" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_Equal" body1="head_2_slide" body2="sw_Equal" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_Bksp" body1="head_2_slide" body2="sw_Bksp" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_PgUp" body1="head_2_slide" body2="sw_PgUp" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_Tab" body1="head_2_slide" body2="sw_Tab" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_Q" body1="head_2_slide" body2="sw_Q" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_W" body1="head_2_slide" body2="sw_W" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_E" body1="head_2_slide" body2="sw_E" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_R" body1="head_2_slide" body2="sw_R" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_T" body1="head_2_slide" body2="sw_T" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_Y" body1="head_2_slide" body2="sw_Y" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_U" body1="head_2_slide" body2="sw_U" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_I" body1="head_2_slide" body2="sw_I" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_O" body1="head_2_slide" body2="sw_O" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_P" body1="head_2_slide" body2="sw_P" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_LBrace" body1="head_2_slide" body2="sw_LBrace" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_RBrace" body1="head_2_slide" body2="sw_RBrace" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_Bkslash" body1="head_2_slide" body2="sw_Bkslash" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_PgDn" body1="head_2_slide" body2="sw_PgDn" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_Caps" body1="head_2_slide" body2="sw_Caps" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_A" body1="head_2_slide" body2="sw_A" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_S" body1="head_2_slide" body2="sw_S" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_D" body1="head_2_slide" body2="sw_D" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_F" body1="head_2_slide" body2="sw_F" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_G" body1="head_2_slide" body2="sw_G" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_H" body1="head_2_slide" body2="sw_H" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_J" body1="head_2_slide" body2="sw_J" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_K" body1="head_2_slide" body2="sw_K" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_L" body1="head_2_slide" body2="sw_L" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_Semicol" body1="head_2_slide" body2="sw_Semicol" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_Quote" body1="head_2_slide" body2="sw_Quote" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_Enter" body1="head_2_slide" body2="sw_Enter" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_Home" body1="head_2_slide" body2="sw_Home" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_LShift" body1="head_2_slide" body2="sw_LShift" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_Z" body1="head_2_slide" body2="sw_Z" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_X" body1="head_2_slide" body2="sw_X" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_C" body1="head_2_slide" body2="sw_C" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_V" body1="head_2_slide" body2="sw_V" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_B" body1="head_2_slide" body2="sw_B" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_N" body1="head_2_slide" body2="sw_N" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_M" body1="head_2_slide" body2="sw_M" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_Comma" body1="head_2_slide" body2="sw_Comma" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_Period" body1="head_2_slide" body2="sw_Period" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_Slash" body1="head_2_slide" body2="sw_Slash" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_RShift" body1="head_2_slide" body2="sw_RShift" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_Up" body1="head_2_slide" body2="sw_Up" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_End" body1="head_2_slide" body2="sw_End" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_LCtrl" body1="head_2_slide" body2="sw_LCtrl" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_LWin" body1="head_2_slide" body2="sw_LWin" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_LAlt" body1="head_2_slide" body2="sw_LAlt" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_Space" body1="head_2_slide" body2="sw_Space" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_RAlt" body1="head_2_slide" body2="sw_RAlt" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_Fn" body1="head_2_slide" body2="sw_Fn" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_Left" body1="head_2_slide" body2="sw_Left" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_Down" body1="head_2_slide" body2="sw_Down" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_Right" body1="head_2_slide" body2="sw_Right" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="pick2_End2" body1="head_2_slide" body2="sw_End2" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <!-- ins: alu_plate holds switch permanently -->
+    <weld name="ins_Esc" body1="alu_plate" body2="sw_Esc" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_F1" body1="alu_plate" body2="sw_F1" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_F2" body1="alu_plate" body2="sw_F2" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_F3" body1="alu_plate" body2="sw_F3" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_F4" body1="alu_plate" body2="sw_F4" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_F5" body1="alu_plate" body2="sw_F5" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_F6" body1="alu_plate" body2="sw_F6" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_F7" body1="alu_plate" body2="sw_F7" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_F8" body1="alu_plate" body2="sw_F8" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_F9" body1="alu_plate" body2="sw_F9" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_F10" body1="alu_plate" body2="sw_F10" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_F11" body1="alu_plate" body2="sw_F11" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_F12" body1="alu_plate" body2="sw_F12" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_PrtSc" body1="alu_plate" body2="sw_PrtSc" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_Pause" body1="alu_plate" body2="sw_Pause" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_Del" body1="alu_plate" body2="sw_Del" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_Grave" body1="alu_plate" body2="sw_Grave" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_1" body1="alu_plate" body2="sw_1" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_2" body1="alu_plate" body2="sw_2" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_3" body1="alu_plate" body2="sw_3" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_4" body1="alu_plate" body2="sw_4" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_5" body1="alu_plate" body2="sw_5" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_6" body1="alu_plate" body2="sw_6" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_7" body1="alu_plate" body2="sw_7" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_8" body1="alu_plate" body2="sw_8" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_9" body1="alu_plate" body2="sw_9" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_0" body1="alu_plate" body2="sw_0" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_Minus" body1="alu_plate" body2="sw_Minus" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_Equal" body1="alu_plate" body2="sw_Equal" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_Bksp" body1="alu_plate" body2="sw_Bksp" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_PgUp" body1="alu_plate" body2="sw_PgUp" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_Tab" body1="alu_plate" body2="sw_Tab" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_Q" body1="alu_plate" body2="sw_Q" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_W" body1="alu_plate" body2="sw_W" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_E" body1="alu_plate" body2="sw_E" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_R" body1="alu_plate" body2="sw_R" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_T" body1="alu_plate" body2="sw_T" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_Y" body1="alu_plate" body2="sw_Y" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_U" body1="alu_plate" body2="sw_U" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_I" body1="alu_plate" body2="sw_I" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_O" body1="alu_plate" body2="sw_O" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_P" body1="alu_plate" body2="sw_P" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_LBrace" body1="alu_plate" body2="sw_LBrace" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_RBrace" body1="alu_plate" body2="sw_RBrace" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_Bkslash" body1="alu_plate" body2="sw_Bkslash" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_PgDn" body1="alu_plate" body2="sw_PgDn" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_Caps" body1="alu_plate" body2="sw_Caps" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_A" body1="alu_plate" body2="sw_A" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_S" body1="alu_plate" body2="sw_S" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_D" body1="alu_plate" body2="sw_D" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_F" body1="alu_plate" body2="sw_F" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_G" body1="alu_plate" body2="sw_G" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_H" body1="alu_plate" body2="sw_H" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_J" body1="alu_plate" body2="sw_J" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_K" body1="alu_plate" body2="sw_K" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_L" body1="alu_plate" body2="sw_L" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_Semicol" body1="alu_plate" body2="sw_Semicol" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_Quote" body1="alu_plate" body2="sw_Quote" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_Enter" body1="alu_plate" body2="sw_Enter" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_Home" body1="alu_plate" body2="sw_Home" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_LShift" body1="alu_plate" body2="sw_LShift" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_Z" body1="alu_plate" body2="sw_Z" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_X" body1="alu_plate" body2="sw_X" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_C" body1="alu_plate" body2="sw_C" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_V" body1="alu_plate" body2="sw_V" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_B" body1="alu_plate" body2="sw_B" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_N" body1="alu_plate" body2="sw_N" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_M" body1="alu_plate" body2="sw_M" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_Comma" body1="alu_plate" body2="sw_Comma" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_Period" body1="alu_plate" body2="sw_Period" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_Slash" body1="alu_plate" body2="sw_Slash" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_RShift" body1="alu_plate" body2="sw_RShift" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_Up" body1="alu_plate" body2="sw_Up" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_End" body1="alu_plate" body2="sw_End" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_LCtrl" body1="alu_plate" body2="sw_LCtrl" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_LWin" body1="alu_plate" body2="sw_LWin" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_LAlt" body1="alu_plate" body2="sw_LAlt" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_Space" body1="alu_plate" body2="sw_Space" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_RAlt" body1="alu_plate" body2="sw_RAlt" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_Fn" body1="alu_plate" body2="sw_Fn" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_Left" body1="alu_plate" body2="sw_Left" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_Down" body1="alu_plate" body2="sw_Down" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_Right" body1="alu_plate" body2="sw_Right" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="ins_End2" body1="alu_plate" body2="sw_End2" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+  </equality>
 </mujoco>
