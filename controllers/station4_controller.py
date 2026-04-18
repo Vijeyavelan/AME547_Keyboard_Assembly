@@ -34,7 +34,7 @@ SWITCH_TOP_OFFSET = 0.012   # kc_* site is 12mm above plate site
 CARRY_Z_OFFSET    = -0.0036 # keycap center above tip (half of 7.23mm height)
 
 TRAY_WORLD_Y  = 0.300
-TRAY_WORLD_Z  = 0.8261      # keycap bottom face at tray surface
+TRAY_WORLD_Z  = 0.8411      # keycap bottom face at tray surface
 PITCH         = 0.01905     # 19.05mm slot pitch
 
 # 84 keycaps — same layout as switches
@@ -76,6 +76,30 @@ N = len(KEYCAPS)
 KEYCAP_MAP  = {k: (sx, sy) for k, sx, sy in KEYCAPS}
 KEYCAP_KEYS = [k for k, _, _ in KEYCAPS]
 
+# Keycap widths in metres (measured from STL)
+KEYCAP_WIDTHS = {
+    "Esc":0.018,"F1":0.018,"F2":0.018,"F3":0.018,"F4":0.018,
+    "F5":0.018,"F6":0.018,"F7":0.018,"F8":0.018,"F9":0.018,
+    "F10":0.018,"F11":0.018,"F12":0.018,"PrtSc":0.018,
+    "Pause":0.018,"Del":0.018,"Grave":0.018,"1":0.018,"2":0.018,
+    "3":0.018,"4":0.018,"5":0.018,"6":0.018,"7":0.018,"8":0.018,
+    "9":0.018,"0":0.018,"Minus":0.018,"Equal":0.018,
+    "Bksp":0.0370,"PgUp":0.018,"Tab":0.0275,"Q":0.018,"W":0.018,
+    "E":0.018,"R":0.018,"T":0.018,"Y":0.018,"U":0.018,"I":0.018,
+    "O":0.018,"P":0.018,"LBrace":0.018,"RBrace":0.018,
+    "Bkslash":0.0275,"PgDn":0.018,"Caps":0.0323,"A":0.018,
+    "S":0.018,"D":0.018,"F":0.018,"G":0.018,"H":0.018,"J":0.018,
+    "K":0.018,"L":0.018,"Semicol":0.018,"Quote":0.018,
+    "Enter":0.0418,"Home":0.018,"LShift":0.0418,"Z":0.018,
+    "X":0.018,"C":0.018,"V":0.018,"B":0.018,"N":0.018,"M":0.018,
+    "Comma":0.018,"Period":0.018,"Slash":0.018,
+    "RShift":0.0323,"Up":0.018,"End":0.018,
+    "LCtrl":0.0228,"LWin":0.0228,"LAlt":0.0228,
+    "Space":0.1180,"RAlt":0.0228,"Fn":0.0228,
+    "Left":0.018,"Down":0.018,"Right":0.018,"End2":0.018,
+}
+
+GAP = 0.002  # 2mm gap between keycaps in tray
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -211,11 +235,10 @@ def settle(m, d, v, steps, tbl, inserted_map, tray_state, carried_map):
         sim_step(m, d, v, tbl, inserted_map, tray_state, carried_map)
 
 
-def tray_advance_step(d, tray_state, tray_x, advance_start_x, step, total_steps):
-    """Advance all tray keycaps by one PITCH over total_steps steps."""
+def tray_advance_step(d, tray_state, tray_x, advance_start_x, step, total_steps, advance_amount):
     t = smoothstep((step + 1) / total_steps)
     for key, (qa, da) in tray_state.items():
-        new_x = advance_start_x[key] + PITCH * t
+        new_x = advance_start_x[key] + advance_amount * t
         tray_x[key] = new_x
         d.qpos[qa+0] = new_x
 
@@ -299,6 +322,7 @@ def do_pick_and_insert(m, d, v,
     if targets:
         drive_to(m, d, v, targets, HEAD_Z_STEPS, "", tbl, inserted_map, tray_state, carried_map)
 
+# Add this before the rotation loop:
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 
@@ -329,10 +353,14 @@ def main():
     print("Resolving tray keycap joints...")
     tray_state = {}
     tray_x     = {}
-    for i, key in enumerate(KEYCAP_KEYS):
+
+    cursor = 0.0
+    for key in KEYCAP_KEYS:
         qa, da = get_body_jnt(m, f"kc_{key}")
         tray_state[key] = (qa, da)
-        tray_x[key]     = -i * PITCH
+        
+        tray_x[key] = -(cursor + KEYCAP_WIDTHS[key] / 2)
+        cursor += KEYCAP_WIDTHS[key] + GAP
     print(f"  {len(tray_state)} keycaps in tray ✓")
 
     # Place all keycaps at tray positions
@@ -432,6 +460,14 @@ def main():
             print(f"  Rotate → {np.degrees(col_angle):.0f}°  "
                   f"XY → ({ins_xc*1000:.1f}, {ins_yc*1000:.1f}) mm  "
                   f"Belt advance +{PITCH*1000:.2f} mm")
+            
+            if pick_key is not None and kc_queue_idx > 0:
+                prev_key = KEYCAP_KEYS[kc_queue_idx - 1]
+                advance_amount = (KEYCAP_WIDTHS[prev_key] / 2 +
+                                GAP +
+                                KEYCAP_WIDTHS[pick_key] / 2)
+            else:
+                advance_amount = PITCH
 
             col_start = d.ctrl[col_aid]
             x_start   = d.ctrl[x_aid_v]
@@ -449,9 +485,10 @@ def main():
                     d.ctrl[x_aid_v] = x_start + (ins_xc - x_start) * tx
                     d.ctrl[y_aid_v] = y_start + (ins_yc - y_start) * tx
 
+                    
                 if step < ADVANCE_STEPS and pick_key is not None:
                     tray_advance_step(d, tray_state, tray_x,
-                                      advance_start_x, step, ADVANCE_STEPS)
+                                      advance_start_x, step, ADVANCE_STEPS, advance_amount)
                 ss()
 
             stl(SETTLE_STEPS)

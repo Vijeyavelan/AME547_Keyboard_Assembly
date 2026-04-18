@@ -460,7 +460,7 @@
 
     <body name="tray_feeder" pos="0 0.330 0">
       <geom name="feeder_leg_FL" type="box" size="0.015 0.015 0.4056"
-            pos="-0.285 -0.030 0.4056" material="steel_dark" mass="2.0"
+            pos="-0.958 -0.030 0.4056" material="steel_dark" mass="2.0"
             contype="0" conaffinity="0"/>
       <geom name="feeder_leg_FR" type="box" size="0.015 0.015 0.4056"
             pos="0.010 -0.030 0.4056"  material="steel_dark" mass="2.0"
@@ -468,22 +468,22 @@
       <geom name="feeder_base" type="box" size="0.155 0.040 0.008"
             pos="-0.143 0 0.008" material="steel_dark" mass="2.0"
             contype="0" conaffinity="0"/>
-      <geom name="tray_shelf" type="box" size="0.800 0.035 0.005"
-            pos="-0.800 -0.025 0.8161" material="steel_mid" mass="1.0"
+      <geom name="tray_shelf" type="box" size="0.9581 0.035 0.005"
+            pos="-0.800 -0.025 0.8311" material="steel_mid" mass="1.0"
             contype="0" conaffinity="0"/>
-      <geom name="tray_body" type="box" size="0.800 0.015 0.004"
-            pos="-0.800 -0.030 0.8221" material="tray_mat" mass="6.0"
+      <geom name="tray_body" type="box" size="0.9581 0.015 0.004"
+            pos="-0.800 -0.030 0.8371" material="tray_mat" mass="6.0"
             contype="0" conaffinity="0"/>
-      <geom name="tray_rail_F" type="box" size="0.800 0.002 0.006"
-            pos="-0.800 -0.043 0.8291" material="steel_mid" mass="0.8"
+      <geom name="tray_rail_F" type="box" size="0.9581 0.002 0.006"
+            pos="-0.800 -0.043 0.8441" material="steel_mid" mass="0.8"
             contype="0" conaffinity="0"/>
-      <geom name="tray_rail_R" type="box" size="0.800 0.002 0.006"
-            pos="-0.800 -0.017 0.8291" material="steel_mid" mass="0.8"
+      <geom name="tray_rail_R" type="box" size="0.9581 0.002 0.006"
+            pos="-0.800 -0.017 0.8441" material="steel_mid" mass="0.8"
             contype="0" conaffinity="0"/>
       <geom name="tray_rail_back" type="box" size="0.002 0.015 0.008"
-            pos="-1.614 -0.030 0.8281" material="steel_mid" mass="0.1"
+            pos="-1.614 -0.030 0.8431" material="steel_mid" mass="0.1"
             contype="0" conaffinity="0"/>
-      <site name="pick_position" pos="0 -0.030 0.8261"
+      <site name="pick_position" pos="0 -0.030 0.8411"
             size="0.006" rgba="0 1 0 0.9"/>
     </body>
 
