@@ -37,7 +37,9 @@ import mujoco
 import mujoco.viewer
 import numpy as np
 import time
-
+import sys, os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from cycle_timer import CycleTimer
 MODEL_PATH = "models/stations/station3.xml"
 
 TIMESTEP      = 0.002
@@ -437,7 +439,8 @@ def main():
 
         insert_head = 1
         cycle = 0
-
+        timer = CycleTimer("Station 3")
+        timer.start(d)
         # ── MAIN LOOP ────────────────────────────────────────────────────────
         while inserted < N:
             pick_head = 1 - insert_head
@@ -496,7 +499,7 @@ def main():
 
             stl(SETTLE_STEPS)
             print(f"  ✓ rotation + XY + belt advance done")
-
+            timer.mark(d, f"C{cycle:02d} rotate+XY+belt ({ins_key or 'none'}→{pick_key or 'none'})")
             # ── Simultaneous insert + pick ────────────────────────────────────
             if pick_key is not None:
                 px = tray_x.get(pick_key, None)
@@ -509,7 +512,7 @@ def main():
                                tbl=tbl, inserted_map=inserted_map,
                                tray_state=tray_state, tray_x=tray_x,
                                carried_map=carried_map)
-
+            timer.mark(d, f"C{cycle:02d} insert+pick ({ins_key or 'none'}+{pick_key or 'none'})")
             if has_ins:
                 head_carry[insert_head] = None
                 inserted += 1
@@ -527,7 +530,8 @@ def main():
         print("=" * 60)
         print(f"[DONE] All {inserted}/{N} switches inserted.")
         print("=" * 60)
-
+        timer.finish(d)
+        timer.print_report(ref_key="switch_fast")
         d.ctrl[x_aid_v] = 0.0
         d.ctrl[y_aid_v] = 0.0
         d.ctrl[col_aid] = 0.0

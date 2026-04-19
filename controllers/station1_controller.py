@@ -12,7 +12,9 @@ Run from repo root:
 import mujoco
 import mujoco.viewer
 import numpy as np
-
+import sys, os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from cycle_timer import CycleTimer
 MODEL_PATH   = "models/stations/station1.xml"
 SETTLE_TOL   = 0.015
 SETTLE_STEPS = 50
@@ -281,7 +283,8 @@ def main():
         v.cam.azimuth   = 150
 
         move_to(m, d, v, kf[kf_idx["home"]], "home")
-
+        timer = CycleTimer("Station 1")
+        timer.start(d)
         for step_idx, part in enumerate(parts_rt):
             fj_adr = part["fj_adr"]; fv_adr = part["fv_adr"]
             print()
@@ -371,13 +374,16 @@ def main():
                                 retract_ctrl=kf[kf_idx["place_ready"]],
                                 label=part["name"])
             print(f"  {part['name']} final: {np.round(d.qpos[fj_adr:fj_adr+3], 4)}")
-
+            timer.mark(d, f"Place & release — {part['name']}")
         print()
         print("[DONE] Returning home...")
         move_to(m, d, v, kf[kf_idx["home"]], "home")
         print("=" * 60)
         print("All 5 parts placed. Holding viewer — close to exit.")
         print("=" * 60)
+
+        timer.finish(d)
+        timer.print_report(ref_key="pick_place_fast")
 
         while v.is_running():
             mujoco.mj_step(m, d); v.sync()
