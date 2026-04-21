@@ -82,6 +82,13 @@
     <material name="mat_conn_dark"  rgba="0.15 0.15 0.15 1" specular="0.4"  shininess="0.5"/>
     <material name="mat_pe_foam"    rgba="0.18 0.18 0.18 1" specular="0.05" shininess="0.1"/>
     <material name="mat_alu_silver" rgba="0.75 0.75 0.78 1" specular="0.8"  shininess="0.7"/>
+    <!-- Tool dock and end-effector materials -->
+    <material name="mat_dock_rack"   rgba="0.35 0.35 0.38 1"/>
+    <material name="mat_pin_grip"    rgba="0.15 0.15 0.15 1"/>
+    <material name="mat_screwdriver" rgba="1.0 0.45 0.0 1"/>
+    <material name="mat_screw_steel" rgba="0.75 0.75 0.78 1" specular="0.9" shininess="0.8"/>
+    <material name="mat_screw_box"   rgba="0.20 0.20 0.22 1"/>
+    <material name="mat_holder_cup"  rgba="0.50 0.50 0.52 1"/>
     <!-- UR5e materials -->
     <material class="ur5e" name="black"     rgba="0.033 0.033 0.033 1"/>
     <material class="ur5e" name="jointgray" rgba="0.278 0.278 0.278 1"/>
@@ -475,6 +482,50 @@
                       <!-- Suction cup tip site: used for IK target -->
                       <site name="gripper_tip" pos="0 0.056 0" size="0.003"
                             rgba="1 1 0 0.8"/>
+
+                      <!-- ── PIN GRIPPER (fixed child, toggled visible/invisible) ── -->
+                      <body name="pin_gripper" pos="0 0 0">
+                        <!-- Flat body block -->
+                        <geom name="pin_body_blk" type="box" size="0.085 0.018 0.018"
+                              pos="0 0.030 0" euler="0 0 0"
+                              rgba="0.15 0.15 0.15 0" contype="0" conaffinity="0"/>
+                        <!-- Left pin -->
+                        <geom name="pin_left" type="cylinder" size="0.002 0.015"
+                              pos="-0.0762 0.051 0" euler="1.5708 0 0"
+                              rgba="0.7 0.7 0.7 0" contype="0" conaffinity="0"/>
+                        <!-- Right pin -->
+                        <geom name="pin_right" type="cylinder" size="0.002 0.015"
+                              pos=" 0.0762 0.051 0" euler="1.5708 0 0"
+                              rgba="0.7 0.7 0.7 0" contype="0" conaffinity="0"/>
+                        <site name="pin_gripper_tip" pos="0 0.056 0" size="0.003"
+                              rgba="0 0 0 0"/>
+                      </body>
+
+                      <!-- ── SCREWDRIVER (fixed child, toggled visible/invisible) ── -->
+                      <body name="screwdriver" pos="0 0 0">
+                        <!-- Mounting flange (same Y convention as vacuum gripper) -->
+                        <geom name="sd_flange" type="cylinder" size="0.030 0.005"
+                              pos="0 0.005 0" euler="1.5708 0 0"
+                              rgba="0.278 0.278 0.278 0" contype="0" conaffinity="0"/>
+                        <!-- Spring coil -->
+                        <geom name="sd_spring" type="cylinder" size="0.008 0.008"
+                              pos="0 0.018 0" euler="1.5708 0 0"
+                              rgba="0.7 0.7 0.7 0" contype="0" conaffinity="0"/>
+                        <!-- Orange body -->
+                        <geom name="sd_body" type="cylinder" size="0.018 0.020"
+                              pos="0 0.046 0" euler="1.5708 0 0"
+                              rgba="1.0 0.45 0.0 0" contype="0" conaffinity="0"/>
+                        <!-- Steel shaft -->
+                        <geom name="sd_shaft" type="cylinder" size="0.005 0.012"
+                              pos="0 0.078 0" euler="1.5708 0 0"
+                              rgba="0.8 0.8 0.82 0" contype="0" conaffinity="0"/>
+                        <!-- Hex bit tip -->
+                        <geom name="sd_bit" type="cylinder" size="0.003 0.006"
+                              pos="0 0.096 0" euler="1.5708 0 0"
+                              rgba="0.5 0.5 0.5 0" contype="0" conaffinity="0"/>
+                        <site name="screwdriver_tip" pos="0 0.102 0" size="0.003"
+                              rgba="0 0 0 0"/>
+                      </body>
                     </body>
                   </body>
                 </body>
@@ -655,6 +706,153 @@
 
     <!-- Pick point: world pos gripper_tip targets for every pick -->
 
+    <!-- ═══════════════════════════════════════════════════════════════
+         TOOL DOCK — left side of robot, holds pin gripper + screwdriver
+         Dock body at [-0.38, -0.15, 0.800]
+         Three cup holders along Y axis, spaced 90mm apart
+         ═══════════════════════════════════════════════════════════════ -->
+    <body name="tool_dock" pos="-0.38 -0.15 0.800">
+      <!-- Base plate -->
+      <geom name="dock_base" type="box" size="0.060 0.160 0.004"
+            pos="0 0 0" material="mat_dock_rack"
+            contype="1" conaffinity="1" mass="2.0"/>
+      <!-- Vertical post -->
+      <geom name="dock_post" type="box" size="0.012 0.012 0.035"
+            pos="0 0 0.039" material="mat_dock_rack"
+            contype="1" conaffinity="1" mass="0.5"/>
+      <!-- Horizontal arm -->
+      <geom name="dock_arm" type="box" size="0.012 0.150 0.010"
+            pos="0 0 0.074" material="mat_dock_rack"
+            contype="1" conaffinity="1" mass="0.3"/>
+      <!-- Cup 1: vacuum gripper (empty at start — robot carries it) -->
+      <geom name="dock_cup_vacuum" type="cylinder" size="0.022 0.008"
+            pos="0 -0.090 0.082" material="mat_holder_cup"
+            contype="0" conaffinity="0"/>
+      <site name="dock_vacuum_W2" type="sphere" size="0.003"
+            pos="0 -0.090 0.090" rgba="0 0.8 0 0.8"/>
+      <!-- Cup 2: pin gripper -->
+      <geom name="dock_cup_pin" type="cylinder" size="0.022 0.008"
+            pos="0 0.000 0.082" material="mat_holder_cup"
+            contype="0" conaffinity="0"/>
+      <site name="dock_pin_W2" type="sphere" size="0.003"
+            pos="0 0.000 0.090" rgba="0 0.8 0 0.8"/>
+      <!-- Cup 3: screwdriver -->
+      <geom name="dock_cup_screw" type="cylinder" size="0.022 0.008"
+            pos="0 0.090 0.082" material="mat_holder_cup"
+            contype="0" conaffinity="0"/>
+      <site name="dock_screw_W2" type="sphere" size="0.003"
+            pos="0 0.090 0.090" rgba="0 0.8 0 0.8"/>
+
+      <!-- Static visual: pin gripper parked in cup 2 (hidden when robot holds it) -->
+      <body name="dock_pin_visual" pos="0 0.000 0.090">
+        <geom name="dpv_body" type="box" size="0.085 0.018 0.018"
+              pos="0 0 0.010" rgba="0.15 0.15 0.15 1" contype="0" conaffinity="0"/>
+        <geom name="dpv_pin_l" type="cylinder" size="0.002 0.015"
+              pos="-0.0762 0 0.031" euler="1.5708 0 0"
+              rgba="0.7 0.7 0.7 1" contype="0" conaffinity="0"/>
+        <geom name="dpv_pin_r" type="cylinder" size="0.002 0.015"
+              pos=" 0.0762 0 0.031" euler="1.5708 0 0"
+              rgba="0.7 0.7 0.7 1" contype="0" conaffinity="0"/>
+      </body>
+
+      <!-- Static visual: screwdriver parked in cup 3 -->
+      <body name="dock_sd_visual" pos="0 0.090 0.090">
+        <geom name="dsv_flange" type="cylinder" size="0.030 0.005"
+              pos="0 0 0.005" rgba="0.278 0.278 0.278 1" contype="0" conaffinity="0"/>
+        <geom name="dsv_body"   type="cylinder" size="0.018 0.020"
+              pos="0 0 0.030" rgba="1.0 0.45 0.0 1" contype="0" conaffinity="0"/>
+        <geom name="dsv_spring" type="cylinder" size="0.008 0.008"
+              pos="0 0 0.018" rgba="0.7 0.7 0.7 1" contype="0" conaffinity="0"/>
+        <geom name="dsv_shaft"  type="cylinder" size="0.005 0.012"
+              pos="0 0 0.058" rgba="0.8 0.8 0.82 1" contype="0" conaffinity="0"/>
+        <geom name="dsv_bit"    type="cylinder" size="0.003 0.006"
+              pos="0 0 0.076" rgba="0.5 0.5 0.5 1" contype="0" conaffinity="0"/>
+      </body>
+    </body>
+<!-- ═══════════════════════════════════════════════════════════════
+         SCREW BOX — right side of table, holds 4 screws in 2×2 grid
+         Box at [0.28, -0.18, 0.800] (on table surface)
+         ═══════════════════════════════════════════════════════════════ -->
+    <body name="screw_box" pos="0.28 -0.18 0.800">
+      <!-- Floor -->
+      <geom name="sbox_floor" type="box" size="0.033 0.033 0.003"
+            pos="0 0 0.003" material="mat_screw_box"
+            contype="1" conaffinity="1" mass="0.2"/>
+      <!-- Four walls -->
+      <geom name="sbox_wall_front" type="box" size="0.033 0.003 0.010"
+            pos="0 -0.033 0.010" material="mat_screw_box"
+            contype="0" conaffinity="0"/>
+      <geom name="sbox_wall_rear"  type="box" size="0.033 0.003 0.010"
+            pos="0  0.033 0.010" material="mat_screw_box"
+            contype="0" conaffinity="0"/>
+      <geom name="sbox_wall_left"  type="box" size="0.003 0.033 0.010"
+            pos="-0.033 0 0.010" material="mat_screw_box"
+            contype="0" conaffinity="0"/>
+      <geom name="sbox_wall_right" type="box" size="0.003 0.033 0.010"
+            pos=" 0.033 0 0.010" material="mat_screw_box"
+            contype="0" conaffinity="0"/>
+      <!-- Pick site: where screwdriver tip aligns to pick -->
+      <site name="screw_pick_site" type="sphere" size="0.003"
+            pos="0 0 0.020" rgba="1 0.5 0 0.8"/>
+    </body>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         4 SCREWS — M2.5×6mm, sit in screw box at start
+         Freejoints — teleported to screwdriver tip when picked,
+         then to boss position when installed
+         ═══════════════════════════════════════════════════════════════ -->
+    <body name="screw_FL" pos="0.27 -0.19 0.808">
+      <freejoint name="screw_FL_jnt"/>
+      <inertial pos="0 0 0.006" mass="0.0005" diaginertia="1.0e-9 1.0e-9 5.0e-10"/>
+      <geom name="screw_FL_shaft" type="cylinder" size="0.0015 0.005"
+            pos="0 0 0.005" material="mat_screw_steel"
+            contype="0" conaffinity="0"/>
+      <geom name="screw_FL_head" type="cylinder" size="0.003 0.001"
+            pos="0 0 0.011" material="mat_screw_steel"
+            contype="0" conaffinity="0"/>
+      <site name="screw_FL_tip"    type="sphere" size="0.001" pos="0 0 0"     rgba="1 0.2 0.2 0.8"/>
+      <site name="screw_FL_engage" type="sphere" size="0.001" pos="0 0 0.012" rgba="0 0.6 0.8 0.8"/>
+    </body>
+
+    <body name="screw_FR" pos="0.29 -0.19 0.808">
+      <freejoint name="screw_FR_jnt"/>
+      <inertial pos="0 0 0.006" mass="0.0005" diaginertia="1.0e-9 1.0e-9 5.0e-10"/>
+      <geom name="screw_FR_shaft" type="cylinder" size="0.0015 0.005"
+            pos="0 0 0.005" material="mat_screw_steel"
+            contype="0" conaffinity="0"/>
+      <geom name="screw_FR_head" type="cylinder" size="0.003 0.001"
+            pos="0 0 0.011" material="mat_screw_steel"
+            contype="0" conaffinity="0"/>
+      <site name="screw_FR_tip"    type="sphere" size="0.001" pos="0 0 0"     rgba="1 0.2 0.2 0.8"/>
+      <site name="screw_FR_engage" type="sphere" size="0.001" pos="0 0 0.012" rgba="0 0.6 0.8 0.8"/>
+    </body>
+
+    <body name="screw_RL" pos="0.27 -0.17 0.808">
+      <freejoint name="screw_RL_jnt"/>
+      <inertial pos="0 0 0.006" mass="0.0005" diaginertia="1.0e-9 1.0e-9 5.0e-10"/>
+      <geom name="screw_RL_shaft" type="cylinder" size="0.0015 0.005"
+            pos="0 0 0.005" material="mat_screw_steel"
+            contype="0" conaffinity="0"/>
+      <geom name="screw_RL_head" type="cylinder" size="0.003 0.001"
+            pos="0 0 0.011" material="mat_screw_steel"
+            contype="0" conaffinity="0"/>
+      <site name="screw_RL_tip"    type="sphere" size="0.001" pos="0 0 0"     rgba="1 0.2 0.2 0.8"/>
+      <site name="screw_RL_engage" type="sphere" size="0.001" pos="0 0 0.012" rgba="0 0.6 0.8 0.8"/>
+    </body>
+
+    <body name="screw_RR" pos="0.29 -0.17 0.808">
+      <freejoint name="screw_RR_jnt"/>
+      <inertial pos="0 0 0.006" mass="0.0005" diaginertia="1.0e-9 1.0e-9 5.0e-10"/>
+      <geom name="screw_RR_shaft" type="cylinder" size="0.0015 0.005"
+            pos="0 0 0.005" material="mat_screw_steel"
+            contype="0" conaffinity="0"/>
+      <geom name="screw_RR_head" type="cylinder" size="0.003 0.001"
+            pos="0 0 0.011" material="mat_screw_steel"
+            contype="0" conaffinity="0"/>
+      <site name="screw_RR_tip"    type="sphere" size="0.001" pos="0 0 0"     rgba="1 0.2 0.2 0.8"/>
+      <site name="screw_RR_engage" type="sphere" size="0.001" pos="0 0 0.012" rgba="0 0.6 0.8 0.8"/>
+    </body>
+
     <!-- Cameras -->
     <camera name="station1_overview"
             pos="1.2 -1.5 1.8"
@@ -677,39 +875,39 @@
   <keyframe>
 
     <key name="home"
-         qpos="-1.5708 -1.5708 1.5708 -1.5708 -1.5708 0  0.00 0.28 0.82575 1 0 0 0  -0.43 0.28 0.828 1 0 0 0  -0.68 0.28 0.8258 1 0 0 0  -1.04 0.28 0.8255 1 0 0 0  -1.40 0.28 0.82575 1 0 0 0"
+         qpos="-1.5708 -1.5708 1.5708 -1.5708 -1.5708 0  0.00 0.28 0.82575 1 0 0 0  -0.43 0.28 0.828 1 0 0 0  -0.68 0.28 0.8258 1 0 0 0  -1.04 0.28 0.8255 1 0 0 0  -1.40 0.28 0.82575 1 0 0 0  0.270 -0.190 0.808 1 0 0 0  0.290 -0.190 0.808 1 0 0 0  0.270 -0.170 0.808 1 0 0 0  0.290 -0.170 0.808 1 0 0 0"
          ctrl="-1.5708 -1.5708 1.5708 -1.5708 -1.5708 0"/>
 
     <key name="pick_ready"
-         qpos="-1.6828 -1.2975 1.676 -2.2389 -1.5961 0.0  0.00 0.28 0.82575 1 0 0 0  -0.43 0.28 0.828 1 0 0 0  -0.68 0.28 0.8258 1 0 0 0  -1.04 0.28 0.8255 1 0 0 0  -1.40 0.28 0.82575 1 0 0 0"
+         qpos="-1.6828 -1.2975 1.676 -2.2389 -1.5961 0.0  0.00 0.28 0.82575 1 0 0 0  -0.43 0.28 0.828 1 0 0 0  -0.68 0.28 0.8258 1 0 0 0  -1.04 0.28 0.8255 1 0 0 0  -1.40 0.28 0.82575 1 0 0 0  0.270 -0.190 0.808 1 0 0 0  0.290 -0.190 0.808 1 0 0 0  0.270 -0.170 0.808 1 0 0 0  0.290 -0.170 0.808 1 0 0 0"
          ctrl="-1.6828 -1.2975 1.676 -2.2389 -1.5961 0.0"/>
 
     <key name="pick_down"
-         qpos="-1.684 -1.1889 1.7115 -2.2357 -1.5915 0.0  0.00 0.28 0.82575 1 0 0 0  -0.43 0.28 0.828 1 0 0 0  -0.68 0.28 0.8258 1 0 0 0  -1.04 0.28 0.8255 1 0 0 0  -1.40 0.28 0.82575 1 0 0 0"
+         qpos="-1.684 -1.1889 1.7115 -2.2357 -1.5915 0.0  0.00 0.28 0.82575 1 0 0 0  -0.43 0.28 0.828 1 0 0 0  -0.68 0.28 0.8258 1 0 0 0  -1.04 0.28 0.8255 1 0 0 0  -1.40 0.28 0.82575 1 0 0 0  0.270 -0.190 0.808 1 0 0 0  0.290 -0.190 0.808 1 0 0 0  0.270 -0.170 0.808 1 0 0 0  0.290 -0.170 0.808 1 0 0 0"
          ctrl="-1.684 -1.1889 1.7115 -2.2357 -1.5915 0.0"/>
 
     <key name="place_ready"
-         qpos="-1.7112 -1.8214 2.1684 -1.9483 -1.7086 0.0  0.00 0.28 0.82575 1 0 0 0  -0.43 0.28 0.828 1 0 0 0  -0.68 0.28 0.8258 1 0 0 0  -1.04 0.28 0.8255 1 0 0 0  -1.40 0.28 0.82575 1 0 0 0"
+         qpos="-1.7112 -1.8214 2.1684 -1.9483 -1.7086 0.0  0.00 0.28 0.82575 1 0 0 0  -0.43 0.28 0.828 1 0 0 0  -0.68 0.28 0.8258 1 0 0 0  -1.04 0.28 0.8255 1 0 0 0  -1.40 0.28 0.82575 1 0 0 0  0.270 -0.190 0.808 1 0 0 0  0.290 -0.190 0.808 1 0 0 0  0.270 -0.170 0.808 1 0 0 0  0.290 -0.170 0.808 1 0 0 0"
          ctrl="-1.7112 -1.8214 2.1684 -1.9483 -1.7086 0.0"/>
 
     <key name="place_1"
-         qpos="-1.7185 -1.6733 2.2192 -1.9653 -1.6912 0.0  0.00 0.28 0.82575 1 0 0 0  -0.43 0.28 0.828 1 0 0 0  -0.68 0.28 0.8258 1 0 0 0  -1.04 0.28 0.8255 1 0 0 0  -1.40 0.28 0.82575 1 0 0 0"
+         qpos="-1.7185 -1.6733 2.2192 -1.9653 -1.6912 0.0  0.00 0.28 0.82575 1 0 0 0  -0.43 0.28 0.828 1 0 0 0  -0.68 0.28 0.8258 1 0 0 0  -1.04 0.28 0.8255 1 0 0 0  -1.40 0.28 0.82575 1 0 0 0  0.270 -0.190 0.808 1 0 0 0  0.290 -0.190 0.808 1 0 0 0  0.270 -0.170 0.808 1 0 0 0  0.290 -0.170 0.808 1 0 0 0"
          ctrl="-1.7185 -1.6733 2.2192 -1.9653 -1.6912 0.0"/>
 
     <key name="place_2"
-         qpos="-1.7181 -1.6819 2.2172 -1.9639 -1.6922 0.0  0.00 0.28 0.82575 1 0 0 0  -0.43 0.28 0.828 1 0 0 0  -0.68 0.28 0.8258 1 0 0 0  -1.04 0.28 0.8255 1 0 0 0  -1.40 0.28 0.82575 1 0 0 0"
+         qpos="-1.7181 -1.6819 2.2172 -1.9639 -1.6922 0.0  0.00 0.28 0.82575 1 0 0 0  -0.43 0.28 0.828 1 0 0 0  -0.68 0.28 0.8258 1 0 0 0  -1.04 0.28 0.8255 1 0 0 0  -1.40 0.28 0.82575 1 0 0 0  0.270 -0.190 0.808 1 0 0 0  0.290 -0.190 0.808 1 0 0 0  0.270 -0.170 0.808 1 0 0 0  0.290 -0.170 0.808 1 0 0 0"
          ctrl="-1.7181 -1.6819 2.2172 -1.9639 -1.6922 0.0"/>
 
     <key name="place_3"
-         qpos="-1.7176 -1.6906 2.2151 -1.9625 -1.6932 0.0  0.00 0.28 0.82575 1 0 0 0  -0.43 0.28 0.828 1 0 0 0  -0.68 0.28 0.8258 1 0 0 0  -1.04 0.28 0.8255 1 0 0 0  -1.40 0.28 0.82575 1 0 0 0"
+         qpos="-1.7176 -1.6906 2.2151 -1.9625 -1.6932 0.0  0.00 0.28 0.82575 1 0 0 0  -0.43 0.28 0.828 1 0 0 0  -0.68 0.28 0.8258 1 0 0 0  -1.04 0.28 0.8255 1 0 0 0  -1.40 0.28 0.82575 1 0 0 0  0.270 -0.190 0.808 1 0 0 0  0.290 -0.190 0.808 1 0 0 0  0.270 -0.170 0.808 1 0 0 0  0.290 -0.170 0.808 1 0 0 0"
          ctrl="-1.7176 -1.6906 2.2151 -1.9625 -1.6932 0.0"/>
 
     <key name="place_4"
-         qpos="-1.7175 -1.6928 2.2145 -1.9622 -1.6935 0.0  0.00 0.28 0.82575 1 0 0 0  -0.43 0.28 0.828 1 0 0 0  -0.68 0.28 0.8258 1 0 0 0  -1.04 0.28 0.8255 1 0 0 0  -1.40 0.28 0.82575 1 0 0 0"
+         qpos="-1.7175 -1.6928 2.2145 -1.9622 -1.6935 0.0  0.00 0.28 0.82575 1 0 0 0  -0.43 0.28 0.828 1 0 0 0  -0.68 0.28 0.8258 1 0 0 0  -1.04 0.28 0.8255 1 0 0 0  -1.40 0.28 0.82575 1 0 0 0  0.270 -0.190 0.808 1 0 0 0  0.290 -0.190 0.808 1 0 0 0  0.270 -0.170 0.808 1 0 0 0  0.290 -0.170 0.808 1 0 0 0"
          ctrl="-1.7175 -1.6928 2.2145 -1.9622 -1.6935 0.0"/>
 
     <key name="place_5"
-         qpos="-1.7174 -1.695 2.214 -1.9618 -1.6938 0.0  0.00 0.28 0.82575 1 0 0 0  -0.43 0.28 0.828 1 0 0 0  -0.68 0.28 0.8258 1 0 0 0  -1.04 0.28 0.8255 1 0 0 0  -1.40 0.28 0.82575 1 0 0 0"
+         qpos="-1.7174 -1.695 2.214 -1.9618 -1.6938 0.0  0.00 0.28 0.82575 1 0 0 0  -0.43 0.28 0.828 1 0 0 0  -0.68 0.28 0.8258 1 0 0 0  -1.04 0.28 0.8255 1 0 0 0  -1.40 0.28 0.82575 1 0 0 0  0.270 -0.190 0.808 1 0 0 0  0.290 -0.190 0.808 1 0 0 0  0.270 -0.170 0.808 1 0 0 0  0.290 -0.170 0.808 1 0 0 0"
          ctrl="-1.7174 -1.695 2.214 -1.9618 -1.6938 0.0"/>
 
   </keyframe>
