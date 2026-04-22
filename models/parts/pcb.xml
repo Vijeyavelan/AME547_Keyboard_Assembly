@@ -5,17 +5,23 @@
 
     Reference: Keychron K2 V3
 
-    Dimensions:
-      313mm × 107mm × 1.6mm (standard FR4)
-      Wider than original 305mm to incorporate FR/RR screw boss positions
-      Half-extents: 0.1565, 0.0535, 0.0008
+    ── Resized to match updated bottom_case.xml (new plate 304.8×114.3mm) ──
 
-      Case interior: 319×109mm (half: 0.1595, 0.0545)
-      PCB clearance from case walls: 3mm each side ✓
-      Left connector face at X=-0.1540, PCB left edge at X=-0.1565
-        → 2.5mm connector clearance from PCB edge ✓
-      FR/RR boss at X=+0.1545, PCB right edge at X=+0.1565
-        → 2mm boss clearance from PCB edge ✓
+    Dimensions:
+      302mm × 112mm × 1.6mm (standard FR4)
+      Half-extents: 0.1510, 0.0560, 0.0008
+
+    Case interior (updated): 306.8mm × 116.3mm
+      PCB clearance from case interior walls:
+        X: (306.8 - 302.0) / 2 = 2.4mm each side ✓
+        Y: (116.3 - 112.0) / 2 = 2.15mm each side ✓
+      Left edge (USB-C face) at X = -0.1510
+      Connector housings protrude ~1.5mm beyond left edge at X ≈ -0.1525
+
+    Screw hole alignment (matches updated bottom_case.xml screw bosses):
+      Corner bosses: X = ±0.1484, Y = ±0.05315
+        PCB half-X = 0.1510 → bosses 2.6mm inside PCB edge in X ✓
+        PCB half-Y = 0.0560 → bosses 2.85mm inside PCB edge in Y ✓
 
     Coordinate convention: matches bottom_case.xml
       +X → keyboard length
@@ -23,36 +29,43 @@
       +Z → up
 
     Position in assembly stack:
-      Sits on top of battery
-      Battery top z_world  = 0.01050m
+      PCB sits on top of battery (tilt-and-insert approach)
+      Battery top z_world  = 0.01050m  (unchanged)
       PCB bottom z_world   = 0.01050m
       PCB center z_world   = 0.01050 + 0.0008 = 0.01130m
       PCB body pos z       = 0.01130m
 
-    Left edge features (-X face):
-      USB-C port housing : Y=+0.028
-      Power switch body  : Y=+0.0105
-      OS switch body     : Y=-0.0095
+    Note: Sound foam removed from BOM. Assembly stack under PCB is:
+      Case floor top → EPDM foam (1.5mm) → Battery (6mm) → PCB
+      The aluminum plate sits separately on the EPDM foam beside the battery.
+
+    Left edge features (−X face):
+      USB-C port housing : Y = +0.028
+      Power switch body  : Y = +0.0105
+      OS switch body     : Y = -0.0095
+      All protrude from PCB left edge (X = -0.1510) into wall cutout
 
     Switch socket sites:
-      84 hot-swap socket positions matching aluminum_plate grid
+      84 hot-swap socket positions matching aluminum_plate site grid exactly
       Site Z = PCB top face = +0.0008m (body local)
       Named sock_<key>
+      All sites verified within new PCB boundary:
+        X range: ±0.1429 vs half 0.1510 ✓
+        Y range: ±0.0480 vs half 0.0560 ✓
 
     Screw hole sites:
-      All 8 screw positions now on PCB:
-      FL, FR corners + 4 center (RL, RR also included)
-      Site Z = PCB top face = +0.0008m
+      4 corners (FL, FR, RL, RR) — aligned to case screw boss XY
+      4 center screws (C1–C4) — within PCB footprint
 
     Material: FR4 glass-epoxy
       rgba    : dark green PCB color
       density : 1850 kg/m³
-      Mass    : 313×107×1.6mm × 1.85g/cm³ ≈ 99g
+      Mass    : 302×112×1.6mm × 1.85g/cm³ ≈ 100g
 
-    Gripper approach:
-      Angled insertion — left edge enters case first
+    Gripper approach (unchanged):
+      Angled insertion — left edge enters case first (10° tilt)
       USB-C/switch features engage wall cutouts
-      Then PCB lowers flat onto battery
+      PCB lowers flat onto battery top
       Vacuum dual pad on top face, right side
   -->
 
@@ -80,21 +93,27 @@
           friction="0.8 0.005 0.0001"
           rgba="0.4 0.4 0.4 1"/>
 
-    <body name="pcb" pos="0 0 0.0008">
+    <!-- ══════════════════════════════════════════════════════════════════
+         PCB BODY
+         Body pos z = 0.01130m (PCB center above ground)
+         In standalone validation: pos="0 0 0.01130" places PCB at
+         correct world height above a floor at z=0.
+         ══════════════════════════════════════════════════════════════════ -->
+    <body name="pcb" pos="0 0 0.01130">
 
       <inertial pos="0 0 0"
-                mass="0.099"
+                mass="0.100"
                 diaginertia="9.3e-5 8.1e-4 8.9e-4"/>
 
       <freejoint name="pcb_free"/>
 
       <!-- ── MAIN PCB BOARD ─────────────────────────────────────────────
-           313mm × 107mm × 1.6mm
-           Half-extents: 0.1565, 0.0535, 0.0008
+           302mm × 112mm × 1.6mm
+           Half-extents: 0.1510, 0.0560, 0.0008
       -->
       <geom name="pcb_board"
             type="box"
-            size="0.1565 0.0535 0.0008"
+            size="0.1510 0.0560 0.0008"
             pos="0 0 0"
             material="fr4_green"
             density="1850"
@@ -102,34 +121,39 @@
             condim="4"
             priority="1"/>
 
-      <!-- ── LEFT EDGE FEATURES (-X face) ──────────────────────────────
-           Connectors at physical positions — unchanged from original
-           All protrude from PCB left edge at X=-0.154
+      <!-- ── LEFT EDGE FEATURES (−X face) ──────────────────────────────
+           Connectors protrude from PCB left edge at X = -0.1510
+           Protrusion depth: 1.5mm → geom center X = -(0.1510 + 0.0015) = -0.1525
+           Y and Z positions unchanged from original.
       -->
+
+      <!-- USB-C port housing -->
       <geom name="usbc_housing"
             type="box"
             size="0.0015 0.0045 0.002"
-            pos="-0.154 0.028 0.001"
+            pos="-0.1525 0.028 0.001"
             material="connector_dark"
             density="1050"
             friction="0.6 0.005 0.0001"
             condim="4"
             priority="1"/>
 
+      <!-- Power switch body -->
       <geom name="power_switch"
             type="box"
             size="0.0015 0.007 0.003"
-            pos="-0.154 0.0105 0.002"
+            pos="-0.1525 0.0105 0.002"
             material="connector_dark"
             density="1050"
             friction="0.6 0.005 0.0001"
             condim="4"
             priority="1"/>
 
+      <!-- OS toggle switch body -->
       <geom name="os_switch"
             type="box"
             size="0.0015 0.007 0.003"
-            pos="-0.154 -0.0095 0.002"
+            pos="-0.1525 -0.0095 0.002"
             material="connector_dark"
             density="1050"
             friction="0.6 0.005 0.0001"
@@ -149,7 +173,7 @@
       <!-- Left edge insertion reference — robot aligns to usbc_cutout -->
       <site name="left_edge_ref"
             type="sphere" size="0.002"
-            pos="-0.1565 0.028 0"
+            pos="-0.1510 0.028 0"
             rgba="0 0.5 1 0.8"/>
 
       <!-- Vacuum grasp sites — right side, away from left edge features -->
@@ -266,22 +290,21 @@
       <site name="sock_End2"   type="cylinder" size="0.002 0.001" pos=" 0.1429 -0.0473 0.0008" rgba="0 1 0.5 0.6"/>
 
       <!-- ══════════════════════════════════════════════════════════════
-           SCREW HOLE SITES (M3) — all 8 positions
-           All 4 corners + 4 center screws now within PCB footprint
-           Site Z = PCB top face = +0.0008m
+           SCREW HOLE SITES (M3) — aligned to updated case screw boss XY
+           Corner bosses in bottom_case.xml: X=±0.1484, Y=±0.05315
            ══════════════════════════════════════════════════════════════ -->
 
-      <!-- 4 corner screw holes -->
-      <site name="screw_FL" type="cylinder" size="0.0015 0.001" pos="-0.1515 -0.0495 0.0008" rgba="1 0.3 0.3 0.9"/>
-      <site name="screw_FR" type="cylinder" size="0.0015 0.001" pos=" 0.1545 -0.0495 0.0008" rgba="1 0.3 0.3 0.9"/>
-      <site name="screw_RL" type="cylinder" size="0.0015 0.001" pos="-0.1515  0.0495 0.0008" rgba="1 0.3 0.3 0.9"/>
-      <site name="screw_RR" type="cylinder" size="0.0015 0.001" pos=" 0.1545  0.0495 0.0008" rgba="1 0.3 0.3 0.9"/>
+      <!-- 4 corner screw holes — match case boss positions exactly -->
+      <site name="screw_FL" type="cylinder" size="0.0015 0.001" pos="-0.1484 -0.05315 0.0008" rgba="1 0.3 0.3 0.9"/>
+      <site name="screw_FR" type="cylinder" size="0.0015 0.001" pos=" 0.1484 -0.05315 0.0008" rgba="1 0.3 0.3 0.9"/>
+      <site name="screw_RL" type="cylinder" size="0.0015 0.001" pos="-0.1484  0.05315 0.0008" rgba="1 0.3 0.3 0.9"/>
+      <site name="screw_RR" type="cylinder" size="0.0015 0.001" pos=" 0.1484  0.05315 0.0008" rgba="1 0.3 0.3 0.9"/>
 
-      <!-- 4 center screw holes -->
-      <site name="screw_C1" type="cylinder" size="0.0015 0.001" pos="-0.0762  0.0495 0.0008" rgba="1 0.3 0.3 0.9"/>
-      <site name="screw_C2" type="cylinder" size="0.0015 0.001" pos=" 0.0381  0.0495 0.0008" rgba="1 0.3 0.3 0.9"/>
-      <site name="screw_C3" type="cylinder" size="0.0015 0.001" pos="-0.0762 -0.0495 0.0008" rgba="1 0.3 0.3 0.9"/>
-      <site name="screw_C4" type="cylinder" size="0.0015 0.001" pos=" 0.0381 -0.0495 0.0008" rgba="1 0.3 0.3 0.9"/>
+      <!-- 4 center screw holes — positions unchanged, within new PCB boundary -->
+      <site name="screw_C1" type="cylinder" size="0.0015 0.001" pos="-0.0762  0.05315 0.0008" rgba="1 0.3 0.3 0.9"/>
+      <site name="screw_C2" type="cylinder" size="0.0015 0.001" pos=" 0.0381  0.05315 0.0008" rgba="1 0.3 0.3 0.9"/>
+      <site name="screw_C3" type="cylinder" size="0.0015 0.001" pos="-0.0762 -0.05315 0.0008" rgba="1 0.3 0.3 0.9"/>
+      <site name="screw_C4" type="cylinder" size="0.0015 0.001" pos=" 0.0381 -0.05315 0.0008" rgba="1 0.3 0.3 0.9"/>
 
     </body>
 

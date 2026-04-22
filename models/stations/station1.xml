@@ -1,23 +1,54 @@
 <mujoco model="station1">
   <!--
-    AME 547 - Keyboard Assembly Cell Simulation
-    Scene: Station 1 (S1)
+    AME 547 — Keyboard Assembly Cell  |  Station 1 (S1)
+    UR5e structural assembly: EPDM → Battery → PCB → Aluminum Plate → Screws
+    Cycle: ~68s
 
-    Robot  : UR5e (MuJoCo Menagerie) — self-contained, no include
-    Task   : Structural assembly steps 1-6
-    Cycle  : ~79.5s
+    ═══════════════════════ WORLD LAYOUT (top-down) ═══════════════════════
 
-    Layout:
-      - Work table top surface at z=0.800m (standard industrial height)
-      - Assembly pallet top surface at z=0.810m (sits on table)
-      - Bottom case center at z=0.822m (sitting on pallet)
-      - Robot raiser: 400x400x460mm steel pedestal at pos="0 -0.45 0"
-      - UR5e base at z=0.460m (on raiser) — shoulder at z=0.623m
-      - Work surface 350mm above robot base — optimal dexterous workspace
-      - Gripper clearance: 50mm gripper + 15% = 58mm buffer above case top
+         +Y
+          ↑
+    Y=1.32│  [PRE-STAGE TRAY]  ──── feeder main leg X=−0.40
+          │
+    Y=0.75│  [PICK ZONE TRAY] ─────────────────────→ [EXIT ARM] → [STACK X=+0.60]
+          │        190mm gap to robot ↓
+    Y=0.30│  [UR5e]  (0, 0.30)
+          │
+    Y=0.00├──[PALLET]────────────────────────────── +X  (CDLR)
+          │        220mm gap ↓
+    Y=−0.22│ [SCREW BOX] (0.22, −0.22)
 
-    Coordinate convention:
-      +X = keyboard length, +Y = width front-to-back, +Z = up
+    UR5e reach (robot at (0, 0.300)):
+      EPDM  (−0.40, 0.569): 0.482m ✓   PCB   (−0.40, 0.798): 0.639m ✓
+      Batt  (−0.40, 0.686): 0.556m ✓   Plate (−0.40, 0.937): 0.753m ✓
+      Tool dock  (0.40, 0.30): 0.400m ✓  Screw box: 0.565m ✓
+
+    ═══════════════════════ TRAY ORIENTATION ═══════════════════════════════
+    EPDM foam is NEAREST to robot (smallest world Y, local Y=−0.181)
+    Pick order as robot advances in +Y: EPDM → Battery → PCB → Plate
+
+    ═══════════════════════ Z LEVELS ═══════════════════════════════════════
+      Belt top / floor surface  : 0.800m
+      Pallet top (body pos z)   : 0.810m
+      Kit tray body pos z       : 0.815m  (0.800 + half-thickness 0.015)
+      Pocket floor world z      : 0.810m  (0.815 − 0.005)
+      Case center               : 0.821m  (0.810 + 0.011)
+      Case interior floor top   : 0.813m
+
+    Part Z = pocket_floor(0.810) + part_half_Z:
+      EPDM: 0.81075  Battery: 0.81300  PCB: 0.81080  Plate: 0.81075
+
+    ═══════════════════════ KEY POSITIONS ══════════════════════════════════
+      Pallet          : (0.000,  0.000, 0.810) static
+      Robot raiser    : (0.000,  0.300, 0.000)
+      UR5e mount      : (0.000,  0.300, 0.600) euler Z=π
+      Pick zone tray  : (−0.400, 0.750, 0.815)
+      Pre-stage tray  : (−0.400, 1.320, 0.815)
+      Feeder main leg : body (−0.400, 1.075, 0)
+      Exit arm        : body (0.147, 0.750, 0)
+      Tray stack      : (0.597, 0.750, 0.800)
+      Tool dock       : (0.400, 0.300, 0.800)
+      Screw box       : (0.220, −0.220, 0.800)
   -->
 
   <compiler angle="radian"
@@ -57,353 +88,177 @@
   <visual>
     <headlight diffuse="0.6 0.6 0.6" ambient="0.3 0.3 0.3" specular="0 0 0"/>
     <rgba haze="0.15 0.25 0.35 1"/>
-    <global azimuth="150" elevation="-25"/>
+    <global azimuth="120" elevation="-20"/>
   </visual>
 
   <asset>
-    <texture type="skybox" builtin="gradient" rgb1="0.3 0.5 0.7" rgb2="0 0 0"
-             width="512" height="3072"/>
-    <texture name="grid" type="2d" builtin="checker"
-             rgb1="0.3 0.3 0.3" rgb2="0.4 0.4 0.4" width="512" height="512"/>
-    <material name="floor_mat"      texture="grid" texrepeat="5 5" reflectance="0.2"/>
-    <material name="aluminum_plate" rgba="0.75 0.75 0.78 1"/>
-    <material name="fixture_stop"   rgba="1.0 0.85 0.0 1"/>
-    <material name="abs_plastic"    rgba="0.15 0.15 0.15 1"/>
-    <material name="table_surface"  rgba="0.55 0.45 0.35 1"/>
-    <material name="table_leg_mat"  rgba="0.4 0.4 0.4 1"/>
-    <!-- Feeder conveyor -->
-    <material name="conveyor_belt"  rgba="0.20 0.20 0.20 1"/>
-    <material name="conveyor_rail"  rgba="0.45 0.45 0.48 1"/>
-    <!-- Part materials — exact from part XMLs -->
-    <material name="mat_epdm"       rgba="0.18 0.18 0.20 1" specular="0.05" shininess="0.1"/>
-    <material name="mat_lipo"       rgba="0.75 0.75 0.78 1" specular="0.8"  shininess="0.6"/>
-    <material name="mat_connector"  rgba="0.85 0.85 0.88 1" specular="0.9"  shininess="0.7"/>
-    <material name="mat_fr4"        rgba="0.08 0.35 0.08 1" specular="0.2"  shininess="0.3"/>
-    <material name="mat_conn_dark"  rgba="0.15 0.15 0.15 1" specular="0.4"  shininess="0.5"/>
-    <material name="mat_pe_foam"    rgba="0.18 0.18 0.18 1" specular="0.05" shininess="0.1"/>
-    <material name="mat_alu_silver" rgba="0.75 0.75 0.78 1" specular="0.8"  shininess="0.7"/>
-    <!-- Tool dock and end-effector materials -->
-    <material name="mat_dock_rack"   rgba="0.35 0.35 0.38 1"/>
-    <material name="mat_pin_grip"    rgba="0.15 0.15 0.15 1"/>
-    <material name="mat_screwdriver" rgba="1.0 0.45 0.0 1"/>
-    <material name="mat_screw_steel" rgba="0.75 0.75 0.78 1" specular="0.9" shininess="0.8"/>
-    <material name="mat_screw_box"   rgba="0.20 0.20 0.22 1"/>
-    <material name="mat_holder_cup"  rgba="0.50 0.50 0.52 1"/>
-    <!-- UR5e materials -->
+    <texture type="skybox" builtin="gradient" rgb1="0.3 0.5 0.7" rgb2="0 0 0" width="512" height="3072"/>
+    <texture name="grid" type="2d" builtin="checker" rgb1="0.3 0.3 0.3" rgb2="0.4 0.4 0.4" width="512" height="512"/>
+    <!-- Scene -->
+    <material name="floor_mat"       texture="grid" texrepeat="5 5" reflectance="0.2"/>
+    <material name="conveyor_belt"   rgba="0.18 0.18 0.18 1"/>
+    <material name="conveyor_rail"   rgba="0.50 0.52 0.55 1" specular="0.4" shininess="0.3"/>
+    <material name="stopper_mat"     rgba="1.0  0.85 0.0  1"/>
+    <material name="aluminum_pallet" rgba="0.80 0.82 0.85 1" specular="0.6" shininess="0.5"/>
+    <material name="fixture_stop"    rgba="1.0  0.75 0.0  1"/>
+    <material name="abs_plastic"     rgba="0.12 0.12 0.15 1"/>
+    <!-- Tray — warm aluminium with clear contrast -->
+    <material name="tray_alu"        rgba="0.85 0.87 0.90 1" specular="0.8" shininess="0.6"/>
+    <material name="tray_foam_epdm"  rgba="0.20 0.22 0.25 1" specular="0.02"/>
+    <material name="tray_foam_batt"  rgba="0.22 0.24 0.20 1" specular="0.02"/>
+    <material name="tray_foam_pcb"   rgba="0.20 0.24 0.22 1" specular="0.02"/>
+    <material name="tray_foam_plate" rgba="0.24 0.22 0.20 1" specular="0.02"/>
+    <material name="tray_id"         rgba="1.0  0.40 0.0  1"/>
+    <material name="stack_mat"       rgba="0.28 0.30 0.33 1"/>
+    <!-- Parts — distinct, saturated colors -->
+    <material name="mat_epdm"        rgba="0.15 0.15 0.17 1" specular="0.03" shininess="0.05"/>
+    <material name="mat_lipo"        rgba="0.70 0.72 0.75 1" specular="0.9"  shininess="0.7"/>
+    <material name="mat_connector"   rgba="0.90 0.90 0.92 1" specular="0.9"  shininess="0.8"/>
+    <material name="mat_fr4"         rgba="0.05 0.40 0.10 1" specular="0.3"  shininess="0.4"/>
+    <material name="mat_conn_dark"   rgba="0.12 0.12 0.12 1" specular="0.5"  shininess="0.6"/>
+    <material name="mat_alu_silver"  rgba="0.82 0.84 0.88 1" specular="0.9"  shininess="0.8"/>
+    <!-- Tools -->
+    <material name="mat_dock"        rgba="0.30 0.32 0.35 1"/>
+    <material name="mat_cup"         rgba="0.55 0.55 0.58 1"/>
+    <material name="mat_screw_box"   rgba="0.25 0.25 0.28 1"/>
+    <material name="mat_screw"       rgba="0.80 0.82 0.85 1" specular="0.9" shininess="0.9"/>
+    <!-- UR5e -->
     <material class="ur5e" name="black"     rgba="0.033 0.033 0.033 1"/>
     <material class="ur5e" name="jointgray" rgba="0.278 0.278 0.278 1"/>
-    <material class="ur5e" name="linkgray"  rgba="0.82 0.82 0.82 1"/>
-    <material class="ur5e" name="urblue"    rgba="0.49 0.678 0.8 1"/>
+    <material class="ur5e" name="linkgray"  rgba="0.82  0.82  0.82  1"/>
+    <material class="ur5e" name="urblue"    rgba="0.49  0.678 0.8   1"/>
     <!-- UR5e meshes -->
-    <mesh file="base_0.obj"/>
-    <mesh file="base_1.obj"/>
-    <mesh file="shoulder_0.obj"/>
-    <mesh file="shoulder_1.obj"/>
-    <mesh file="shoulder_2.obj"/>
-    <mesh file="upperarm_0.obj"/>
-    <mesh file="upperarm_1.obj"/>
-    <mesh file="upperarm_2.obj"/>
-    <mesh file="upperarm_3.obj"/>
-    <mesh file="forearm_0.obj"/>
-    <mesh file="forearm_1.obj"/>
-    <mesh file="forearm_2.obj"/>
-    <mesh file="forearm_3.obj"/>
-    <mesh file="wrist1_0.obj"/>
-    <mesh file="wrist1_1.obj"/>
-    <mesh file="wrist1_2.obj"/>
-    <mesh file="wrist2_0.obj"/>
-    <mesh file="wrist2_1.obj"/>
-    <mesh file="wrist2_2.obj"/>
+    <mesh file="base_0.obj"/>     <mesh file="base_1.obj"/>
+    <mesh file="shoulder_0.obj"/> <mesh file="shoulder_1.obj"/> <mesh file="shoulder_2.obj"/>
+    <mesh file="upperarm_0.obj"/> <mesh file="upperarm_1.obj"/>
+    <mesh file="upperarm_2.obj"/> <mesh file="upperarm_3.obj"/>
+    <mesh file="forearm_0.obj"/>  <mesh file="forearm_1.obj"/>
+    <mesh file="forearm_2.obj"/>  <mesh file="forearm_3.obj"/>
+    <mesh file="wrist1_0.obj"/>   <mesh file="wrist1_1.obj"/>   <mesh file="wrist1_2.obj"/>
+    <mesh file="wrist2_0.obj"/>   <mesh file="wrist2_1.obj"/>   <mesh file="wrist2_2.obj"/>
     <mesh file="wrist3.obj"/>
   </asset>
 
   <worldbody>
-    <light name="main_light" pos="0 0 3" dir="0 0 -1" directional="true"/>
-    <light name="fill_light" pos="1 -1 2" dir="-0.5 0.5 -1" directional="true"
-           diffuse="0.3 0.3 0.3"/>
-    <light name="spotlight" mode="targetbodycom" target="wrist_2_link" pos="0 -1 2"/>
+    <light name="main_light" pos="0 0.8 4"   dir="0 -0.2 -1" directional="true"/>
+    <light name="fill_light" pos="1 -0.2 3"  dir="-0.3 0.2 -1" directional="true" diffuse="0.4 0.4 0.4"/>
+    <light name="spot"       mode="targetbodycom" target="wrist_2_link" pos="0 0.3 3"/>
 
-    <geom name="floor" type="plane" size="3 3 0.05" material="floor_mat"/>
+    <geom name="floor" type="plane" size="5 5 0.05" material="floor_mat"/>
 
-    <!-- World frame axis indicator at origin (red=X, green=Y, blue=Z) -->
-    <!-- Each cylinder: 5mm radius, 100mm half-length = 200mm total -->
-    <body name="axis_indicator" pos="0 0 0">
-      <!-- X axis: red, points along +X -->
-      <geom name="axis_x" type="cylinder" size="0.0025 0.100"
-            pos="0.100 0 0.0025" euler="0 1.5708 0"
-            rgba="1 0 0 1" contype="0" conaffinity="0"/>
-      <!-- Y axis: green, points along +Y -->
-      <geom name="axis_y" type="cylinder" size="0.0025 0.100"
-            pos="0 0.100 0.0025" euler="1.5708 0 0"
-            rgba="0 0.8 0 1" contype="0" conaffinity="0"/>
-      <!-- Z axis: blue, points along +Z -->
-      <geom name="axis_z" type="cylinder" size="0.0025 0.100"
-            pos="0 0 0.100"
-            rgba="0 0 1 1" contype="0" conaffinity="0"/>
-      <!-- Origin marker: small white sphere -->
-      <geom name="axis_origin" type="sphere" size="0.008"
-            pos="0 0 0" rgba="1 1 1 1" contype="0" conaffinity="0"/>
+    <!-- World frame axes -->
+    <body name="axes" pos="0 0 0">
+      <geom type="cylinder" size="0.003 0.150" pos="0.150 0 0.003" euler="0 1.5708 0" rgba="1 0 0 1"   contype="0" conaffinity="0"/>
+      <geom type="cylinder" size="0.003 0.150" pos="0 0.150 0.003" euler="1.5708 0 0" rgba="0 0.8 0 1" contype="0" conaffinity="0"/>
+      <geom type="cylinder" size="0.003 0.150" pos="0 0 0.150"                         rgba="0 0 1 1"   contype="0" conaffinity="0"/>
+      <geom type="sphere"   size="0.012"       pos="0 0 0"                              rgba="1 1 1 1"   contype="0" conaffinity="0"/>
     </body>
 
-    <!-- Work table: top surface at z=0.800m, legs 390mm half-height -->
-    <body name="work_table" pos="0 0.030 0">
-      <geom name="table_top" type="box" size="0.350 0.150 0.010"
-            pos="0 0 0.800" material="table_surface" contype="1" conaffinity="1"/>
-      <geom name="table_leg_fl" type="box" size="0.020 0.020 0.395"
-            pos="-0.330 -0.130 0.395" material="table_leg_mat"/>
-      <geom name="table_leg_fr" type="box" size="0.020 0.020 0.395"
-            pos="0.330 -0.130 0.395"  material="table_leg_mat"/>
-      <geom name="table_leg_rl" type="box" size="0.020 0.020 0.395"
-            pos="-0.330 0.130 0.395"  material="table_leg_mat"/>
-      <geom name="table_leg_rr" type="box" size="0.020 0.020 0.395"
-            pos="0.330 0.130 0.395"   material="table_leg_mat"/>
+    <!-- ══════════════════════════════════════════════════════════════════
+         MAIN LINE CDLR — +X, centered (0,0)
+         Pallet 350×150mm → inner-Y 180mm, rail outer half-Y=0.0975
+         Belt top z=0.800, total 3m (half-X=1.500), rail height 40mm
+         Stop pin at X=+0.185 (just past pallet +X face 0.175)
+         ══════════════════════════════════════════════════════════════════ -->
+    <body name="cdlr_main" pos="0 0 0">
+      <geom name="cdlr_belt"   type="box" size="1.500 0.090 0.005"  pos="0 0 0.795"       material="conveyor_belt" contype="1" conaffinity="1"/>
+      <geom name="cdlr_rail_f" type="box" size="1.500 0.0075 0.040" pos="0 -0.0975 0.820" material="conveyor_rail" contype="1" conaffinity="1"/>
+      <geom name="cdlr_rail_r" type="box" size="1.500 0.0075 0.040" pos="0  0.0975 0.820" material="conveyor_rail" contype="1" conaffinity="1"/>
+      <geom name="cdlr_cap_l"  type="box" size="0.010 0.0975 0.040" pos="-1.510 0 0.820"  material="conveyor_rail" contype="0" conaffinity="0"/>
+      <geom name="cdlr_cap_r"  type="box" size="0.010 0.0975 0.040" pos=" 1.510 0 0.820"  material="conveyor_rail" contype="0" conaffinity="0"/>
+      <geom name="cl1f" type="box" size="0.015 0.015 0.392" pos="-1.200 -0.085 0.392" material="conveyor_rail"/>
+      <geom name="cl1r" type="box" size="0.015 0.015 0.392" pos="-1.200  0.085 0.392" material="conveyor_rail"/>
+      <geom name="cl2f" type="box" size="0.015 0.015 0.392" pos="-0.400 -0.085 0.392" material="conveyor_rail"/>
+      <geom name="cl2r" type="box" size="0.015 0.015 0.392" pos="-0.400  0.085 0.392" material="conveyor_rail"/>
+      <geom name="cl3f" type="box" size="0.015 0.015 0.392" pos=" 0.400 -0.085 0.392" material="conveyor_rail"/>
+      <geom name="cl3r" type="box" size="0.015 0.015 0.392" pos=" 0.400  0.085 0.392" material="conveyor_rail"/>
+      <geom name="cl4f" type="box" size="0.015 0.015 0.392" pos=" 1.200 -0.085 0.392" material="conveyor_rail"/>
+      <geom name="cl4r" type="box" size="0.015 0.015 0.392" pos=" 1.200  0.085 0.392" material="conveyor_rail"/>
+      <geom name="cdlr_stop"  type="cylinder" size="0.012 0.030" pos="0.185 0 0.832" material="stopper_mat" contype="1" conaffinity="1"/>
+      <site name="s_cdlr_stop" type="sphere" size="0.005" pos="0.185 0 0.862" rgba="1 0.85 0 1"/>
     </body>
 
-    <!-- Assembly pallet: top surface at z=0.810m (table top + 10mm plate) -->
-    <body name="pallet_base" pos="0 0.030 0.810">
-      <geom name="base_plate" type="box" size="0.170 0.065 0.004"
-            pos="0 0 -0.004" material="aluminum_plate" mass="1.5"/>
-      <geom name="stop_FL_x" type="box" size="0.0125 0.0025 0.003"
-            pos="-0.1500 -0.0600 0.003" material="fixture_stop" mass="0.02"/>
-      <geom name="stop_FL_y" type="box" size="0.0025 0.0125 0.003"
-            pos="-0.1650 -0.0475 0.003" material="fixture_stop" mass="0.02"/>
-      <geom name="stop_FR_x" type="box" size="0.0125 0.0025 0.003"
-            pos="0.1500 -0.0600 0.003" material="fixture_stop" mass="0.02"/>
-      <geom name="stop_FR_y" type="box" size="0.0025 0.0125 0.003"
-            pos="0.1650 -0.0475 0.003" material="fixture_stop" mass="0.02"/>
-      <geom name="stop_RL_x" type="box" size="0.0125 0.0025 0.003"
-            pos="-0.1500 0.0600 0.003" material="fixture_stop" mass="0.02"/>
-      <geom name="stop_RL_y" type="box" size="0.0025 0.0125 0.003"
-            pos="-0.1650 0.0475 0.003" material="fixture_stop" mass="0.02"/>
-      <geom name="stop_RR_x" type="box" size="0.0125 0.0025 0.003"
-            pos="0.1500 0.0600 0.003" material="fixture_stop" mass="0.02"/>
-      <geom name="stop_RR_y" type="box" size="0.0025 0.0125 0.003"
-            pos="0.1650 0.0475 0.003" material="fixture_stop" mass="0.02"/>
+    <!-- ══════════════════════════════════════════════════════════════════
+         PALLET — static fixture, centered at world origin
+         Case outer: 312.8×122.3mm (half 0.1564×0.06115)
+         ══════════════════════════════════════════════════════════════════ -->
+    <body name="pallet_base" pos="0 0 0.810">
+      <geom name="pallet_plate" type="box" size="0.175 0.075 0.004" pos="0 0 -0.004"
+            material="aluminum_pallet" mass="1.5" contype="1" conaffinity="1"/>
+      <geom name="stop_FL_x" type="box" size="0.0125 0.0025 0.003" pos="-0.1439 -0.0637  0.003" material="fixture_stop" mass="0.02"/>
+      <geom name="stop_FL_y" type="box" size="0.0025 0.0125 0.003" pos="-0.1589 -0.04865 0.003" material="fixture_stop" mass="0.02"/>
+      <geom name="stop_FR_x" type="box" size="0.0125 0.0025 0.003" pos=" 0.1439 -0.0637  0.003" material="fixture_stop" mass="0.02"/>
+      <geom name="stop_FR_y" type="box" size="0.0025 0.0125 0.003" pos=" 0.1589 -0.04865 0.003" material="fixture_stop" mass="0.02"/>
+      <geom name="stop_RL_x" type="box" size="0.0125 0.0025 0.003" pos="-0.1439  0.0637  0.003" material="fixture_stop" mass="0.02"/>
+      <geom name="stop_RL_y" type="box" size="0.0025 0.0125 0.003" pos="-0.1589  0.04865 0.003" material="fixture_stop" mass="0.02"/>
+      <geom name="stop_RR_x" type="box" size="0.0125 0.0025 0.003" pos=" 0.1439  0.0637  0.003" material="fixture_stop" mass="0.02"/>
+      <geom name="stop_RR_y" type="box" size="0.0025 0.0125 0.003" pos=" 0.1589  0.04865 0.003" material="fixture_stop" mass="0.02"/>
+      <site name="s_pallet_ctr" type="sphere" size="0.004" pos="0 0 0" rgba="1 0.8 0 0.8"/>
     </body>
 
-    <!-- Bottom case — detailed geometry, s1_ prefixed -->
-    <body name="s1_bottom_case" pos="0 0.030 0.822">
-
+    <!-- ══════════════════════════════════════════════════════════════════
+         BOTTOM CASE — 312.8×122.3mm outer, center z=0.821
+         Interior floor top z_world = 0.813
+         ══════════════════════════════════════════════════════════════════ -->
+    <body name="s1_bottom_case" pos="0 0 0.821">
       <inertial pos="0 0 0" mass="0.085" diaginertia="3.2e-5 2.4e-4 2.5e-4"/>
-
-      <!-- ── FLOOR SLAB ──────────────────────────────────────────────── -->
-      <geom name="s1_floor_slab"
-            type="box" size="0.1625 0.0575 0.0015"
-            pos="0 0 -0.0095"
-            material="abs_plastic" density="1050"
-            friction="1.0 0.005 0.0001" condim="4" priority="1"/>
-
-      <!-- ── LEFT WALL (−X) with USB-C, Power, OS cutouts ────────────── -->
-      <geom name="s1_wall_left_A"
-            type="box" size="0.0015 0.0125 0.0095"
-            pos="-0.161 0.045 0.0015"
-            material="abs_plastic" density="1050"
-            friction="1.0 0.005 0.0001" condim="4" priority="1"/>
-
-      <geom name="s1_wall_left_usbc_below"
-            type="box" size="0.0015 0.0045 0.0045"
-            pos="-0.161 0.028 -0.0035"
-            material="abs_plastic" density="1050"
-            friction="1.0 0.005 0.0001" condim="4" priority="1"/>
-
-      <geom name="s1_wall_left_usbc_above"
-            type="box" size="0.0015 0.0045 0.003"
-            pos="-0.161 0.028 0.008"
-            material="abs_plastic" density="1050"
-            friction="1.0 0.005 0.0001" condim="4" priority="1"/>
-
-      <geom name="s1_wall_left_B"
-            type="box" size="0.0015 0.005 0.0095"
-            pos="-0.161 0.0185 0.0015"
-            material="abs_plastic" density="1050"
-            friction="1.0 0.005 0.0001" condim="4" priority="1"/>
-
-      <geom name="s1_wall_left_pwr_below"
-            type="box" size="0.0015 0.007 0.004"
-            pos="-0.161 0.0105 -0.004"
-            material="abs_plastic" density="1050"
-            friction="1.0 0.005 0.0001" condim="4" priority="1"/>
-
-      <geom name="s1_wall_left_pwr_above"
-            type="box" size="0.0015 0.007 0.0025"
-            pos="-0.161 0.0105 0.0085"
-            material="abs_plastic" density="1050"
-            friction="1.0 0.005 0.0001" condim="4" priority="1"/>
-
-      <geom name="s1_wall_left_C"
-            type="box" size="0.0015 0.005 0.0095"
-            pos="-0.161 -0.0005 0.0015"
-            material="abs_plastic" density="1050"
-            friction="1.0 0.005 0.0001" condim="4" priority="1"/>
-
-      <geom name="s1_wall_left_os_below"
-            type="box" size="0.0015 0.007 0.004"
-            pos="-0.161 -0.0095 -0.004"
-            material="abs_plastic" density="1050"
-            friction="1.0 0.005 0.0001" condim="4" priority="1"/>
-
-      <geom name="s1_wall_left_os_above"
-            type="box" size="0.0015 0.007 0.0025"
-            pos="-0.161 -0.0095 0.0085"
-            material="abs_plastic" density="1050"
-            friction="1.0 0.005 0.0001" condim="4" priority="1"/>
-
-      <geom name="s1_wall_left_D"
-            type="box" size="0.0015 0.0205 0.0095"
-            pos="-0.161 -0.037 0.0015"
-            material="abs_plastic" density="1050"
-            friction="1.0 0.005 0.0001" condim="4" priority="1"/>
-
-      <!-- ── CUTOUT INDICATOR SITES ──────────────────────────────────── -->
-      <site name="s1_usbc_cutout"
-            type="box" size="0.001 0.0045 0.002"
-            pos="-0.162 0.028 0.003"
-            rgba="0 0.5 1 0.9"/>
-
-      <site name="s1_led_indicator"
-            type="sphere" size="0.0008"
-            pos="-0.163 -0.0245 0.003"
-            rgba="1 1 0 1.0"/>
-
-      <site name="s1_power_switch_cutout"
-            type="box" size="0.001 0.007 0.003"
-            pos="-0.162 0.0105 0.003"
-            rgba="1 0.5 0 0.9"/>
-
-      <site name="s1_os_switch_cutout"
-            type="box" size="0.001 0.007 0.003"
-            pos="-0.162 -0.0095 0.003"
-            rgba="1 0.5 0 0.9"/>
-
-      <!-- ── RIGHT WALL (+X) ─────────────────────────────────────────── -->
-      <geom name="s1_wall_right"
-            type="box" size="0.0015 0.0575 0.0095"
-            pos="0.161 0 0.0015"
-            material="abs_plastic" density="1050"
-            friction="1.0 0.005 0.0001" condim="4" priority="1"/>
-
-      <!-- ── FRONT WALL ─────────────────────────────────────────────── -->
-      <geom name="s1_wall_front"
-            type="box" size="0.1595 0.0015 0.0095"
-            pos="0 -0.056 0.0015"
-            material="abs_plastic" density="1050"
-            friction="1.0 0.005 0.0001" condim="4" priority="1"/>
-
-      <!-- ── REAR WALL ──────────────────────────────────────────────── -->
-      <geom name="s1_wall_rear"
-            type="box" size="0.1595 0.0015 0.0095"
-            pos="0 0.056 0.0015"
-            material="abs_plastic" density="1050"
-            friction="1.0 0.005 0.0001" condim="4" priority="1"/>
-
-      <!-- ── BATTERY LOCATING RIBS ──────────────────────────────────── -->
-      <geom name="s1_battery_rib_left"
-            type="box" size="0.045 0.00075 0.002"
-            pos="0.025 -0.03075 -0.006"
-            material="abs_plastic" density="1050"
-            friction="1.0 0.005 0.0001" condim="4" priority="1"/>
-
-      <geom name="s1_battery_rib_right"
-            type="box" size="0.045 0.00075 0.002"
-            pos="0.025 0.03075 -0.006"
-            material="abs_plastic" density="1050"
-            friction="1.0 0.005 0.0001" condim="4" priority="1"/>
-
-      <geom name="s1_battery_rib_front_left"
-            type="box" size="0.00075 0.0125 0.002"
-            pos="-0.02025 -0.0175 -0.006"
-            material="abs_plastic" density="1050"
-            friction="1.0 0.005 0.0001" condim="4" priority="1"/>
-
-      <geom name="s1_battery_rib_front_right"
-            type="box" size="0.00075 0.0125 0.002"
-            pos="-0.02025 0.0175 -0.006"
-            material="abs_plastic" density="1050"
-            friction="1.0 0.005 0.0001" condim="4" priority="1"/>
-
-      <geom name="s1_battery_rib_rear"
-            type="box" size="0.00075 0.030 0.002"
-            pos="0.07025 0 -0.006"
-            material="abs_plastic" density="1050"
-            friction="1.0 0.005 0.0001" condim="4" priority="1"/>
-
-      <!-- ── SCREW BOSSES ────────────────────────────────────────────── -->
-      <geom name="s1_screw_boss_geom_FL"
-            type="cylinder" size="0.003 0.004"
-            pos="-0.1515 -0.0495 -0.004"
-            material="abs_plastic" density="1050"
-            friction="1.0 0.005 0.0001" condim="4" priority="1"/>
-
-      <geom name="s1_screw_boss_geom_FR"
-            type="cylinder" size="0.003 0.004"
-            pos="0.1545 -0.0495 -0.004"
-            material="abs_plastic" density="1050"
-            friction="1.0 0.005 0.0001" condim="4" priority="1"/>
-
-      <geom name="s1_screw_boss_geom_RL"
-            type="cylinder" size="0.003 0.004"
-            pos="-0.1515 0.0495 -0.004"
-            material="abs_plastic" density="1050"
-            friction="1.0 0.005 0.0001" condim="4" priority="1"/>
-
-      <geom name="s1_screw_boss_geom_RR"
-            type="cylinder" size="0.003 0.004"
-            pos="0.1545 0.0495 -0.004"
-            material="abs_plastic" density="1050"
-            friction="1.0 0.005 0.0001" condim="4" priority="1"/>
-
-      <!-- ── REGISTRATION SITES ─────────────────────────────────────── -->
-      <site name="s1_fixture_dowel_center"
-            type="cylinder" size="0.002 0.001"
-            pos="0 0 -0.0095" rgba="1 0.8 0 1"/>
-
-      <site name="s1_screw_boss_FL"
-            type="cylinder" size="0.003 0.001"
-            pos="-0.1545 -0.0495 -0.0085" rgba="0.8 0.2 0.2 1"/>
-
-      <site name="s1_screw_boss_FR"
-            type="cylinder" size="0.003 0.001"
-            pos="0.1545 -0.0495 -0.0085" rgba="0.8 0.2 0.2 1"/>
-
-      <site name="s1_screw_boss_RL"
-            type="cylinder" size="0.003 0.001"
-            pos="-0.1545 0.0495 -0.0085" rgba="0.8 0.2 0.2 1"/>
-
-      <site name="s1_screw_boss_RR"
-            type="cylinder" size="0.003 0.001"
-            pos="0.1545 0.0495 -0.0085" rgba="0.8 0.2 0.2 1"/>
-
-      <site name="s1_grasp_top_center"
-            type="sphere" size="0.002"
-            pos="0 0 0.011" rgba="0 0.6 0.8 0.4"/>
-
+      <geom name="s1_floor"  type="box" size="0.1564 0.06115 0.0015" pos="0 0 -0.0095"         material="abs_plastic" density="1050" friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+      <geom name="s1_wl_A"   type="box" size="0.0015 0.01433 0.0095" pos="-0.1549  0.04682  0.0015" material="abs_plastic" density="1050" friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+      <geom name="s1_wl_ub"  type="box" size="0.0015 0.0045  0.0045" pos="-0.1549  0.028   -0.0035" material="abs_plastic" density="1050" friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+      <geom name="s1_wl_ua"  type="box" size="0.0015 0.0045  0.003"  pos="-0.1549  0.028    0.008"  material="abs_plastic" density="1050" friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+      <geom name="s1_wl_B"   type="box" size="0.0015 0.003   0.0095" pos="-0.1549  0.0205   0.0015" material="abs_plastic" density="1050" friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+      <geom name="s1_wl_pb"  type="box" size="0.0015 0.007   0.004"  pos="-0.1549  0.0105  -0.004"  material="abs_plastic" density="1050" friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+      <geom name="s1_wl_pa"  type="box" size="0.0015 0.007   0.0025" pos="-0.1549  0.0105   0.0085" material="abs_plastic" density="1050" friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+      <geom name="s1_wl_C"   type="box" size="0.0015 0.005   0.0095" pos="-0.1549 -0.0005   0.0015" material="abs_plastic" density="1050" friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+      <geom name="s1_wl_ob"  type="box" size="0.0015 0.007   0.004"  pos="-0.1549 -0.0095  -0.004"  material="abs_plastic" density="1050" friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+      <geom name="s1_wl_oa"  type="box" size="0.0015 0.007   0.0025" pos="-0.1549 -0.0095   0.0085" material="abs_plastic" density="1050" friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+      <geom name="s1_wl_D"   type="box" size="0.0015 0.02233 0.0095" pos="-0.1549 -0.03883  0.0015" material="abs_plastic" density="1050" friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+      <site name="s1_usbc"  type="box" size="0.001 0.0045 0.002" pos="-0.1565  0.028   0.003" rgba="0 0.5 1 0.9"/>
+      <site name="s1_pwr"   type="box" size="0.001 0.007  0.002" pos="-0.1565  0.0105  0.003" rgba="1 0.5 0 0.9"/>
+      <site name="s1_os"    type="box" size="0.001 0.007  0.002" pos="-0.1565 -0.0095  0.003" rgba="1 0.5 0 0.9"/>
+      <geom name="s1_wr"    type="box" size="0.0015 0.06115 0.0095" pos=" 0.1549  0       0.0015" material="abs_plastic" density="1050" friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+      <geom name="s1_wrear" type="box" size="0.1564 0.0015  0.0095" pos="0  0.05965 0.0015" material="abs_plastic" density="1050" friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+      <geom name="s1_wfrt"  type="box" size="0.1564 0.0015  0.0095" pos="0 -0.05965 0.0015" material="abs_plastic" density="1050" friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+      <geom name="s1_brl"   type="box" size="0.045  0.00075 0.002" pos=" 0.025  -0.03075 -0.006" material="abs_plastic" density="1050" friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+      <geom name="s1_brr"   type="box" size="0.045  0.00075 0.002" pos=" 0.025   0.03075 -0.006" material="abs_plastic" density="1050" friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+      <geom name="s1_brfl"  type="box" size="0.00075 0.0125 0.002" pos="-0.02025 -0.0175  -0.006" material="abs_plastic" density="1050" friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+      <geom name="s1_brfr"  type="box" size="0.00075 0.0125 0.002" pos="-0.02025  0.0175  -0.006" material="abs_plastic" density="1050" friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+      <geom name="s1_brrr"  type="box" size="0.00075 0.030  0.002" pos=" 0.07025  0       -0.006" material="abs_plastic" density="1050" friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+      <geom name="s1_boss_FL" type="cylinder" size="0.003 0.004" pos="-0.1484 -0.05315 -0.004" material="abs_plastic" density="1050" friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+      <geom name="s1_boss_FR" type="cylinder" size="0.003 0.004" pos=" 0.1484 -0.05315 -0.004" material="abs_plastic" density="1050" friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+      <geom name="s1_boss_RL" type="cylinder" size="0.003 0.004" pos="-0.1484  0.05315 -0.004" material="abs_plastic" density="1050" friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+      <geom name="s1_boss_RR" type="cylinder" size="0.003 0.004" pos=" 0.1484  0.05315 -0.004" material="abs_plastic" density="1050" friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+      <site name="s1_boss_FL_s" type="cylinder" size="0.003 0.001" pos="-0.1484 -0.05315 -0.0085" rgba="0.8 0.2 0.2 1"/>
+      <site name="s1_boss_FR_s" type="cylinder" size="0.003 0.001" pos=" 0.1484 -0.05315 -0.0085" rgba="0.8 0.2 0.2 1"/>
+      <site name="s1_boss_RL_s" type="cylinder" size="0.003 0.001" pos="-0.1484  0.05315 -0.0085" rgba="0.8 0.2 0.2 1"/>
+      <site name="s1_boss_RR_s" type="cylinder" size="0.003 0.001" pos=" 0.1484  0.05315 -0.0085" rgba="0.8 0.2 0.2 1"/>
+      <site name="s1_case_top"  type="sphere"   size="0.002"       pos="0 0 0.011"                rgba="0 0.6 0.8 0.4"/>
     </body>
 
-    <!-- Robot raiser: 400x400x460mm steel pedestal -->
-    <body name="robot_raiser" pos="0 -0.35 0">
-      <geom name="raiser_block" type="box" size="0.200 0.200 0.300"
-            pos="0 0 0.300" rgba="0.35 0.35 0.38 1"
-            contype="1" conaffinity="1" mass="50.0"/>
+    <!-- ══════════════════════════════════════════════════════════════════
+         ROBOT RAISER + UR5e
+         At (0, 0.300): 300mm gap to pallet, 450mm gap to pick zone tray
+         euler Z=π: pan=0 faces pallet (−Y), pan=π faces feeder (+Y)
+         ══════════════════════════════════════════════════════════════════ -->
+    <body name="robot_raiser" pos="0 0.300 0">
+      <geom name="raiser" type="box" size="0.200 0.200 0.300" pos="0 0 0.300"
+            rgba="0.35 0.35 0.38 1" contype="1" conaffinity="1" mass="50.0"/>
     </body>
 
-    <!-- UR5e: base at z=0.460m on raiser, euler Z=pi rotates to face table -->
-    <body name="ur5e_mount" pos="0 -0.35 0.600" euler="0 0 3.1416">
+    <body name="ur5e_mount" pos="0 0.300 0.600" euler="0 0 3.1416">
       <body name="base" childclass="ur5e">
-        <inertial mass="4.0" pos="0 0 0"
-                   diaginertia="0.00443333156 0.00443333156 0.0072"/>
+        <inertial mass="4.0" pos="0 0 0" diaginertia="0.00443333156 0.00443333156 0.0072"/>
         <geom mesh="base_0" material="black"     class="visual"/>
         <geom mesh="base_1" material="jointgray" class="visual"/>
         <body name="shoulder_link" pos="0 0 0.163">
-          <inertial mass="3.7" pos="0 0 0"
-                     diaginertia="0.0102675 0.0102675 0.00666"/>
-          <joint name="shoulder_pan_joint" class="size3" axis="0 0 1"/>
+          <inertial mass="3.7" pos="0 0 0" diaginertia="0.0102675 0.0102675 0.00666"/>
+          <joint name="shoulder_pan_joint"  class="size3" axis="0 0 1"/>
           <geom mesh="shoulder_0" material="urblue"    class="visual"/>
           <geom mesh="shoulder_1" material="black"     class="visual"/>
           <geom mesh="shoulder_2" material="jointgray" class="visual"/>
           <geom class="collision" size="0.06 0.06" pos="0 0 -0.04"/>
           <body name="upper_arm_link" pos="0 0.138 0" quat="1 0 1 0">
-            <inertial mass="8.393" pos="0 0 0.2125"
-                       diaginertia="0.133886 0.133886 0.0151074"/>
+            <inertial mass="8.393" pos="0 0 0.2125" diaginertia="0.133886 0.133886 0.0151074"/>
             <joint name="shoulder_lift_joint" class="size3"/>
             <geom mesh="upperarm_0" material="linkgray"  class="visual"/>
             <geom mesh="upperarm_1" material="black"     class="visual"/>
@@ -412,8 +267,7 @@
             <geom class="collision" pos="0 -0.04 0" quat="1 1 0 0" size="0.06 0.06"/>
             <geom class="collision" size="0.05 0.2" pos="0 0 0.2"/>
             <body name="forearm_link" pos="0 -0.131 0.425">
-              <inertial mass="2.275" pos="0 0 0.196"
-                         diaginertia="0.0311796 0.0311796 0.004095"/>
+              <inertial mass="2.275" pos="0 0 0.196" diaginertia="0.0311796 0.0311796 0.004095"/>
               <joint name="elbow_joint" class="size3_limited"/>
               <geom mesh="forearm_0" material="urblue"    class="visual"/>
               <geom mesh="forearm_1" material="linkgray"  class="visual"/>
@@ -422,16 +276,14 @@
               <geom class="collision" pos="0 0.08 0" quat="1 1 0 0" size="0.055 0.06"/>
               <geom class="collision" size="0.038 0.19" pos="0 0 0.2"/>
               <body name="wrist_1_link" pos="0 0 0.392" quat="1 0 1 0">
-                <inertial mass="1.219" pos="0 0.127 0"
-                           diaginertia="0.0025599 0.0025599 0.0021942"/>
+                <inertial mass="1.219" pos="0 0.127 0" diaginertia="0.0025599 0.0025599 0.0021942"/>
                 <joint name="wrist_1_joint" class="size1"/>
                 <geom mesh="wrist1_0" material="black"     class="visual"/>
                 <geom mesh="wrist1_1" material="urblue"    class="visual"/>
                 <geom mesh="wrist1_2" material="jointgray" class="visual"/>
                 <geom class="collision" pos="0 0.05 0" quat="1 1 0 0" size="0.04 0.07"/>
                 <body name="wrist_2_link" pos="0 0.127 0">
-                  <inertial mass="1.219" pos="0 0 0.1"
-                             diaginertia="0.0025599 0.0025599 0.0021942"/>
+                  <inertial mass="1.219" pos="0 0 0.1" diaginertia="0.0025599 0.0025599 0.0021942"/>
                   <joint name="wrist_2_joint" axis="0 0 1" class="size1"/>
                   <geom mesh="wrist2_0" material="black"     class="visual"/>
                   <geom mesh="wrist2_1" material="urblue"    class="visual"/>
@@ -443,88 +295,32 @@
                                diaginertia="0.000132134 9.90863e-05 9.90863e-05"/>
                     <joint name="wrist_3_joint" class="size1"/>
                     <geom material="linkgray" mesh="wrist3" class="visual"/>
-                    <geom class="eef_collision" pos="0 0.08 0" quat="1 1 0 0"
-                          size="0.04 0.02"/>
+                    <geom class="eef_collision" pos="0 0.08 0" quat="1 1 0 0" size="0.04 0.02"/>
                     <site name="attachment_site" pos="0 0.1 0" quat="-1 1 0 0"/>
 
-                    <!--
-                      Vacuum Gripper (single cup, S1 assembly)
-                      Attached at attachment_site: pos="0 0.1 0" in wrist_3_link frame
-                      All geoms offset along +Y from that site position.
-                      Total gripper length: 50mm
-                      Colors match UR5e scheme: jointgray body, black cup, urblue accent
-                    -->
                     <body name="gripper" pos="0 0.1 0">
-                      <!-- Mounting flange: 60mm dia x 10mm -->
-                      <geom name="gripper_flange"
-                            type="cylinder" size="0.030 0.005"
-                            pos="0 0.005 0" euler="1.5708 0 0"
-                            rgba="0.278 0.278 0.278 1"
-                            contype="0" conaffinity="0" mass="0.05"/>
-                      <!-- Main body tube: 40mm dia x 30mm -->
-                      <geom name="gripper_body"
-                            type="cylinder" size="0.020 0.015"
-                            pos="0 0.025 0" euler="1.5708 0 0"
-                            rgba="0.278 0.278 0.278 1"
-                            contype="0" conaffinity="0" mass="0.08"/>
-                      <!-- Blue accent ring: 44mm dia x 6mm -->
-                      <geom name="gripper_accent"
-                            type="cylinder" size="0.022 0.003"
-                            pos="0 0.043 0" euler="1.5708 0 0"
-                            rgba="0.49 0.678 0.8 1"
-                            contype="0" conaffinity="0" mass="0.01"/>
-                      <!-- Suction cup: 30mm dia x 10mm -->
-                      <geom name="gripper_cup"
-                            type="cylinder" size="0.015 0.005"
-                            pos="0 0.051 0" euler="1.5708 0 0"
-                            rgba="0.033 0.033 0.033 1"
-                            contype="0" conaffinity="0" mass="0.02"/>
-                      <!-- Suction cup tip site: used for IK target -->
-                      <site name="gripper_tip" pos="0 0.056 0" size="0.003"
-                            rgba="1 1 0 0.8"/>
+                      <geom name="g_flange" type="cylinder" size="0.030 0.005" pos="0 0.005 0" euler="1.5708 0 0" rgba="0.278 0.278 0.278 1" contype="0" conaffinity="0" mass="0.05"/>
+                      <geom name="g_body"   type="cylinder" size="0.020 0.015" pos="0 0.025 0" euler="1.5708 0 0" rgba="0.278 0.278 0.278 1" contype="0" conaffinity="0" mass="0.08"/>
+                      <geom name="g_accent" type="cylinder" size="0.022 0.003" pos="0 0.043 0" euler="1.5708 0 0" rgba="0.49 0.678 0.8 1"   contype="0" conaffinity="0" mass="0.01"/>
+                      <geom name="g_cup"    type="cylinder" size="0.015 0.005" pos="0 0.051 0" euler="1.5708 0 0" rgba="0.1 0.1 0.1 1"       contype="0" conaffinity="0" mass="0.02"/>
+                      <site name="gripper_tip" pos="0 0.056 0" size="0.003" rgba="1 1 0 0.8"/>
 
-                      <!-- ── PIN GRIPPER (fixed child, toggled visible/invisible) ── -->
+                      <!-- Pin gripper (α toggled by controller) -->
                       <body name="pin_gripper" pos="0 0 0">
-                        <!-- Flat body block -->
-                        <geom name="pin_body_blk" type="box" size="0.085 0.018 0.018"
-                              pos="0 0.030 0" euler="0 0 0"
-                              rgba="0.15 0.15 0.15 0" contype="0" conaffinity="0"/>
-                        <!-- Left pin -->
-                        <geom name="pin_left" type="cylinder" size="0.002 0.015"
-                              pos="-0.0762 0.051 0" euler="1.5708 0 0"
-                              rgba="0.7 0.7 0.7 0" contype="0" conaffinity="0"/>
-                        <!-- Right pin -->
-                        <geom name="pin_right" type="cylinder" size="0.002 0.015"
-                              pos=" 0.0762 0.051 0" euler="1.5708 0 0"
-                              rgba="0.7 0.7 0.7 0" contype="0" conaffinity="0"/>
-                        <site name="pin_gripper_tip" pos="0 0.056 0" size="0.003"
-                              rgba="0 0 0 0"/>
+                        <geom name="pin_body" type="box"      size="0.085 0.018 0.018" pos="0 0.030 0"       rgba="0.15 0.15 0.15 0" contype="0" conaffinity="0"/>
+                        <geom name="pin_l"    type="cylinder" size="0.002 0.015"        pos="-0.0762 0.051 0" euler="1.5708 0 0" rgba="0.7 0.7 0.7 0" contype="0" conaffinity="0"/>
+                        <geom name="pin_r"    type="cylinder" size="0.002 0.015"        pos=" 0.0762 0.051 0" euler="1.5708 0 0" rgba="0.7 0.7 0.7 0" contype="0" conaffinity="0"/>
+                        <site name="pin_tip" pos="0 0.056 0" size="0.003" rgba="0 0 0 0"/>
                       </body>
 
-                      <!-- ── SCREWDRIVER (fixed child, toggled visible/invisible) ── -->
+                      <!-- Screwdriver (α toggled by controller) -->
                       <body name="screwdriver" pos="0 0 0">
-                        <!-- Mounting flange (same Y convention as vacuum gripper) -->
-                        <geom name="sd_flange" type="cylinder" size="0.030 0.005"
-                              pos="0 0.005 0" euler="1.5708 0 0"
-                              rgba="0.278 0.278 0.278 0" contype="0" conaffinity="0"/>
-                        <!-- Spring coil -->
-                        <geom name="sd_spring" type="cylinder" size="0.008 0.008"
-                              pos="0 0.018 0" euler="1.5708 0 0"
-                              rgba="0.7 0.7 0.7 0" contype="0" conaffinity="0"/>
-                        <!-- Orange body -->
-                        <geom name="sd_body" type="cylinder" size="0.018 0.020"
-                              pos="0 0.046 0" euler="1.5708 0 0"
-                              rgba="1.0 0.45 0.0 0" contype="0" conaffinity="0"/>
-                        <!-- Steel shaft -->
-                        <geom name="sd_shaft" type="cylinder" size="0.005 0.012"
-                              pos="0 0.078 0" euler="1.5708 0 0"
-                              rgba="0.8 0.8 0.82 0" contype="0" conaffinity="0"/>
-                        <!-- Hex bit tip -->
-                        <geom name="sd_bit" type="cylinder" size="0.003 0.006"
-                              pos="0 0.096 0" euler="1.5708 0 0"
-                              rgba="0.5 0.5 0.5 0" contype="0" conaffinity="0"/>
-                        <site name="screwdriver_tip" pos="0 0.102 0" size="0.003"
-                              rgba="0 0 0 0"/>
+                        <geom name="sd_flange" type="cylinder" size="0.030 0.005" pos="0 0.005 0" euler="1.5708 0 0" rgba="0.278 0.278 0.278 0" contype="0" conaffinity="0"/>
+                        <geom name="sd_spring" type="cylinder" size="0.008 0.008" pos="0 0.018 0" euler="1.5708 0 0" rgba="0.7 0.7 0.7 0"       contype="0" conaffinity="0"/>
+                        <geom name="sd_body"   type="cylinder" size="0.018 0.020" pos="0 0.046 0" euler="1.5708 0 0" rgba="1.0 0.45 0.0 0"      contype="0" conaffinity="0"/>
+                        <geom name="sd_shaft"  type="cylinder" size="0.005 0.012" pos="0 0.078 0" euler="1.5708 0 0" rgba="0.8 0.8 0.82 0"      contype="0" conaffinity="0"/>
+                        <geom name="sd_bit"    type="cylinder" size="0.003 0.006" pos="0 0.096 0" euler="1.5708 0 0" rgba="0.5 0.5 0.5 0"       contype="0" conaffinity="0"/>
+                        <site name="screwdriver_tip" pos="0 0.102 0" size="0.003" rgba="0 0 0 0"/>
                       </body>
                     </body>
                   </body>
@@ -536,330 +332,287 @@
       </body>
     </body>
 
-    <!--
-      ═══════════════════════════════════════════════════════════════
-      FEEDER CONVEYOR — runs parallel to work table along X axis
-      Belt center: x=-0.50, y=0.40, z=0.800 (flush with table top)
-      Belt spans x=-1.15 to x=+0.15 (half-length=0.65)
-      Belt width: y=0.33 to y=0.47 (half-width=0.075 → 150mm)
-      Side rails at y ± 0.082 (32mm above belt face)
-      4 support legs at corners
+    <!-- ══════════════════════════════════════════════════════════════════
+         FEEDER CONVEYOR — L-shaped
+         ── Main leg: +Y, X=−0.400 ──────────────────────────────────────
+           Y span: 0.370→1.780, center Y=1.075, half-Y=0.705
+           Inner width 380mm (tray 350+30mm), half-X=0.190
+           Rail outer half-X=0.1975
+           Pick stopper  : world Y=0.480 → local=-0.595
+           Pre-stage stop: world Y=1.050 → local=-0.025
 
-      Parts queue from right (pick end x=0.0) toward left (-X):
-        EPDM foam    x= 0.00  (pick here first)
-        Battery      x=-0.22
-        PCB          x=-0.44
-        Sound foam   x=-0.66
-        Alu plate    x=-0.88
-      Pick point: (0.0, 0.40, 0.805)
-      ═══════════════════════════════════════════════════════════════
-    -->
-    <!-- Feeder center at x=-0.60 so pick end is at x=0.0,
-         belt spans x=-1.45 to x=+0.25 (half-length=0.85).
-         Rails sit BELOW belt top surface so gripper picks freely.
-         Rail top face flush with belt top (z=0.800):
-           belt half-z=0.005 → belt top at z=0.805 from body origin=0
-           rail half-z=0.010 → rail top at z=0.790 (15mm below belt top)
-           rail pos z = 0.790 - 0.010 = 0.780 ... 
-           Simpler: belt top=0.805, rail top=0.795 (10mm below belt top)
-           rail half-z=0.012, rail center z = 0.800 - 0.012 = 0.788
-           So rails are recessed 10mm below belt surface — gripper clears. -->
-    <!-- Belt center x=-0.70, spans x=-1.50 to x=+0.10 (half=0.80)
-         Pick end at x=0.0, queue extends to x=-1.43 -->
-    <body name="s1_feeder" pos="-0.72 0.28 0">
-      <!-- Belt surface: 1.6m long, 150mm wide -->
-      <geom name="s1_belt" type="box" size="1.070 0.075 0.005"
-            pos="0 0 0.820" material="conveyor_belt"
-            contype="1" conaffinity="1"/>
-      <!-- Front guide rail — recessed 10mm below belt top -->
-      <geom name="s1_rail_front" type="box" size="1.070 0.008 0.012"
-            pos="0 -0.083 0.803" material="conveyor_rail"
-            contype="0" conaffinity="0"/>
-      <!-- Rear guide rail -->
-      <geom name="s1_rail_rear" type="box" size="1.070 0.008 0.012"
-            pos="0  0.083 0.803" material="conveyor_rail"
-            contype="0" conaffinity="0"/>
-      <!-- End cap right (+X, pick end) -->
-      <geom name="s1_cap_r" type="box" size="0.008 0.075 0.012"
-            pos="1.078 0 0.803" material="conveyor_rail"
-            contype="0" conaffinity="0"/>
-      <!-- End cap left (-X, feed end) -->
-      <geom name="s1_cap_l" type="box" size="0.008 0.075 0.012"
-            pos="-1.078 0 0.803" material="conveyor_rail"
-            contype="0" conaffinity="0"/>
-      <!-- Structural cross-beam -->
-      <geom name="s1_crossbeam" type="box" size="0.820 0.008 0.008"
-            pos="0 0 0.783" material="conveyor_rail"
-            contype="0" conaffinity="0"/>
-      <!-- 4 support legs -->
-      <geom name="s1_feed_leg_fl" type="box" size="0.015 0.015 0.408"
-            pos="-1.040 -0.060 0.408" material="conveyor_rail"/>
-      <geom name="s1_feed_leg_fr" type="box" size="0.015 0.015 0.408"
-            pos=" 1.040 -0.060 0.408" material="conveyor_rail"/>
-      <geom name="s1_feed_leg_rl" type="box" size="0.015 0.015 0.408"
-            pos="-1.040  0.060 0.408" material="conveyor_rail"/>
-      <geom name="s1_feed_leg_rr" type="box" size="0.015 0.015 0.408"
-            pos=" 1.040  0.060 0.408" material="conveyor_rail"/>
+         ── Exit arm: +X at Y=0.750 ──────────────────────────────────────
+           Width = TRAY LENGTH (520mm), inner half-Y=0.260, rail outer=0.2675
+           X span: feeder right rail (−0.2025) → +0.4975
+           half-X=0.350, center X=0.1475
+           Stack placed AFTER exit arm end at X=+0.5975
+         ══════════════════════════════════════════════════════════════════ -->
+
+    <!-- Feeder main leg: body centered at (−0.400, 1.075) -->
+    <body name="feeder_main" pos="-0.400 1.075 0">
+      <geom name="fm_belt"     type="box" size="0.190 0.705 0.005"  pos="0 0 0.795"   material="conveyor_belt" contype="1" conaffinity="1"/>
+      <geom name="fm_rail_l"   type="box" size="0.0075 0.705 0.040" pos="-0.1975 0 0.820" material="conveyor_rail" contype="1" conaffinity="1"/>
+      <geom name="fm_rail_r"   type="box" size="0.0075 0.705 0.040" pos=" 0.1975 0 0.820" material="conveyor_rail" contype="1" conaffinity="1"/>
+      <geom name="fm_cap_top"  type="box" size="0.1975 0.010 0.040" pos="0  0.715 0.820" material="conveyor_rail" contype="0" conaffinity="0"/>
+      <!-- Support legs — 3 pairs -->
+      <geom name="fl1l" type="box" size="0.015 0.015 0.392" pos="-0.180 -0.550 0.392" material="conveyor_rail"/>
+      <geom name="fl1r" type="box" size="0.015 0.015 0.392" pos=" 0.180 -0.550 0.392" material="conveyor_rail"/>
+      <geom name="fl2l" type="box" size="0.015 0.015 0.392" pos="-0.180  0.000 0.392" material="conveyor_rail"/>
+      <geom name="fl2r" type="box" size="0.015 0.015 0.392" pos=" 0.180  0.000 0.392" material="conveyor_rail"/>
+      <geom name="fl3l" type="box" size="0.015 0.015 0.392" pos="-0.180  0.550 0.392" material="conveyor_rail"/>
+      <geom name="fl3r" type="box" size="0.015 0.015 0.392" pos=" 0.180  0.550 0.392" material="conveyor_rail"/>
+      <!-- Pick zone stopper: tray trailing world Y=0.480 → local=0.480−1.075=−0.595 -->
+      <geom name="fm_stop_pick" type="cylinder" size="0.012 0.030" pos="0 -0.595 0.832" material="stopper_mat" contype="1" conaffinity="1"/>
+      <site name="s_stop_pick" type="sphere" size="0.005" pos="0 -0.595 0.862" rgba="1 0.85 0 1"/>
+      <!-- Pre-stage stopper: tray trailing world Y=1.050 → local=1.050−1.075=−0.025 -->
+      <geom name="fm_stop_pre"  type="cylinder" size="0.012 0.030" pos="0 -0.025 0.832" material="stopper_mat" contype="1" conaffinity="1"/>
+      <site name="s_stop_pre"  type="sphere" size="0.005" pos="0 -0.025 0.862" rgba="1 0.85 0 1"/>
     </body>
 
-    <!--
-      ═══════════════════════════════════════════════════════════════
-      PARTS ON FEEDER
-      All at y=0.40, x spaced 0.22m apart, belt top z=0.805
-      Part sits at z = 0.805 + half_height
-
-      Place Z inside case (case floor world z=0.811):
-        EPDM foam    z = 0.811 + 0.00375 = 0.81475
-        Battery      z = 0.811 + 0.00750 = 0.81850  (x+0.025 offset)
-        PCB          z = 0.811 + 0.01130 = 0.82230
-        Sound foam   z = 0.811 + 0.01260 = 0.82360
-        Alu plate    z = 0.811 + 0.01385 = 0.82485
-      ═══════════════════════════════════════════════════════════════
-    -->
-
-    <!-- STEP 1: EPDM FOAM — 319x109x1.5mm, 4-geom around battery cutout -->
-    <!-- Belt top z=0.805, foam half-height=0.00075, body z=0.80575 -->
-    <body name="s1_epdm" pos="0.00 0.28 0.82575">
-      <freejoint name="s1_epdm_jnt"/>
-      <inertial pos="0 0 0" mass="0.008" diaginertia="1.2e-5 3.8e-5 5.0e-5"/>
-      <geom name="s1_epdm_front" type="box" size="0.1515 0.01225 0.00075"
-            pos="0 -0.04225 0" material="mat_epdm"
-            density="200" friction="0.8 0.005 0.0001" condim="4"/>
-      <geom name="s1_epdm_rear"  type="box" size="0.1515 0.01225 0.00075"
-            pos="0  0.04225 0" material="mat_epdm"
-            density="200" friction="0.8 0.005 0.0001" condim="4"/>
-      <geom name="s1_epdm_left"  type="box" size="0.06975 0.030 0.00075"
-            pos="-0.08975 0 0" material="mat_epdm"
-            density="200" friction="0.8 0.005 0.0001" condim="4"/>
-      <geom name="s1_epdm_right" type="box" size="0.04475 0.030 0.00075"
-            pos=" 0.11475 0 0" material="mat_epdm"
-            density="200" friction="0.8 0.005 0.0001" condim="4"/>
-      <site name="s1_epdm_grasp" type="sphere" size="0.003"
-            pos="-0.06 0 0.00075" rgba="0 0.6 0.8 0.6"/>
+    <!-- Exit arm: body centered at (0.1475, 0.750)
+         Width = tray Y length (520mm): inner half-Y=0.260, outer half-Y=0.2675
+         X span: −0.2025 → +0.4975 (half=0.350, center=0.1475) -->
+    <body name="feeder_exit" pos="0.1475 0.750 0">
+      <geom name="fe_belt"   type="box" size="0.350 0.260 0.005"  pos="0 0 0.795"    material="conveyor_belt" contype="1" conaffinity="1"/>
+      <!-- −Y rail (front of arm, toward robot) -->
+      <geom name="fe_rail_f" type="box" size="0.350 0.0075 0.040" pos="0 -0.2675 0.820" material="conveyor_rail" contype="1" conaffinity="1"/>
+      <!-- +Y rail (rear of arm, away from robot) -->
+      <geom name="fe_rail_r" type="box" size="0.350 0.0075 0.040" pos="0  0.2675 0.820" material="conveyor_rail" contype="1" conaffinity="1"/>
+      <!-- +X end cap (exit end, where stack begins) -->
+      <geom name="fe_cap_r"  type="box" size="0.010 0.2675 0.040" pos="0.360 0 0.820" material="conveyor_rail" contype="0" conaffinity="0"/>
+      <!-- Support legs -->
+      <geom name="fel1f" type="box" size="0.015 0.015 0.392" pos="-0.200 -0.250 0.392" material="conveyor_rail"/>
+      <geom name="fel1r" type="box" size="0.015 0.015 0.392" pos="-0.200  0.250 0.392" material="conveyor_rail"/>
+      <geom name="fel2f" type="box" size="0.015 0.015 0.392" pos=" 0.200 -0.250 0.392" material="conveyor_rail"/>
+      <geom name="fel2r" type="box" size="0.015 0.015 0.392" pos=" 0.200  0.250 0.392" material="conveyor_rail"/>
     </body>
 
-    <!-- STEP 2: BATTERY — 90x60x6mm LiPo -->
-    <!-- body z = 0.805 + 0.003 = 0.808 -->
-    <body name="s1_battery" pos="-0.43 0.28 0.828">  <!-- x=-0.25 -->
-      <freejoint name="s1_battery_jnt"/>
-      <inertial pos="0 0 0" mass="0.080" diaginertia="3.6e-5 1.6e-4 1.8e-4"/>
-      <geom name="s1_battery_body" type="box" size="0.045 0.030 0.003"
-            pos="0 0 0" material="mat_lipo"
-            density="2400" friction="0.6 0.005 0.0001" condim="4"/>
-      <geom name="s1_jst" type="box" size="0.001 0.004 0.002"
-            pos="-0.046 0 -0.001" material="mat_connector"
-            contype="0" conaffinity="0"/>
-      <site name="s1_battery_grasp" type="sphere" size="0.003"
-            pos="0 0 0.003" rgba="0 0.6 0.8 0.6"/>
-      <site name="s1_jst_face" type="sphere" size="0.002"
-            pos="-0.045 0 0" rgba="1 0.4 0 0.6"/>
-    </body>
-
-    <!-- STEP 3: PCB — 313x107x1.6mm FR4 with left-edge connectors -->
-    <!-- body z = 0.805 + 0.0008 = 0.8058 -->
-    <body name="s1_pcb" pos="-0.68 0.28 0.8258">  <!-- x=-0.50 -->
-      <freejoint name="s1_pcb_jnt"/>
-      <inertial pos="0 0 0" mass="0.099" diaginertia="9.3e-5 8.1e-4 8.9e-4"/>
-      <geom name="s1_pcb_board" type="box" size="0.1565 0.0535 0.0008"
-            pos="0 0 0" material="mat_fr4"
-            density="1850" friction="0.6 0.005 0.0001" condim="4"/>
-      <geom name="s1_usbc" type="box" size="0.0015 0.0045 0.002"
-            pos="-0.154 0.028 0.001" material="mat_conn_dark"
-            contype="0" conaffinity="0"/>
-      <geom name="s1_pwr_sw" type="box" size="0.0015 0.007 0.003"
-            pos="-0.154 0.0105 0.002" material="mat_conn_dark"
-            contype="0" conaffinity="0"/>
-      <geom name="s1_os_sw" type="box" size="0.0015 0.007 0.003"
-            pos="-0.154 -0.0095 0.002" material="mat_conn_dark"
-            contype="0" conaffinity="0"/>
-      <site name="s1_pcb_grasp_l" type="sphere" size="0.003"
-            pos="0.05 0 0.0008" rgba="0 0.6 0.8 0.6"/>
-      <site name="s1_pcb_grasp_r" type="sphere" size="0.003"
-            pos="0.12 0 0.0008" rgba="0 0.6 0.8 0.6"/>
-    </body>
-
-    <!-- STEP 4: SOUND FOAM — 305x107x1mm PE foam -->
-    <!-- body z = 0.805 + 0.0005 = 0.8055 -->
-    <body name="s1_sound_foam" pos="-1.04 0.28 0.8255">  <!-- x=-0.86 -->
-      <freejoint name="s1_sound_foam_jnt"/>
-      <inertial pos="0 0 0" mass="0.002" diaginertia="2.5e-6 2.1e-5 2.3e-5"/>
-      <geom name="s1_sound_foam_body" type="box" size="0.1480 0.0535 0.0005"
-            pos="0 0 0" material="mat_pe_foam"
-            density="60" friction="0.5 0.005 0.0001" condim="4"/>
-      <site name="s1_sound_foam_grasp" type="sphere" size="0.003"
-            pos="0 0 0.0005" rgba="0 0.6 0.8 0.6"/>
-    </body>
-
-    <!-- STEP 5: ALUMINUM PLATE — 317x107x1.5mm -->
-    <!-- body z = 0.805 + 0.00075 = 0.80575 -->
-    <body name="s1_alu_plate" pos="-1.40 0.28 0.82575">  <!-- x=-1.22 -->
-      <freejoint name="s1_alu_plate_jnt"/>
-      <inertial pos="0 0 0.00075" mass="0.138" diaginertia="1.4e-4 1.3e-3 1.4e-3"/>
-      <geom name="s1_alu_visual" type="box" size="0.1585 0.0535 0.00075"
-            pos="0 0 0.00075" material="mat_alu_silver"
-            density="2700" friction="0.4 0.005 0.0001" condim="4"/>
-      <site name="s1_alu_grasp_l" type="sphere" size="0.003"
-            pos="-0.06 0 0.0015" rgba="0 0.6 0.8 0.6"/>
-      <site name="s1_alu_grasp_r" type="sphere" size="0.003"
-            pos=" 0.06 0 0.0015" rgba="0 0.6 0.8 0.6"/>
-    </body>
-
-    <!-- Pick point: world pos gripper_tip targets for every pick -->
-
-    <!-- ═══════════════════════════════════════════════════════════════
-         TOOL DOCK — left side of robot, holds pin gripper + screwdriver
-         Dock body at [-0.38, -0.15, 0.800]
-         Three cup holders along Y axis, spaced 90mm apart
-         ═══════════════════════════════════════════════════════════════ -->
-    <body name="tool_dock" pos="-0.38 -0.15 0.800">
+    <!-- Tray stack accumulator — placed after exit arm ends at X=+0.4975
+         Stack center X = 0.4975 + 0.100 (gap) + 0.130 (half stack width) = 0.7275
+         But we keep it at 0.5975 for compactness (just past exit arm cap) -->
+    <body name="tray_stack" pos="0.640 0.750 0.800">
       <!-- Base plate -->
-      <geom name="dock_base" type="box" size="0.060 0.160 0.004"
-            pos="0 0 0" material="mat_dock_rack"
-            contype="1" conaffinity="1" mass="2.0"/>
-      <!-- Vertical post -->
-      <geom name="dock_post" type="box" size="0.012 0.012 0.035"
-            pos="0 0 0.039" material="mat_dock_rack"
-            contype="1" conaffinity="1" mass="0.5"/>
-      <!-- Horizontal arm -->
-      <geom name="dock_arm" type="box" size="0.012 0.150 0.010"
-            pos="0 0 0.074" material="mat_dock_rack"
-            contype="1" conaffinity="1" mass="0.3"/>
-      <!-- Cup 1: vacuum gripper (empty at start — robot carries it) -->
-      <geom name="dock_cup_vacuum" type="cylinder" size="0.022 0.008"
-            pos="0 -0.090 0.082" material="mat_holder_cup"
-            contype="0" conaffinity="0"/>
-      <site name="dock_vacuum_W2" type="sphere" size="0.003"
-            pos="0 -0.090 0.090" rgba="0 0.8 0 0.8"/>
-      <!-- Cup 2: pin gripper -->
-      <geom name="dock_cup_pin" type="cylinder" size="0.022 0.008"
-            pos="0 0.000 0.082" material="mat_holder_cup"
-            contype="0" conaffinity="0"/>
-      <site name="dock_pin_W2" type="sphere" size="0.003"
-            pos="0 0.000 0.090" rgba="0 0.8 0 0.8"/>
-      <!-- Cup 3: screwdriver -->
-      <geom name="dock_cup_screw" type="cylinder" size="0.022 0.008"
-            pos="0 0.090 0.082" material="mat_holder_cup"
-            contype="0" conaffinity="0"/>
-      <site name="dock_screw_W2" type="sphere" size="0.003"
-            pos="0 0.090 0.090" rgba="0 0.8 0 0.8"/>
+      <geom name="ts_base"   type="box" size="0.140 0.270 0.008" pos="0 0 0"         material="stack_mat" contype="1" conaffinity="1" mass="5.0"/>
+      <!-- Three walls (open toward −X for tray entry) -->
+      <geom name="ts_wall_r" type="box" size="0.006 0.270 0.120" pos=" 0.146 0 0.120" material="stack_mat" contype="0" conaffinity="0"/>
+      <geom name="ts_wall_f" type="box" size="0.146 0.006 0.120" pos="0 -0.276 0.120" material="stack_mat" contype="0" conaffinity="0"/>
+      <geom name="ts_wall_b" type="box" size="0.146 0.006 0.120" pos="0  0.276 0.120" material="stack_mat" contype="0" conaffinity="0"/>
+      <site name="s_stack" type="sphere" size="0.010" pos="0 0 0.130" rgba="0.8 0.4 0 0.8"/>
+    </body>
 
-      <!-- Static visual: pin gripper parked in cup 2 (hidden when robot holds it) -->
-      <body name="dock_pin_visual" pos="0 0.000 0.090">
-        <geom name="dpv_body" type="box" size="0.085 0.018 0.018"
-              pos="0 0 0.010" rgba="0.15 0.15 0.15 1" contype="0" conaffinity="0"/>
-        <geom name="dpv_pin_l" type="cylinder" size="0.002 0.015"
-              pos="-0.0762 0 0.031" euler="1.5708 0 0"
-              rgba="0.7 0.7 0.7 1" contype="0" conaffinity="0"/>
-        <geom name="dpv_pin_r" type="cylinder" size="0.002 0.015"
-              pos=" 0.0762 0 0.031" euler="1.5708 0 0"
-              rgba="0.7 0.7 0.7 1" contype="0" conaffinity="0"/>
+    <!-- ══════════════════════════════════════════════════════════════════
+         KIT TRAY — PICK ZONE  (−0.400, 0.750, 0.815)
+         ORIENTATION CORRECTED: EPDM at local Y=−0.181 (nearest robot, −Y)
+                                 Plate at local Y=+0.187 (farthest, +Y)
+         Pocket floor world z = 0.815 − 0.005 = 0.810
+         ══════════════════════════════════════════════════════════════════ -->
+    <body name="kit_tray_pickzone" pos="-0.400 0.750 0.815">
+      <freejoint name="jnt_tray_pz"/>
+      <inertial pos="0 0 -0.0075" mass="3.5" diaginertia="5.0e-2 1.2e-1 1.5e-1"/>
+      <!-- Base slab -->
+      <geom name="pz_slab" type="box" size="0.175 0.260 0.0075" pos="0 0 -0.0075" material="tray_alu" contype="1" conaffinity="1"/>
+      <!-- Outer walls -->
+      <geom name="pz_wl"   type="box" size="0.0075 0.260 0.004" pos="-0.1675 0 0.004"  material="tray_alu" contype="0" conaffinity="0"/>
+      <geom name="pz_wr"   type="box" size="0.0075 0.260 0.004" pos=" 0.1675 0 0.004"  material="tray_alu" contype="0" conaffinity="0"/>
+      <!-- −Y wall = robot-facing end (EPDM side) -->
+      <geom name="pz_wb"   type="box" size="0.1600 0.0075 0.004" pos="0 -0.2525 0.004" material="tray_alu" contype="0" conaffinity="0"/>
+      <!-- +Y wall = far end (Plate side) -->
+      <geom name="pz_wt"   type="box" size="0.1600 0.0075 0.004" pos="0  0.2525 0.004" material="tray_alu" contype="0" conaffinity="0"/>
+      <!-- Inter-pocket dividers (Y positions now flipped) -->
+      <!-- Div between EPDM (−0.181) and Battery (−0.064): gap center = (−0.117+−0.031)/2 = −0.074? -->
+      <!-- Gap: EPDM top Y = −0.181+0.064 = −0.117, Battery bottom Y = −0.064−0.033 = −0.097 -->
+      <!-- div1 center Y = (−0.117 + −0.097)/2 = −0.107 -->
+      <geom name="pz_div1" type="box" size="0.1600 0.010 0.004" pos="0 -0.10700 0.004" material="tray_alu" contype="0" conaffinity="0"/>
+      <!-- Gap: Battery top Y = −0.064+0.033=−0.031, PCB bottom Y=0.048−0.059=−0.011 -->
+      <!-- div2 center Y = (−0.031+−0.011)/2 = −0.021 -->
+      <geom name="pz_div2" type="box" size="0.1600 0.010 0.004" pos="0 -0.02100 0.004" material="tray_alu" contype="0" conaffinity="0"/>
+      <!-- Gap: PCB top Y = 0.048+0.059=0.107, Plate bottom Y=0.187−0.060=0.127 -->
+      <!-- div3 center Y = (0.107+0.127)/2 = 0.117 -->
+      <geom name="pz_div3" type="box" size="0.1600 0.010 0.004" pos="0  0.11700 0.004" material="tray_alu" contype="0" conaffinity="0"/>
+      <!-- Battery lateral stops (centered on battery pocket Y=−0.064) -->
+      <geom name="pz_bsl"  type="box" size="0.0075 0.0330 0.004" pos="-0.0555 -0.06370 0.004" material="tray_alu" contype="0" conaffinity="0"/>
+      <geom name="pz_bsr"  type="box" size="0.0075 0.0330 0.004" pos=" 0.0555 -0.06370 0.004" material="tray_alu" contype="0" conaffinity="0"/>
+      <!-- Pocket floors — distinct colors per part -->
+      <!-- EPDM pocket: local Y=−0.18085, half 0.1564×0.06415 -->
+      <geom name="pz_fl_epdm" type="box" size="0.1564 0.06415 0.0015" pos="0 -0.18085 -0.0065" material="tray_foam_epdm"  contype="0" conaffinity="0"/>
+      <!-- Battery pocket: local Y=−0.06370, half 0.0480×0.0330 -->
+      <geom name="pz_fl_batt" type="box" size="0.0480 0.0330  0.0015" pos="0 -0.06370 -0.0065" material="tray_foam_batt"  contype="0" conaffinity="0"/>
+      <!-- PCB pocket: local Y=+0.04830, half 0.1540×0.0590 -->
+      <geom name="pz_fl_pcb"  type="box" size="0.1540 0.0590  0.0015" pos="0  0.04830 -0.0065" material="tray_foam_pcb"   contype="0" conaffinity="0"/>
+      <!-- Plate pocket: local Y=+0.18745, half 0.1554×0.06015 -->
+      <geom name="pz_fl_plt"  type="box" size="0.1554 0.06015 0.0015" pos="0  0.18745 -0.0065" material="tray_foam_plate" contype="0" conaffinity="0"/>
+      <!-- ID stripe at +Y end (plate/load-station side) -->
+      <geom name="pz_id"      type="box" size="0.040 0.0015 0.002" pos="0 0.2600 0.006" material="tray_id" contype="0" conaffinity="0"/>
+      <!-- Pick sites (body-local) -->
+      <site name="pz_pick_epdm"  type="sphere" size="0.004" pos="0 -0.18085 -0.00425" rgba="0.5 0.6 1.0 0.9"/>
+      <site name="pz_pick_batt"  type="sphere" size="0.004" pos="0 -0.06370 -0.002"   rgba="0.9 0.9 0.3 0.9"/>
+      <site name="pz_pick_pcb"   type="sphere" size="0.004" pos="0  0.04830 -0.0042"  rgba="0.3 0.9 0.4 0.9"/>
+      <site name="pz_pick_plate" type="sphere" size="0.004" pos="0  0.18745 -0.00425" rgba="0.9 0.9 0.9 0.9"/>
+    </body>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         KIT TRAY — PRE-STAGE  (−0.400, 1.320, 0.815) — empty pockets
+         Same geometry, same orientation
+         ══════════════════════════════════════════════════════════════════ -->
+    <body name="kit_tray_prestage" pos="-0.400 1.320 0.815">
+      <freejoint name="jnt_tray_ps"/>
+      <inertial pos="0 0 -0.0075" mass="3.5" diaginertia="5.0e-2 1.2e-1 1.5e-1"/>
+      <geom name="ps_slab" type="box" size="0.175 0.260 0.0075" pos="0 0 -0.0075"        material="tray_alu" contype="1" conaffinity="1"/>
+      <geom name="ps_wl"   type="box" size="0.0075 0.260 0.004" pos="-0.1675 0 0.004"    material="tray_alu" contype="0" conaffinity="0"/>
+      <geom name="ps_wr"   type="box" size="0.0075 0.260 0.004" pos=" 0.1675 0 0.004"    material="tray_alu" contype="0" conaffinity="0"/>
+      <geom name="ps_wb"   type="box" size="0.1600 0.0075 0.004" pos="0 -0.2525 0.004"   material="tray_alu" contype="0" conaffinity="0"/>
+      <geom name="ps_wt"   type="box" size="0.1600 0.0075 0.004" pos="0  0.2525 0.004"   material="tray_alu" contype="0" conaffinity="0"/>
+      <geom name="ps_div1" type="box" size="0.1600 0.010 0.004"  pos="0 -0.10700 0.004"  material="tray_alu" contype="0" conaffinity="0"/>
+      <geom name="ps_div2" type="box" size="0.1600 0.010 0.004"  pos="0 -0.02100 0.004"  material="tray_alu" contype="0" conaffinity="0"/>
+      <geom name="ps_div3" type="box" size="0.1600 0.010 0.004"  pos="0  0.11700 0.004"  material="tray_alu" contype="0" conaffinity="0"/>
+      <geom name="ps_bsl"  type="box" size="0.0075 0.0330 0.004" pos="-0.0555 -0.06370 0.004" material="tray_alu" contype="0" conaffinity="0"/>
+      <geom name="ps_bsr"  type="box" size="0.0075 0.0330 0.004" pos=" 0.0555 -0.06370 0.004" material="tray_alu" contype="0" conaffinity="0"/>
+      <geom name="ps_fl_epdm" type="box" size="0.1564 0.06415 0.0015" pos="0 -0.18085 -0.0065" material="tray_foam_epdm"  contype="0" conaffinity="0"/>
+      <geom name="ps_fl_batt" type="box" size="0.0480 0.0330  0.0015" pos="0 -0.06370 -0.0065" material="tray_foam_batt"  contype="0" conaffinity="0"/>
+      <geom name="ps_fl_pcb"  type="box" size="0.1540 0.0590  0.0015" pos="0  0.04830 -0.0065" material="tray_foam_pcb"   contype="0" conaffinity="0"/>
+      <geom name="ps_fl_plt"  type="box" size="0.1554 0.06015 0.0015" pos="0  0.18745 -0.0065" material="tray_foam_plate" contype="0" conaffinity="0"/>
+      <geom name="ps_id"      type="box" size="0.040 0.0015 0.002"    pos="0  0.2600  0.006"   material="tray_id"         contype="0" conaffinity="0"/>
+    </body>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         ASSEMBLY PARTS — freejoint bodies in pick zone tray pockets
+         Tray world: (−0.400, 0.750, 0.815), pocket floor z=0.810
+         ORIENTATION: EPDM local Y=−0.181 → world Y = 0.750−0.181 = 0.569
+
+         EPDM   (−0.400, 0.56915, 0.81075)  local Y=−0.18085
+         Battery(−0.400, 0.68630, 0.81300)  local Y=−0.06370
+         PCB    (−0.400, 0.79830, 0.81080)  local Y=+0.04830
+         Plate  (−0.400, 0.93745, 0.81075)  local Y=+0.18745
+         ══════════════════════════════════════════════════════════════════ -->
+
+    <!-- EPDM FOAM — 4-slab, 306.8×116.3×1.5mm, very dark grey -->
+    <body name="s1_epdm" pos="-0.4000 0.56915 0.81075">
+      <freejoint name="jnt_epdm"/>
+      <inertial pos="0 0 0" mass="0.008" diaginertia="1.2e-5 3.8e-5 5.0e-5"/>
+      <geom name="epdm_f" type="box" size="0.1454 0.01408 0.00075" pos="0 -0.04408 0" material="mat_epdm" density="200" friction="0.8 0.005 0.0001" condim="4"/>
+      <geom name="epdm_r" type="box" size="0.1454 0.01408 0.00075" pos="0  0.04408 0" material="mat_epdm" density="200" friction="0.8 0.005 0.0001" condim="4"/>
+      <geom name="epdm_l" type="box" size="0.06670 0.030 0.00075"  pos="-0.08670 0 0" material="mat_epdm" density="200" friction="0.8 0.005 0.0001" condim="4"/>
+      <geom name="epdm_g" type="box" size="0.04170 0.030 0.00075"  pos=" 0.11170 0 0" material="mat_epdm" density="200" friction="0.8 0.005 0.0001" condim="4"/>
+      <site name="s1_epdm_grasp" type="sphere" size="0.004" pos="-0.06 0 0.00075" rgba="0.4 0.7 1.0 0.9"/>
+    </body>
+
+    <!-- BATTERY — 90×60×6mm, metallic silver -->
+    <body name="s1_battery" pos="-0.4000 0.68630 0.81300">
+      <freejoint name="jnt_battery"/>
+      <inertial pos="0 0 0" mass="0.080" diaginertia="3.6e-5 1.6e-4 1.8e-4"/>
+      <geom name="batt_body" type="box" size="0.045 0.030 0.003" pos="0 0 0"           material="mat_lipo"      density="2400" friction="0.6 0.005 0.0001" condim="4"/>
+      <geom name="batt_jst"  type="box" size="0.001 0.004 0.002" pos="-0.046 0 -0.001" material="mat_connector" contype="0" conaffinity="0"/>
+      <site name="s1_battery_grasp" type="sphere" size="0.004" pos="0 0 0.003"  rgba="1.0 0.9 0.2 0.9"/>
+      <site name="s1_jst_face"      type="sphere" size="0.002" pos="-0.045 0 0" rgba="1 0.4 0 0.8"/>
+    </body>
+
+    <!-- PCB — 302×112×1.6mm, bright green FR4 -->
+    <body name="s1_pcb" pos="-0.4000 0.79830 0.81080">
+      <freejoint name="jnt_pcb"/>
+      <inertial pos="0 0 0" mass="0.100" diaginertia="9.3e-5 8.1e-4 8.9e-4"/>
+      <geom name="pcb_board" type="box" size="0.1510 0.0560 0.0008" pos="0 0 0"              material="mat_fr4"      density="1850" friction="0.6 0.005 0.0001" condim="4"/>
+      <geom name="pcb_usbc"  type="box" size="0.0015 0.0045 0.002"  pos="-0.1525  0.028  0.001" material="mat_conn_dark" contype="0" conaffinity="0"/>
+      <geom name="pcb_pwr"   type="box" size="0.0015 0.007  0.003"  pos="-0.1525  0.0105 0.002" material="mat_conn_dark" contype="0" conaffinity="0"/>
+      <geom name="pcb_os"    type="box" size="0.0015 0.007  0.003"  pos="-0.1525 -0.0095 0.002" material="mat_conn_dark" contype="0" conaffinity="0"/>
+      <site name="s1_pcb_gl" type="sphere" size="0.004" pos="0.05 0 0.0008" rgba="0.2 1.0 0.4 0.9"/>
+      <site name="s1_pcb_gr" type="sphere" size="0.004" pos="0.12 0 0.0008" rgba="0.2 1.0 0.4 0.9"/>
+    </body>
+
+    <!-- ALUMINUM PLATE — 304.8×114.3×1.5mm, bright silver -->
+    <body name="s1_alu_plate" pos="-0.4000 0.93745 0.81075">
+      <freejoint name="jnt_alu_plate"/>
+      <inertial pos="0 0 0.00075" mass="0.138" diaginertia="1.4e-4 1.3e-3 1.4e-3"/>
+      <geom name="alu_vis" type="box" size="0.1524 0.05715 0.00075" pos="0 0 0.00075" material="mat_alu_silver" density="2700" friction="0.4 0.005 0.0001" condim="4"/>
+      <site name="s1_alu_gl" type="sphere" size="0.004" pos="-0.06 0 0.0015" rgba="0.9 0.9 1.0 0.9"/>
+      <site name="s1_alu_gr" type="sphere" size="0.004" pos=" 0.06 0 0.0015" rgba="0.9 0.9 1.0 0.9"/>
+    </body>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         TOOL DOCK — (0.400, 0.300, 0.800)
+         Clear of feeder right rail at X=−0.2025. Robot reach: 0.400m ✓
+         Cups along +Y: vacuum(−Y=−0.090), pin(ctr=0.000), SD(+Y=+0.090)
+         ══════════════════════════════════════════════════════════════════ -->
+    <body name="tool_dock" pos="0.400 0.300 0.800">
+      <geom name="dock_base" type="box"      size="0.060 0.160 0.004" pos="0 0 0"     material="mat_dock" contype="1" conaffinity="1" mass="2.0"/>
+      <geom name="dock_post" type="box"      size="0.012 0.012 0.035" pos="0 0 0.039" material="mat_dock" contype="1" conaffinity="1" mass="0.5"/>
+      <geom name="dock_arm"  type="box"      size="0.012 0.150 0.010" pos="0 0 0.074" material="mat_dock" contype="1" conaffinity="1" mass="0.3"/>
+      <geom name="cup_vac"   type="cylinder" size="0.022 0.008" pos="0 -0.090 0.082" material="mat_cup" contype="0" conaffinity="0"/>
+      <site name="dock_vac_W2" type="sphere" size="0.003" pos="0 -0.090 0.090" rgba="0 1 0 0.9"/>
+      <geom name="cup_pin"   type="cylinder" size="0.022 0.008" pos="0  0.000 0.082" material="mat_cup" contype="0" conaffinity="0"/>
+      <site name="dock_pin_W2" type="sphere" size="0.003" pos="0  0.000 0.090" rgba="0 1 0 0.9"/>
+      <geom name="cup_sd"    type="cylinder" size="0.022 0.008" pos="0  0.090 0.082" material="mat_cup" contype="0" conaffinity="0"/>
+      <site name="dock_sd_W2"  type="sphere" size="0.003" pos="0  0.090 0.090" rgba="0 1 0 0.9"/>
+      <!-- Parked tools -->
+      <body name="dock_pin_vis" pos="0 0.000 0.090">
+        <geom type="box"      size="0.085 0.018 0.018" pos="0 0 0.010" rgba="0.20 0.20 0.20 1" contype="0" conaffinity="0"/>
+        <geom type="cylinder" size="0.002 0.015" pos="-0.0762 0 0.031" euler="1.5708 0 0" rgba="0.8 0.8 0.8 1" contype="0" conaffinity="0"/>
+        <geom type="cylinder" size="0.002 0.015" pos=" 0.0762 0 0.031" euler="1.5708 0 0" rgba="0.8 0.8 0.8 1" contype="0" conaffinity="0"/>
       </body>
-
-      <!-- Static visual: screwdriver parked in cup 3 -->
-      <body name="dock_sd_visual" pos="0 0.090 0.090">
-        <geom name="dsv_flange" type="cylinder" size="0.030 0.005"
-              pos="0 0 0.005" rgba="0.278 0.278 0.278 1" contype="0" conaffinity="0"/>
-        <geom name="dsv_body"   type="cylinder" size="0.018 0.020"
-              pos="0 0 0.030" rgba="1.0 0.45 0.0 1" contype="0" conaffinity="0"/>
-        <geom name="dsv_spring" type="cylinder" size="0.008 0.008"
-              pos="0 0 0.018" rgba="0.7 0.7 0.7 1" contype="0" conaffinity="0"/>
-        <geom name="dsv_shaft"  type="cylinder" size="0.005 0.012"
-              pos="0 0 0.058" rgba="0.8 0.8 0.82 1" contype="0" conaffinity="0"/>
-        <geom name="dsv_bit"    type="cylinder" size="0.003 0.006"
-              pos="0 0 0.076" rgba="0.5 0.5 0.5 1" contype="0" conaffinity="0"/>
+      <body name="dock_sd_vis" pos="0 0.090 0.090">
+        <geom type="cylinder" size="0.030 0.005" pos="0 0 0.005" rgba="0.30 0.30 0.30 1" contype="0" conaffinity="0"/>
+        <geom type="cylinder" size="0.008 0.008" pos="0 0 0.018" rgba="0.70 0.70 0.70 1" contype="0" conaffinity="0"/>
+        <geom type="cylinder" size="0.018 0.020" pos="0 0 0.030" rgba="1.00 0.45 0.00 1" contype="0" conaffinity="0"/>
+        <geom type="cylinder" size="0.005 0.012" pos="0 0 0.058" rgba="0.85 0.85 0.87 1" contype="0" conaffinity="0"/>
+        <geom type="cylinder" size="0.003 0.006" pos="0 0 0.076" rgba="0.50 0.50 0.50 1" contype="0" conaffinity="0"/>
       </body>
     </body>
-<!-- ═══════════════════════════════════════════════════════════════
-         SCREW BOX — right side of table, holds 4 screws in 2×2 grid
-         Box at [0.28, -0.18, 0.800] (on table surface)
-         ═══════════════════════════════════════════════════════════════ -->
-    <body name="screw_box" pos="0.28 -0.18 0.800">
-      <!-- Floor -->
-      <geom name="sbox_floor" type="box" size="0.033 0.033 0.003"
-            pos="0 0 0.003" material="mat_screw_box"
-            contype="1" conaffinity="1" mass="0.2"/>
-      <!-- Four walls -->
-      <geom name="sbox_wall_front" type="box" size="0.033 0.003 0.010"
-            pos="0 -0.033 0.010" material="mat_screw_box"
-            contype="0" conaffinity="0"/>
-      <geom name="sbox_wall_rear"  type="box" size="0.033 0.003 0.010"
-            pos="0  0.033 0.010" material="mat_screw_box"
-            contype="0" conaffinity="0"/>
-      <geom name="sbox_wall_left"  type="box" size="0.003 0.033 0.010"
-            pos="-0.033 0 0.010" material="mat_screw_box"
-            contype="0" conaffinity="0"/>
-      <geom name="sbox_wall_right" type="box" size="0.003 0.033 0.010"
-            pos=" 0.033 0 0.010" material="mat_screw_box"
-            contype="0" conaffinity="0"/>
-      <!-- Pick site: where screwdriver tip aligns to pick -->
-      <site name="screw_pick_site" type="sphere" size="0.003"
-            pos="0 0 0.020" rgba="1 0.5 0 0.8"/>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         SCREW BOX — (0.220, −0.220, 0.800)
+         CDLR front rail at Y=−0.0975. Screw box +Y face at −0.220+0.033=−0.187
+         Gap to CDLR rail: |−0.187 − (−0.0975)| = 0.090m clear ✓
+         Robot reach: 0.565m ✓
+         ══════════════════════════════════════════════════════════════════ -->
+    <body name="screw_box" pos="0.220 -0.220 0.800">
+      <geom name="sbox_floor" type="box" size="0.033 0.033 0.003" pos="0 0 0.003"      material="mat_screw_box" contype="1" conaffinity="1" mass="0.2"/>
+      <geom name="sbox_wf"    type="box" size="0.033 0.003 0.010" pos="0 -0.033 0.010" material="mat_screw_box" contype="0" conaffinity="0"/>
+      <geom name="sbox_wr"    type="box" size="0.033 0.003 0.010" pos="0  0.033 0.010" material="mat_screw_box" contype="0" conaffinity="0"/>
+      <geom name="sbox_wl"    type="box" size="0.003 0.033 0.010" pos="-0.033 0 0.010" material="mat_screw_box" contype="0" conaffinity="0"/>
+      <geom name="sbox_wrr"   type="box" size="0.003 0.033 0.010" pos=" 0.033 0 0.010" material="mat_screw_box" contype="0" conaffinity="0"/>
+      <site name="screw_pick_site" type="sphere" size="0.004" pos="0 0 0.020" rgba="1 0.5 0 0.9"/>
     </body>
 
-    <!-- ═══════════════════════════════════════════════════════════════
-         4 SCREWS — M2.5×6mm, sit in screw box at start
-         Freejoints — teleported to screwdriver tip when picked,
-         then to boss position when installed
-         ═══════════════════════════════════════════════════════════════ -->
-    <body name="screw_FL" pos="0.27 -0.19 0.808">
-      <freejoint name="screw_FL_jnt"/>
-      <inertial pos="0 0 0.006" mass="0.0005" diaginertia="1.0e-9 1.0e-9 5.0e-10"/>
-      <geom name="screw_FL_shaft" type="cylinder" size="0.0015 0.005"
-            pos="0 0 0.005" material="mat_screw_steel"
-            contype="0" conaffinity="0"/>
-      <geom name="screw_FL_head" type="cylinder" size="0.003 0.001"
-            pos="0 0 0.011" material="mat_screw_steel"
-            contype="0" conaffinity="0"/>
-      <site name="screw_FL_tip"    type="sphere" size="0.001" pos="0 0 0"     rgba="1 0.2 0.2 0.8"/>
-      <site name="screw_FL_engage" type="sphere" size="0.001" pos="0 0 0.012" rgba="0 0.6 0.8 0.8"/>
+    <!-- ══════════════════════════════════════════════════════════════════
+         SCREWS — 4× M2.5, freejoint, 2×2 grid in screw box
+         ══════════════════════════════════════════════════════════════════ -->
+    <body name="screw_FL" pos="0.210 -0.210 0.808">
+      <freejoint name="jnt_screw_FL"/>
+      <inertial pos="0 0 0.006" mass="0.0005" diaginertia="1e-9 1e-9 5e-10"/>
+      <geom name="sFL_s" type="cylinder" size="0.0015 0.005" pos="0 0 0.005" material="mat_screw" contype="0" conaffinity="0"/>
+      <geom name="sFL_h" type="cylinder" size="0.003  0.001" pos="0 0 0.011" material="mat_screw" contype="0" conaffinity="0"/>
+      <site name="sFL_tip" type="sphere" size="0.001" pos="0 0 0"     rgba="1 0.2 0.2 0.9"/>
+      <site name="sFL_eng" type="sphere" size="0.001" pos="0 0 0.012" rgba="0 0.6 1.0 0.9"/>
     </body>
-
-    <body name="screw_FR" pos="0.29 -0.19 0.808">
-      <freejoint name="screw_FR_jnt"/>
-      <inertial pos="0 0 0.006" mass="0.0005" diaginertia="1.0e-9 1.0e-9 5.0e-10"/>
-      <geom name="screw_FR_shaft" type="cylinder" size="0.0015 0.005"
-            pos="0 0 0.005" material="mat_screw_steel"
-            contype="0" conaffinity="0"/>
-      <geom name="screw_FR_head" type="cylinder" size="0.003 0.001"
-            pos="0 0 0.011" material="mat_screw_steel"
-            contype="0" conaffinity="0"/>
-      <site name="screw_FR_tip"    type="sphere" size="0.001" pos="0 0 0"     rgba="1 0.2 0.2 0.8"/>
-      <site name="screw_FR_engage" type="sphere" size="0.001" pos="0 0 0.012" rgba="0 0.6 0.8 0.8"/>
+    <body name="screw_FR" pos="0.230 -0.210 0.808">
+      <freejoint name="jnt_screw_FR"/>
+      <inertial pos="0 0 0.006" mass="0.0005" diaginertia="1e-9 1e-9 5e-10"/>
+      <geom name="sFR_s" type="cylinder" size="0.0015 0.005" pos="0 0 0.005" material="mat_screw" contype="0" conaffinity="0"/>
+      <geom name="sFR_h" type="cylinder" size="0.003  0.001" pos="0 0 0.011" material="mat_screw" contype="0" conaffinity="0"/>
+      <site name="sFR_tip" type="sphere" size="0.001" pos="0 0 0"     rgba="1 0.2 0.2 0.9"/>
+      <site name="sFR_eng" type="sphere" size="0.001" pos="0 0 0.012" rgba="0 0.6 1.0 0.9"/>
     </body>
-
-    <body name="screw_RL" pos="0.27 -0.17 0.808">
-      <freejoint name="screw_RL_jnt"/>
-      <inertial pos="0 0 0.006" mass="0.0005" diaginertia="1.0e-9 1.0e-9 5.0e-10"/>
-      <geom name="screw_RL_shaft" type="cylinder" size="0.0015 0.005"
-            pos="0 0 0.005" material="mat_screw_steel"
-            contype="0" conaffinity="0"/>
-      <geom name="screw_RL_head" type="cylinder" size="0.003 0.001"
-            pos="0 0 0.011" material="mat_screw_steel"
-            contype="0" conaffinity="0"/>
-      <site name="screw_RL_tip"    type="sphere" size="0.001" pos="0 0 0"     rgba="1 0.2 0.2 0.8"/>
-      <site name="screw_RL_engage" type="sphere" size="0.001" pos="0 0 0.012" rgba="0 0.6 0.8 0.8"/>
+    <body name="screw_RL" pos="0.210 -0.230 0.808">
+      <freejoint name="jnt_screw_RL"/>
+      <inertial pos="0 0 0.006" mass="0.0005" diaginertia="1e-9 1e-9 5e-10"/>
+      <geom name="sRL_s" type="cylinder" size="0.0015 0.005" pos="0 0 0.005" material="mat_screw" contype="0" conaffinity="0"/>
+      <geom name="sRL_h" type="cylinder" size="0.003  0.001" pos="0 0 0.011" material="mat_screw" contype="0" conaffinity="0"/>
+      <site name="sRL_tip" type="sphere" size="0.001" pos="0 0 0"     rgba="1 0.2 0.2 0.9"/>
+      <site name="sRL_eng" type="sphere" size="0.001" pos="0 0 0.012" rgba="0 0.6 1.0 0.9"/>
     </body>
-
-    <body name="screw_RR" pos="0.29 -0.17 0.808">
-      <freejoint name="screw_RR_jnt"/>
-      <inertial pos="0 0 0.006" mass="0.0005" diaginertia="1.0e-9 1.0e-9 5.0e-10"/>
-      <geom name="screw_RR_shaft" type="cylinder" size="0.0015 0.005"
-            pos="0 0 0.005" material="mat_screw_steel"
-            contype="0" conaffinity="0"/>
-      <geom name="screw_RR_head" type="cylinder" size="0.003 0.001"
-            pos="0 0 0.011" material="mat_screw_steel"
-            contype="0" conaffinity="0"/>
-      <site name="screw_RR_tip"    type="sphere" size="0.001" pos="0 0 0"     rgba="1 0.2 0.2 0.8"/>
-      <site name="screw_RR_engage" type="sphere" size="0.001" pos="0 0 0.012" rgba="0 0.6 0.8 0.8"/>
+    <body name="screw_RR" pos="0.230 -0.230 0.808">
+      <freejoint name="jnt_screw_RR"/>
+      <inertial pos="0 0 0.006" mass="0.0005" diaginertia="1e-9 1e-9 5e-10"/>
+      <geom name="sRR_s" type="cylinder" size="0.0015 0.005" pos="0 0 0.005" material="mat_screw" contype="0" conaffinity="0"/>
+      <geom name="sRR_h" type="cylinder" size="0.003  0.001" pos="0 0 0.011" material="mat_screw" contype="0" conaffinity="0"/>
+      <site name="sRR_tip" type="sphere" size="0.001" pos="0 0 0"     rgba="1 0.2 0.2 0.9"/>
+      <site name="sRR_eng" type="sphere" size="0.001" pos="0 0 0.012" rgba="0 0.6 1.0 0.9"/>
     </body>
 
     <!-- Cameras -->
-    <camera name="station1_overview"
-            pos="1.2 -1.5 1.8"
-            xyaxes="0.8 0.6 0 -0.35 0.47 0.81"/>
-    <camera name="work_area_cam"
-            pos="0.0 -0.8 1.6"
-            xyaxes="1 0 0 0 0.6 0.8"/>
+    <camera name="overview"   pos="1.5 -0.3 3.0" xyaxes="0.7 0.7 0 -0.3 0.3 0.9"/>
+    <camera name="robot_pov"  pos="1.0  0.3  2.2" xyaxes="1 0 0 0 0.4 0.9"/>
+    <camera name="feeder_cam" pos="-1.3  1.1  2.0" xyaxes="1 0 0 0 0.4 0.9"/>
+    <camera name="pallet_cam" pos="0.0  -0.6  1.8" xyaxes="1 0 0 0 0.7 0.7"/>
 
   </worldbody>
 
@@ -873,54 +626,37 @@
   </actuator>
 
   <keyframe>
-
+    <!--
+      76 qpos values:
+        [0:5]   UR5e joints
+        [6:12]  s1_epdm       x y z qw qx qy qz
+        [13:19] s1_battery
+        [20:26] s1_pcb
+        [27:33] s1_alu_plate
+        [34:40] kit_tray_pickzone
+        [41:47] kit_tray_prestage
+        [48:54] screw_FL  [55:61] screw_FR  [62:68] screw_RL  [69:75] screw_RR
+    -->
     <key name="home"
-         qpos="-1.5708 -1.5708 1.5708 -1.5708 -1.5708 0  0.00 0.28 0.82575 1 0 0 0  -0.43 0.28 0.828 1 0 0 0  -0.68 0.28 0.8258 1 0 0 0  -1.04 0.28 0.8255 1 0 0 0  -1.40 0.28 0.82575 1 0 0 0  0.270 -0.190 0.808 1 0 0 0  0.290 -0.190 0.808 1 0 0 0  0.270 -0.170 0.808 1 0 0 0  0.290 -0.170 0.808 1 0 0 0"
+         qpos="-1.5708 -1.5708 1.5708 -1.5708 -1.5708 0
+               -0.4000  0.56915 0.81075 1 0 0 0
+               -0.4000  0.68630 0.81300 1 0 0 0
+               -0.4000  0.79830 0.81080 1 0 0 0
+               -0.4000  0.93745 0.81075 1 0 0 0
+               -0.4000  0.75000 0.81500 1 0 0 0
+               -0.4000  1.32000 0.81500 1 0 0 0
+                0.2100 -0.2100  0.80800 1 0 0 0
+                0.2300 -0.2100  0.80800 1 0 0 0
+                0.2100 -0.2300  0.80800 1 0 0 0
+                0.2300 -0.2300  0.80800 1 0 0 0"
          ctrl="-1.5708 -1.5708 1.5708 -1.5708 -1.5708 0"/>
-
-    <key name="pick_ready"
-         qpos="-1.6828 -1.2975 1.676 -2.2389 -1.5961 0.0  0.00 0.28 0.82575 1 0 0 0  -0.43 0.28 0.828 1 0 0 0  -0.68 0.28 0.8258 1 0 0 0  -1.04 0.28 0.8255 1 0 0 0  -1.40 0.28 0.82575 1 0 0 0  0.270 -0.190 0.808 1 0 0 0  0.290 -0.190 0.808 1 0 0 0  0.270 -0.170 0.808 1 0 0 0  0.290 -0.170 0.808 1 0 0 0"
-         ctrl="-1.6828 -1.2975 1.676 -2.2389 -1.5961 0.0"/>
-
-    <key name="pick_down"
-         qpos="-1.684 -1.1889 1.7115 -2.2357 -1.5915 0.0  0.00 0.28 0.82575 1 0 0 0  -0.43 0.28 0.828 1 0 0 0  -0.68 0.28 0.8258 1 0 0 0  -1.04 0.28 0.8255 1 0 0 0  -1.40 0.28 0.82575 1 0 0 0  0.270 -0.190 0.808 1 0 0 0  0.290 -0.190 0.808 1 0 0 0  0.270 -0.170 0.808 1 0 0 0  0.290 -0.170 0.808 1 0 0 0"
-         ctrl="-1.684 -1.1889 1.7115 -2.2357 -1.5915 0.0"/>
-
-    <key name="place_ready"
-         qpos="-1.7112 -1.8214 2.1684 -1.9483 -1.7086 0.0  0.00 0.28 0.82575 1 0 0 0  -0.43 0.28 0.828 1 0 0 0  -0.68 0.28 0.8258 1 0 0 0  -1.04 0.28 0.8255 1 0 0 0  -1.40 0.28 0.82575 1 0 0 0  0.270 -0.190 0.808 1 0 0 0  0.290 -0.190 0.808 1 0 0 0  0.270 -0.170 0.808 1 0 0 0  0.290 -0.170 0.808 1 0 0 0"
-         ctrl="-1.7112 -1.8214 2.1684 -1.9483 -1.7086 0.0"/>
-
-    <key name="place_1"
-         qpos="-1.7185 -1.6733 2.2192 -1.9653 -1.6912 0.0  0.00 0.28 0.82575 1 0 0 0  -0.43 0.28 0.828 1 0 0 0  -0.68 0.28 0.8258 1 0 0 0  -1.04 0.28 0.8255 1 0 0 0  -1.40 0.28 0.82575 1 0 0 0  0.270 -0.190 0.808 1 0 0 0  0.290 -0.190 0.808 1 0 0 0  0.270 -0.170 0.808 1 0 0 0  0.290 -0.170 0.808 1 0 0 0"
-         ctrl="-1.7185 -1.6733 2.2192 -1.9653 -1.6912 0.0"/>
-
-    <key name="place_2"
-         qpos="-1.7181 -1.6819 2.2172 -1.9639 -1.6922 0.0  0.00 0.28 0.82575 1 0 0 0  -0.43 0.28 0.828 1 0 0 0  -0.68 0.28 0.8258 1 0 0 0  -1.04 0.28 0.8255 1 0 0 0  -1.40 0.28 0.82575 1 0 0 0  0.270 -0.190 0.808 1 0 0 0  0.290 -0.190 0.808 1 0 0 0  0.270 -0.170 0.808 1 0 0 0  0.290 -0.170 0.808 1 0 0 0"
-         ctrl="-1.7181 -1.6819 2.2172 -1.9639 -1.6922 0.0"/>
-
-    <key name="place_3"
-         qpos="-1.7176 -1.6906 2.2151 -1.9625 -1.6932 0.0  0.00 0.28 0.82575 1 0 0 0  -0.43 0.28 0.828 1 0 0 0  -0.68 0.28 0.8258 1 0 0 0  -1.04 0.28 0.8255 1 0 0 0  -1.40 0.28 0.82575 1 0 0 0  0.270 -0.190 0.808 1 0 0 0  0.290 -0.190 0.808 1 0 0 0  0.270 -0.170 0.808 1 0 0 0  0.290 -0.170 0.808 1 0 0 0"
-         ctrl="-1.7176 -1.6906 2.2151 -1.9625 -1.6932 0.0"/>
-
-    <key name="place_4"
-         qpos="-1.7175 -1.6928 2.2145 -1.9622 -1.6935 0.0  0.00 0.28 0.82575 1 0 0 0  -0.43 0.28 0.828 1 0 0 0  -0.68 0.28 0.8258 1 0 0 0  -1.04 0.28 0.8255 1 0 0 0  -1.40 0.28 0.82575 1 0 0 0  0.270 -0.190 0.808 1 0 0 0  0.290 -0.190 0.808 1 0 0 0  0.270 -0.170 0.808 1 0 0 0  0.290 -0.170 0.808 1 0 0 0"
-         ctrl="-1.7175 -1.6928 2.2145 -1.9622 -1.6935 0.0"/>
-
-    <key name="place_5"
-         qpos="-1.7174 -1.695 2.214 -1.9618 -1.6938 0.0  0.00 0.28 0.82575 1 0 0 0  -0.43 0.28 0.828 1 0 0 0  -0.68 0.28 0.8258 1 0 0 0  -1.04 0.28 0.8255 1 0 0 0  -1.40 0.28 0.82575 1 0 0 0  0.270 -0.190 0.808 1 0 0 0  0.290 -0.190 0.808 1 0 0 0  0.270 -0.170 0.808 1 0 0 0  0.290 -0.170 0.808 1 0 0 0"
-         ctrl="-1.7174 -1.695 2.214 -1.9618 -1.6938 0.0"/>
-
   </keyframe>
 
-
   <equality>
-    <!-- Vacuum gripper weld constraints — one per part, all inactive at start -->
-    <!-- Activated in Python controller at pick_down, deactivated at place_N   -->
-    <weld name="weld_epdm"       body1="gripper" body2="s1_epdm"       active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
-    <weld name="weld_battery"    body1="gripper" body2="s1_battery"    active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
-    <weld name="weld_pcb"        body1="gripper" body2="s1_pcb"        active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
-    <weld name="weld_sound_foam" body1="gripper" body2="s1_sound_foam" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
-    <weld name="weld_alu_plate"  body1="gripper" body2="s1_alu_plate"  active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="weld_epdm"      body1="gripper" body2="s1_epdm"      active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="weld_battery"   body1="gripper" body2="s1_battery"   active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="weld_pcb"       body1="gripper" body2="s1_pcb"       active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
+    <weld name="weld_alu_plate" body1="gripper" body2="s1_alu_plate" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
   </equality>
 
 </mujoco>

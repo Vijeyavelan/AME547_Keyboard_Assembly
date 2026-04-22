@@ -6,67 +6,66 @@
     Reference: Keychron K2 V3
     Material: Aluminum (6061-T6)
 
-    Dimensions:
-      317mm × 107mm × 1.5mm
-      Fits inside case interior (319mm × 109mm) with 1mm tolerance each side
-      Tight fit for robot placement — easy insertion, no slop
+    STL verified dimensions (from Blender/FreeCAD export):
+      Length (X) : 304.8mm
+      Width  (Y) : 114.3mm
+      Thickness  : 1.5mm
+      Scale      : 0.001 (mm → m)
+      Bottom face: at Z = 0 in STL space
+
+    MuJoCo mesh centroid offset (from console warning):
+      X = -0.002361m
+      Y = +0.000056m
+      Z = +0.000747m
+    → Applied as geom pos to shift mesh so body origin = bottom face center
 
     Coordinate convention: matches bottom_case.xml
       +X → keyboard length (left to right)
       +Y → keyboard width (front to back, rear = +Y)
       +Z → up
 
-    Body origin: BOTTOM FACE of plate
-      Stack position:
-        Sound foam top z_world  = 0.01310m
-        Plate bottom z_world    = 0.01310m
-        Plate center z_world    = 0.01310 + 0.00075 = 0.01385m
-        Plate top z_world       = 0.01310 + 0.00150 = 0.01460m
-        Body pos z              = 0.01310m
+    Body origin: CENTER of bottom face of plate (Z=0 in body-local frame)
+      In assembly, body pos z_world = top of EPDM foam
+        EPDM foam top z_world = 0.003 + 0.0015 = 0.00450m
+        Plate body pos z_world = 0.00450m  (bottom face sits on foam top)
+        Plate center z_world   = 0.00450 + 0.00075 = 0.00525m
+        Plate top z_world      = 0.00450 + 0.00150 = 0.00600m
 
-    Geometry strategy: Option C (primitive solid box, no cutouts)
-      - Plate collision geom: contype=0, conaffinity=0 (non-colliding)
-      - Switch insertion driven by site coordinates only
-      - Upgrade to Option A (tiled box with real gaps) post April 18
-      - Upgrade to mesh visual post April 18
+    Assembly stack (no sound foam — dropped from BOM):
+      Case floor top     : z_world = 0.003m
+      EPDM foam (1.5mm)  : 0.003 → 0.00450m
+      Aluminum plate (1.5mm): 0.00450 → 0.00600m
+      Switches seat on plate top face at z_world = 0.00600m
 
     Switch cutout sites:
-      - 84 sites representing Cherry MX switch hole centers
-      - Standard MX grid: 19.05mm per U
-      - Grid centered on plate: left margin = 6.1mm each side
-      - Site type: cylinder, radius=0.003m
-      - Site Z = plate top face = +0.00150m (body local)
-      - Named by key function
+      84 sites at Cherry MX hole centers
+      Standard MX grid: 19.05mm per U
+      Grid centered on plate XY
+      Site Z = plate top face = +0.0015m (body-local)
 
-    Screw hole sites:
-      - 4 corner holes matching case screw boss positions
-      - 4 additional center holes
-      - Site type: cylinder, radius=0.0015m (M3 screw)
+    Screw hole sites: 4 corner + 4 center (M3)
+      Positions match bottom_case.xml screw boss XY
 
-    Material properties:
-      rgba    : brushed aluminum silver
-      density : 2700 kg/m³
-      Mass    : 317×107×1.5mm × 2.7g/cm³ ≈ 138g
-
-    Robot placement:
-      Robot 1 (UR5e, Station 1)
-      Vacuum gripper on top face, centered
-      Lowered straight down into case interior
+    Geometry:
+      Visual + collision: mesh geom (Aluminum_Plate.stl)
+        contype=0, conaffinity=0 — non-colliding (robot carries via teleport)
+      Mesh file must be in models/meshes/ for station1.xml integration
   -->
 
-  <compiler angle="radian" autolimits="true"/>
+  <compiler angle="radian" autolimits="true" meshdir="../../models/meshes"/>
 
   <option gravity="0 0 -9.81" timestep="0.002"/>
 
   <asset>
+    <mesh name="aluminum_plate_mesh"
+          file="Aluminum_Plate.stl"
+          scale="0.001 0.001 0.001"/>
+
     <material name="aluminum_silver"
               rgba="0.75 0.75 0.78 1"
               specular="0.8"
               shininess="0.7"
               reflectance="0.3"/>
-
-    <material name="plate_col"
-              rgba="0.75 0.75 0.78 0.0"/>
   </asset>
 
   <worldbody>
@@ -76,36 +75,55 @@
           friction="0.8 0.005 0.0001"
           rgba="0.4 0.4 0.4 1"/>
 
+    <!-- ══════════════════════════════════════════════════════════════════
+         ALUMINUM PLATE BODY
+         Body pos = center of plate bottom face in world frame
+         In standalone validation: pos="0 0 0" (plate bottom face at world Z=0)
+         In assembly scene (station1.xml): pos="0 0 0.00450"
+         ══════════════════════════════════════════════════════════════════ -->
     <body name="aluminum_plate" pos="0 0 0">
 
       <inertial pos="0 0 0.00075"
                 mass="0.138"
                 diaginertia="1.4e-4 1.3e-3 1.4e-3"/>
 
-      <!-- freejoint added in integration scene -->
+      <!-- freejoint added in integration scene (station1.xml) -->
 
-      <geom name="plate_visual"
-            type="box"
-            size="0.1585 0.0535 0.00075"
-            pos="0 0 0.00075"
+      <!-- ── MESH GEOM ─────────────────────────────────────────────────
+           STL origin = plate bottom face center (Z=0)
+           Centroid correction shifts mesh so MuJoCo body origin aligns
+           with plate bottom face center.
+           contype/conaffinity = 0: plate is carried by teleport; no
+           physical contact needed for assembly motion.
+      -->
+      <geom name="plate_mesh"
+            type="mesh"
+            mesh="aluminum_plate_mesh"
+            pos="-0.002361 0.000056 0.000747"
             material="aluminum_silver"
             contype="0"
             conaffinity="0"/>
 
-      <geom name="plate_col"
-            type="box"
-            size="0.1585 0.0535 0.00075"
-            pos="0 0 0.00075"
-            material="plate_col"
-            contype="0"
-            conaffinity="0"
-            density="2700"
-            friction="0.4 0.005 0.0001"/>
-
       <!-- ══════════════════════════════════════════════════════════════
-           SWITCH CUTOUT SITES — 84 keys, centered grid
-           Grid origin X = -152.4mm, grid spacing = 19.05mm per U
-           +X = right, +Y = rear, site Z = plate top = +0.0015m
+           SWITCH CUTOUT SITES — 84 keys
+           Grid centered on plate. All coords in body-local frame.
+           Site Z = plate top face = +0.0015m (body-local)
+           +X = right, +Y = rear of keyboard
+           Grid spacing = 19.05mm = 0.01905m per 1U
+
+           Row Y positions (plate center = Y=0, top row = +Y):
+             Row 0 (Fn):     Y = +0.0480m
+             Row 1 (Num):    Y = +0.0290m
+             Row 2 (QWERTY): Y = +0.0099m
+             Row 3 (Home):   Y = -0.0092m
+             Row 4 (Shift):  Y = -0.0282m
+             Row 5 (Bottom): Y = -0.0473m
+
+           These positions are unchanged from previous revision —
+           the switch grid is layout-defined, not plate-size-defined.
+           All sites verified to fall within the new 304.8mm × 114.3mm boundary:
+             X span: ±152.4mm (plate half) — switch range ±142.9mm ✓
+             Y span: ±57.15mm (plate half) — switch range ±48.0mm   ✓
            ══════════════════════════════════════════════════════════════ -->
 
       <!-- ROW 0 — Function row (16 keys) -->
@@ -205,9 +223,8 @@
       <site name="sw_End2"   type="cylinder" size="0.003 0.001" pos=" 0.1429 -0.0473 0.0015" rgba="0.2 0.6 1 0.6"/>
 
       <!-- ══════════════════════════════════════════════════════════════
-           SCREW HOLE SITES (M3)
+           SCREW HOLE SITES (M3) — positions match bottom_case.xml bosses
            ══════════════════════════════════════════════════════════════ -->
-
       <site name="screw_FL" type="cylinder" size="0.0015 0.001" pos="-0.1515 -0.0495 0.0015" rgba="1 0.3 0.3 0.9"/>
       <site name="screw_RL" type="cylinder" size="0.0015 0.001" pos="-0.1515  0.0495 0.0015" rgba="1 0.3 0.3 0.9"/>
       <site name="screw_FR" type="cylinder" size="0.0015 0.001" pos=" 0.1545 -0.0495 0.0015" rgba="1 0.3 0.3 0.9"/>
@@ -220,7 +237,6 @@
       <!-- ══════════════════════════════════════════════════════════════
            PLATE REFERENCE SITES
            ══════════════════════════════════════════════════════════════ -->
-
       <site name="plate_center"
             type="sphere" size="0.002"
             pos="0 0 0.00075"

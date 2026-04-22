@@ -2,103 +2,68 @@
   <!--
     AME 547 - Keyboard Assembly Cell Simulation
     Component: EPDM Foam Layer
-    
+
     Reference: Keychron K2 V3 tray-mount design
-    
-    Physical description:
-      Thin rubber foam sheet sitting on case floor interior
-      Provides acoustic dampening and vibration isolation
-      Has cutouts for:
-        - Battery (606090 LiPo: 90mm × 60mm)
-        - 4 corner screw bosses (M3, 6mm OD + 1mm clearance)
-    
-    Dimensions:
-      Fits inside case walls (interior floor)
-      X: 319mm → half = 0.1595m
-      Y: 109mm → half = 0.0545m
-      Thickness: 1.5mm → half = 0.00075m
-    
+
+    ── Resized to match updated bottom_case.xml interior ──
+
+    Interior dimensions (from updated bottom_case.xml):
+      X: 306.8mm → half = 0.1534m
+      Y: 116.3mm → half = 0.05815m
+      (Derived from plate 304.8×114.3mm + 1mm clearance each side)
+
+    Foam thickness: 1.5mm (unchanged)
+
     Coordinate convention: matches bottom_case.xml exactly
-      Body origin at geometric center of foam sheet
-      z = 0 at body center
-      Foam bottom face sits on case floor top face
-        case floor top z_world = 0 + 0.011 - 0.0095 + 0.0015 = -0.008 (body-local of case)
-        In world frame when case is at z=0.011:
-          foam bottom z_world = 0.011 - 0.008 = 0.003
-          foam center z_world = 0.003 + 0.00075 = 0.00375
-    
-    Geometry strategy:
-      Cannot hollow out a box in MuJoCo primitives.
-      Instead use 5 box geoms arranged around the cutouts:
-      
-      Battery cutout: 90mm × 60mm centered at x=+25mm, y=0
-      
-      Layout (top view, X is horizontal, Y is vertical):
-      
-      ┌────────────────────────────────────────────────────┐
-      │  [LEFT SLAB]    [   BATTERY   ]    [RIGHT SLAB]   │
-      │                 [   CUTOUT    ]                    │
-      │  ─────────────  ─────────────  ─────────────────  │
-      │  [     FRONT STRIP (full width)                ]  │
-      │  ─────────────────────────────────────────────    │
-      │  [     REAR  STRIP (full width)                ]  │
-      └────────────────────────────────────────────────────┘
-      
-      5 geoms:
-        front_strip  — Y front of battery cutout, full X width
-        rear_strip   — Y rear of battery cutout, full X width
-        left_slab    — between front/rear strips, left of battery
-        right_slab   — between front/rear strips, right of battery
-        (battery area left empty = the cutout)
-      
-      Corner screw boss clearances handled by positioning:
-        Foam does not extend to the very corners where bosses sit
-        Boss radius = 3mm, foam inset = 3.5mm from case inner wall
-        → foam geoms end 3.5mm short of corners in X and Y
-    
-    Battery cutout dimensions (body-local frame):
-      Battery center X = +0.025m (offset toward rear)
-      Battery half-X   = 0.045m  (90mm/2)
-      Battery half-Y   = 0.030m  (60mm/2)
-      
-      Cutout X range: 0.025 - 0.045 = -0.020 to 0.025 + 0.045 = +0.070
-      Cutout Y range: -0.030 to +0.030
-    
+      Body origin = geometric center of foam sheet
+      Foam bottom face sits on case floor top face:
+        case floor top z_world = 0.003m
+        foam center z_world    = 0.003 + 0.00075 = 0.00375m
+
+    Assembly stack (no sound foam — dropped from BOM):
+      Case floor top     z_world = 0.003m
+      EPDM foam (1.5mm): 0.003 → 0.00450m
+      Aluminum plate     : 0.00450 → 0.00600m
+
+    Battery cutout: UNCHANGED (battery footprint unchanged)
+      Battery center X = +25mm from case center
+      Cutout X: -0.020m to +0.070m
+      Cutout Y: -0.030m to +0.030m
+
+    5-geom layout (top view, X horizontal, Y vertical):
+      ┌─────────────────────────────────────────────────────────┐
+      │  [LEFT SLAB]     [   BATTERY   ]     [RIGHT SLAB]      │
+      │                  [   CUTOUT    ]                        │
+      │  ────────────    ─────────────  ──────────────────────  │
+      │  [          FRONT STRIP (full X, trimmed corners)    ]  │
+      │  ──────────────────────────────────────────────────     │
+      │  [          REAR  STRIP (full X, trimmed corners)    ]  │
+      └─────────────────────────────────────────────────────────┘
+
     Geom calculations:
-      Full foam half-extents: X=0.1595, Y=0.0545
-      Foam z (body-local): 0 (body origin at foam center)
-      Foam thickness half: 0.00075
-      
-      FRONT STRIP (Y from -0.0545 to -0.030, full X):
-        half-X = 0.1595
-        half-Y = (0.0545 - 0.030) / 2 = 0.01225
-        center-Y = -(0.030 + 0.01225) = -0.04225
-      
-      REAR STRIP (Y from +0.030 to +0.0545, full X):
-        half-X = 0.1595
-        half-Y = (0.0545 - 0.030) / 2 = 0.01225
-        center-Y = +(0.030 + 0.01225) = +0.04225
-      
-      LEFT SLAB (X from -0.1595 to -0.020, Y between strips):
-        half-X = (0.1595 - 0.020) / 2 = 0.06975
-        center-X = -(0.020 + 0.06975) = ... 
-        Actually: X range is -0.1595 to -0.020
-        half-X = (0.1595 - 0.020) / 2 = 0.06975
-        center-X = -0.1595 + 0.06975 = -0.08975
-        half-Y = 0.030 (matches battery cutout Y span)
-        center-Y = 0
-      
-      RIGHT SLAB (X from +0.070 to +0.1595, Y between strips):
-        X range: +0.070 to +0.1595
-        half-X = (0.1595 - 0.070) / 2 = 0.04475
-        center-X = 0.070 + 0.04475 = 0.11475
-        half-Y = 0.030
-        center-Y = 0
-    
+      FRONT STRIP (Y from -0.05815 to -0.030):
+        half-Y  = (0.05815 - 0.030) / 2 = 0.01408
+        center-Y = -(0.030 + 0.01408)   = -0.04408
+        half-X (trimmed 8mm for corner screw bosses) = 0.1534 - 0.008 = 0.1454
+
+      REAR STRIP (Y from +0.030 to +0.05815):
+        half-Y  = 0.01408 (symmetric)
+        center-Y = +0.04408
+        half-X = 0.1454 (same trim)
+
+      LEFT SLAB (X from -0.1534 to -0.020, Y ±0.030):
+        half-X  = (0.1534 - 0.020) / 2 = 0.06670
+        center-X = -0.1534 + 0.06670 = -0.08670
+        half-Y = 0.030, center-Y = 0
+
+      RIGHT SLAB (X from +0.070 to +0.1534, Y ±0.030):
+        half-X  = (0.1534 - 0.070) / 2 = 0.04170
+        center-X = 0.070 + 0.04170 = 0.11170
+        half-Y = 0.030, center-Y = 0
+
     Material: EPDM rubber foam
-      density  : ~200 kg/m³ (soft foam, much less than ABS)
-      friction : [0.8, 0.005, 0.0001]
-      rgba     : very dark grey, slightly lighter than ABS
+      density  : 200 kg/m³
+      rgba     : very dark grey
   -->
 
   <compiler angle="radian" autolimits="true"/>
@@ -115,7 +80,6 @@
 
   <worldbody>
 
-    <!-- Static ground plane -->
     <geom name="ground" type="plane" size="1 1 0.1"
           pos="0 0 0"
           friction="0.8 0.005 0.0001"
@@ -123,11 +87,9 @@
 
     <!-- ══════════════════════════════════════════════════════════════════
          EPDM FOAM BODY
-         World position: sits on case floor top face
-           case body at z=0.011 (world)
-           case floor top z_world = 0.011 - 0.008 = 0.003
-           foam center z_world = 0.003 + 0.00075 = 0.00375
-         For solo validation scene, place at correct world height
+         Sits on case floor top face:
+           case floor top z_world = 0.003m
+           foam center z_world    = 0.003 + 0.00075 = 0.00375m
          ══════════════════════════════════════════════════════════════════ -->
     <body name="epdm_foam" pos="0 0 0.00375">
 
@@ -138,18 +100,14 @@
       <freejoint name="epdm_foam_free"/>
 
       <!-- ── FRONT STRIP ──────────────────────────────────────────────
-           Full X width MINUS 8mm notch at each corner for screw bosses
-           Boss at X=±154.5mm, needs 4mm clearance → notch 8mm from edge
-           Trimmed X half: 0.1595 - 0.008 = 0.1515
-           center-X unchanged at 0 (symmetric trim both ends)
-           Y range: -0.0545 to -0.030
-           half-Y: 0.01225
-           center-Y: -0.04225
+           Y range: -0.05815 to -0.030
+           half-Y  = 0.01408, center-Y = -0.04408
+           Trimmed X for screw boss clearance: half-X = 0.1454, center-X = 0
       -->
       <geom name="foam_front_strip"
             type="box"
-            size="0.1515 0.01225 0.00075"
-            pos="0 -0.04225 0"
+            size="0.1454 0.01408 0.00075"
+            pos="0 -0.04408 0"
             material="epdm_foam"
             density="200"
             friction="0.8 0.005 0.0001"
@@ -157,14 +115,13 @@
             priority="1"/>
 
       <!-- ── REAR STRIP ───────────────────────────────────────────────
-           Same trimming as front strip — 8mm notch each corner
-           Trimmed X half: 0.1515
-           center-Y: +0.04225
+           Y range: +0.030 to +0.05815
+           Symmetric to front strip
       -->
       <geom name="foam_rear_strip"
             type="box"
-            size="0.1515 0.01225 0.00075"
-            pos="0 0.04225 0"
+            size="0.1454 0.01408 0.00075"
+            pos="0 0.04408 0"
             material="epdm_foam"
             density="200"
             friction="0.8 0.005 0.0001"
@@ -172,18 +129,14 @@
             priority="1"/>
 
       <!-- ── LEFT SLAB ────────────────────────────────────────────────
-           Between front/rear strips, left of battery cutout
-           X range: -0.1595 to -0.020
-           half-X: 0.06975
-           center-X: -0.08975
-           Y range bounded by strip inner edges: -0.030 to +0.030
-           half-Y: 0.030, center-Y: 0
-           Note: corners already cleared by strip trimming
+           X range: -0.1534 to -0.020 (left of battery cutout)
+           half-X = 0.06670, center-X = -0.08670
+           Y range: ±0.030 (battery-cutout height band)
       -->
       <geom name="foam_left_slab"
             type="box"
-            size="0.06975 0.030 0.00075"
-            pos="-0.08975 0 0"
+            size="0.06670 0.030 0.00075"
+            pos="-0.08670 0 0"
             material="epdm_foam"
             density="200"
             friction="0.8 0.005 0.0001"
@@ -191,18 +144,14 @@
             priority="1"/>
 
       <!-- ── RIGHT SLAB ───────────────────────────────────────────────
-           Between front/rear strips, right of battery cutout
-           X range: +0.070 to +0.1595
-           half-X: 0.04475
-           center-X: +0.11475
-           Y range: -0.030 to +0.030
-           half-Y: 0.030, center-Y: 0
-           Note: corners already cleared by strip trimming
+           X range: +0.070 to +0.1534 (right of battery cutout)
+           half-X = 0.04170, center-X = +0.11170
+           Y range: ±0.030
       -->
       <geom name="foam_right_slab"
             type="box"
-            size="0.04475 0.030 0.00075"
-            pos="0.11475 0 0"
+            size="0.04170 0.030 0.00075"
+            pos="0.11170 0 0"
             material="epdm_foam"
             density="200"
             friction="0.8 0.005 0.0001"
@@ -213,60 +162,37 @@
            REGISTRATION SITES
            ══════════════════════════════════════════════════════════════ -->
 
-      <!-- Center reference for robot placement
-           Moved to X=-60mm to sit on solid foam
-           (battery cutout spans X=-20mm to +70mm,
-            body center X=0 falls inside cutout) -->
+      <!-- Foam center ref — on solid foam left of battery cutout -->
       <site name="foam_center"
-            type="sphere"
-            size="0.002"
+            type="sphere" size="0.002"
             pos="-0.06 0 0.00075"
             rgba="0 0.6 0.8 0.4"/>
 
-      <!-- Battery cutout corners — robot alignment reference -->
+      <!-- Battery cutout corners -->
       <site name="battery_cutout_FL"
-            type="sphere"
-            size="0.0015"
+            type="sphere" size="0.0015"
             pos="-0.020 -0.030 0.00075"
             rgba="1 0.6 0 0.5"/>
-
       <site name="battery_cutout_FR"
-            type="sphere"
-            size="0.0015"
+            type="sphere" size="0.0015"
             pos="0.070 -0.030 0.00075"
             rgba="1 0.6 0 0.5"/>
-
       <site name="battery_cutout_RL"
-            type="sphere"
-            size="0.0015"
+            type="sphere" size="0.0015"
             pos="-0.020 0.030 0.00075"
             rgba="1 0.6 0 0.5"/>
-
       <site name="battery_cutout_RR"
-            type="sphere"
-            size="0.0015"
+            type="sphere" size="0.0015"
             pos="0.070 0.030 0.00075"
             rgba="1 0.6 0 0.5"/>
 
-      <!-- Vacuum grasp points (robot picks foam from above)
-           Both cups placed on LEFT solid zone (X=-159.5 to -20mm)
-           to avoid battery cutout (X=-20 to +70mm)
-           
-           Cup 1 (left)  : X=-120mm — 100mm clear of cutout edge ✓
-           Cup 2 (right) : X=-50mm  — 30mm clear of cutout edge ✓
-           Both Y=0, centered front-to-back
-           Cup diameter 30mm → needs 15mm clear radius at each point
-           Both positions verified solid foam underneath ✓
-      -->
+      <!-- Vacuum grasp points — both on LEFT solid slab -->
       <site name="vacuum_grasp_left"
-            type="sphere"
-            size="0.002"
+            type="sphere" size="0.002"
             pos="-0.12 0 0.00075"
             rgba="0 0.6 0.8 0.3"/>
-
       <site name="vacuum_grasp_right"
-            type="sphere"
-            size="0.002"
+            type="sphere" size="0.002"
             pos="-0.05 0 0.00075"
             rgba="0 0.6 0.8 0.3"/>
 

@@ -1,0 +1,255 @@
+<mujoco model="keyboard_pallet_base">
+  <!--
+    AME 547 - Keyboard Assembly Cell Simulation
+    Component: Assembly Pallet (Aluminium Tooling Plate + Fixture Stops)
+
+    ── Extracted from station1.xml and updated for new case dimensions ──
+
+    Purpose:
+      Aluminium tooling plate that carries the keyboard bottom case through
+      the assembly cell (S1 → S3 → S4). Four L-shaped corner stops precisely
+      locate the bottom case in XY on the pallet surface.
+
+    Design reference: Assembly Station Design doc
+      Material: Aluminium tooling plate (6061-T6)
+      Stops: Hardened steel fixture stops, anodised yellow for visibility
+      Locating holes: engage stop pins at each station (not modelled here)
+      Side clamping faces: compatible with S3/S4 XY slider table clamps
+
+    Pallet base plate dimensions:
+      350mm (X) × 150mm (Y) × 8mm thick
+      Half-extents: 0.175, 0.075, 0.004
+      Top surface = body origin Z = 0 (in body-local frame)
+      Bottom face at Z = -0.008m (body-local)
+
+    Bottom case seating:
+      New case outer footprint: 312.8mm (X) × 122.3mm (Y)
+      Case outer half-extents: X = 0.1564m, Y = 0.06115m
+      Case sits centered on pallet (XY origin aligned)
+      Case bottom face rests on pallet top surface (Z = 0 body-local)
+
+    Fixture stop geometry — L-shaped corner locators (4 corners):
+      Each corner has 2 geoms: X-stop and Y-stop
+      Stop height: 6mm (half = 0.003m) above pallet surface
+      Stop thickness: 5mm (half = 0.0025m)
+      Stop width: 25mm (half = 0.0125m)
+      Stop material: fixture_stop yellow (anodised)
+
+      Stop positioning logic (FL corner example, case half: X=0.1564, Y=0.06115):
+        X-stop: inner +X face flush with case outer −X face (X = −0.1564)
+                spans Y just outside case front −Y face
+        Y-stop: inner +X face flush with case outer −X face (X = −0.1564)
+                spans Y from case front corner upward
+
+    World integration:
+      In station1.xml: pallet body is static (no freejoint), pos="0 0.030 0.810"
+        → pallet top surface at z_world = 0.810m
+        → case body_pos z = 0.810 + 0.011 = 0.821m (case center)
+      In assembly_cell.xml: pallet will have freejoint for conveyor transport
+        → uncomment <freejoint name="pallet_free"/> below
+
+    Coordinate convention: matches station1.xml world frame
+      +X → keyboard length (left to right)
+      +Y → keyboard width  (front to back, rear = +Y)
+      +Z → up
+
+    Body origin: TOP SURFACE of pallet plate (Z = 0 in body-local)
+  -->
+
+  <compiler angle="radian" autolimits="true"/>
+
+  <option gravity="0 0 -9.81" timestep="0.002"/>
+
+  <asset>
+    <material name="aluminum_plate"
+              rgba="0.75 0.75 0.78 1"
+              specular="0.6"
+              shininess="0.4"
+              reflectance="0.2"/>
+
+    <material name="fixture_stop"
+              rgba="1.0 0.85 0.0 1"
+              specular="0.3"
+              shininess="0.3"/>
+  </asset>
+
+  <worldbody>
+
+    <geom name="ground" type="plane" size="1 1 0.1"
+          pos="0 0 0"
+          friction="0.8 0.005 0.0001"
+          rgba="0.4 0.4 0.4 1"/>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         PALLET BODY
+         Body origin = pallet top surface
+         In standalone validation: pos="0 0 0.008" (plate bottom at ground)
+         In station1.xml: pos="0 0.030 0.810" (static fixture, no freejoint)
+         In assembly_cell.xml: add freejoint for conveyor transport
+         ══════════════════════════════════════════════════════════════════ -->
+    <body name="pallet_base" pos="0 0 0.008">
+
+      <!-- Uncomment for assembly_cell.xml conveyor transport:
+      <freejoint name="pallet_free"/>
+      -->
+
+      <!-- ── BASE PLATE ─────────────────────────────────────────────────
+           350mm (X) × 150mm (Y) × 8mm thick aluminium tooling plate
+           Half-extents: 0.175, 0.075, 0.004
+           Body origin at TOP surface → plate center at Z = -0.004
+           Bottom face at Z = -0.008 (body-local)
+      -->
+      <geom name="base_plate"
+            type="box"
+            size="0.175 0.075 0.004"
+            pos="0 0 -0.004"
+            material="aluminum_plate"
+            mass="1.5"
+            friction="0.8 0.005 0.0001"
+            condim="4"
+            priority="1"/>
+
+      <!-- ══════════════════════════════════════════════════════════════
+           FIXTURE STOPS — 4 corners × 2 geoms = 8 geoms
+           Case outer footprint: ±0.1564 (X) × ±0.06115 (Y)
+           Stop height half: 0.003m (6mm tall above pallet surface)
+           Stop thickness half: 0.0025m (5mm thick)
+           Stop width half: 0.0125m (25mm wide)
+           Stop center Z: +0.003m (top face at +0.006m body-local)
+
+           Naming: stop_<corner>_<axis>
+             FL = Front-Left  (−X, −Y corner)
+             FR = Front-Right (+X, −Y corner)
+             RL = Rear-Left   (−X, +Y corner)
+             RR = Rear-Right  (+X, +Y corner)
+             _x = stop blocks X motion (stop face perpendicular to X axis)
+             _y = stop blocks Y motion (stop face perpendicular to Y axis)
+           ══════════════════════════════════════════════════════════════ -->
+
+      <!-- ── FRONT-LEFT CORNER (−X, −Y) ────────────────────────────── -->
+
+      <!-- FL X-stop: inner +X face at X=−0.1564, spans Y outside front face -->
+      <!-- Center X = −0.1564 + 0.0125 = −0.1439                           -->
+      <!-- Center Y = −(0.06115 + 0.0025) = −0.0637 (outside front face)   -->
+      <geom name="stop_FL_x"
+            type="box"
+            size="0.0125 0.0025 0.003"
+            pos="-0.1439 -0.0637 0.003"
+            material="fixture_stop"
+            mass="0.02"/>
+
+      <!-- FL Y-stop: inner +X face at X=−0.1564, spans Y from corner inward -->
+      <!-- Center X = −0.1564 − 0.0025 = −0.1589 (outside left face)       -->
+      <!-- Center Y = −(0.06115 − 0.0125) = −0.04865, range [−0.06115, −0.02365] -->
+      <geom name="stop_FL_y"
+            type="box"
+            size="0.0025 0.0125 0.003"
+            pos="-0.1589 -0.04865 0.003"
+            material="fixture_stop"
+            mass="0.02"/>
+
+      <!-- ── FRONT-RIGHT CORNER (+X, −Y) ───────────────────────────── -->
+
+      <!-- FR X-stop: inner −X face at X=+0.1564, spans Y outside front face -->
+      <!-- Center X = +0.1564 − 0.0125 = +0.1439                            -->
+      <!-- Center Y = −0.0637 (same as FL)                                   -->
+      <geom name="stop_FR_x"
+            type="box"
+            size="0.0125 0.0025 0.003"
+            pos="0.1439 -0.0637 0.003"
+            material="fixture_stop"
+            mass="0.02"/>
+
+      <!-- FR Y-stop: inner −X face at X=+0.1564, spans Y from corner inward -->
+      <!-- Center X = +0.1564 + 0.0025 = +0.1589                             -->
+      <!-- Center Y = −0.04865                                                -->
+      <geom name="stop_FR_y"
+            type="box"
+            size="0.0025 0.0125 0.003"
+            pos="0.1589 -0.04865 0.003"
+            material="fixture_stop"
+            mass="0.02"/>
+
+      <!-- ── REAR-LEFT CORNER (−X, +Y) ────────────────────────────── -->
+
+      <!-- RL X-stop: inner +X face at X=−0.1564, spans Y outside rear face -->
+      <!-- Center Y = +(0.06115 + 0.0025) = +0.0637                         -->
+      <geom name="stop_RL_x"
+            type="box"
+            size="0.0125 0.0025 0.003"
+            pos="-0.1439 0.0637 0.003"
+            material="fixture_stop"
+            mass="0.02"/>
+
+      <!-- RL Y-stop: outside left face, spans Y from corner inward         -->
+      <!-- Center Y = +(0.06115 − 0.0125) = +0.04865, range [+0.02365, +0.06115] -->
+      <geom name="stop_RL_y"
+            type="box"
+            size="0.0025 0.0125 0.003"
+            pos="-0.1589 0.04865 0.003"
+            material="fixture_stop"
+            mass="0.02"/>
+
+      <!-- ── REAR-RIGHT CORNER (+X, +Y) ───────────────────────────── -->
+
+      <!-- RR X-stop: inner −X face at X=+0.1564, spans Y outside rear face -->
+      <geom name="stop_RR_x"
+            type="box"
+            size="0.0125 0.0025 0.003"
+            pos="0.1439 0.0637 0.003"
+            material="fixture_stop"
+            mass="0.02"/>
+
+      <!-- RR Y-stop: outside right face, spans Y from corner inward        -->
+      <geom name="stop_RR_y"
+            type="box"
+            size="0.0025 0.0125 0.003"
+            pos="0.1589 0.04865 0.003"
+            material="fixture_stop"
+            mass="0.02"/>
+
+      <!-- ══════════════════════════════════════════════════════════════
+           REGISTRATION SITES
+           ══════════════════════════════════════════════════════════════ -->
+
+      <!-- Pallet center (top surface) — fixture dowel / stop pin reference -->
+      <site name="pallet_center"
+            type="sphere" size="0.003"
+            pos="0 0 0"
+            rgba="1 0.8 0 0.8"/>
+
+      <!-- Case seating corners — where case bottom face meets pallet top -->
+      <!-- These are the nominal case outer-corner positions on the pallet -->
+      <site name="case_seat_FL"
+            type="sphere" size="0.002"
+            pos="-0.1564 -0.06115 0"
+            rgba="0.2 0.6 1 0.6"/>
+      <site name="case_seat_FR"
+            type="sphere" size="0.002"
+            pos=" 0.1564 -0.06115 0"
+            rgba="0.2 0.6 1 0.6"/>
+      <site name="case_seat_RL"
+            type="sphere" size="0.002"
+            pos="-0.1564  0.06115 0"
+            rgba="0.2 0.6 1 0.6"/>
+      <site name="case_seat_RR"
+            type="sphere" size="0.002"
+            pos=" 0.1564  0.06115 0"
+            rgba="0.2 0.6 1 0.6"/>
+
+      <!-- Conveyor stop-pin engage points (future assembly_cell.xml use) -->
+      <!-- Front and rear center faces of pallet plate — where stop pins hit -->
+      <site name="stop_pin_front"
+            type="sphere" size="0.003"
+            pos="0 -0.075 -0.004"
+            rgba="1 0.3 0.3 0.7"/>
+      <site name="stop_pin_rear"
+            type="sphere" size="0.003"
+            pos="0  0.075 -0.004"
+            rgba="1 0.3 0.3 0.7"/>
+
+    </body>
+
+  </worldbody>
+
+</mujoco>

@@ -1,34 +1,47 @@
 <mujoco model="keyboard_bottom_case">
   <!--
     AME 547 - Keyboard Assembly Cell Simulation
-    Component: Bottom Case (75% Layout, 84-key)
-    
-    Real-world reference dimensions (Noire/QK75-class 75% keyboard):
-      Outer footprint : 325mm (L) x 115mm (W) x 28mm (H total case)
-      Bottom half height: ~6mm floor + 22mm walls = bottom_case height ~22mm
-      Wall thickness   : 3mm
-      Material         : ABS plastic
+    Component: Bottom Case (75% Layout, 84-key Keychron K2 V3)
 
-    Coordinate convention (MuJoCo world frame):
+    ── Resized to match verified aluminum plate STL (304.8mm × 114.3mm) ──
+
+    Interior sizing:
+      Plate    : 304.8mm (X) × 114.3mm (Y) × 1.5mm (Z)
+      Clearance: 1mm each side
+      Interior : 306.8mm (X) × 116.3mm (Y)
+      Interior half-extents: X=0.1534, Y=0.05815
+
+    Case outer dimensions:
+      Wall thickness: 3mm
+      Outer: 312.8mm (X) × 122.3mm (Y)
+      Outer half-extents: X=0.1564, Y=0.06115
+      Height: 22mm → body at z=0.011 above floor
+              (6mm floor + 16mm usable interior depth)
+
+    Coordinate convention:
       +X → keyboard length (left to right)
-      +Y → keyboard width  (front to back)
+      +Y → keyboard width  (front to back, rear = +Y)
       +Z → up
 
-    The bottom case sits on the world floor (z=0 at bottom face).
-    Origin of body = geometric center of the outer shell.
+    Body origin: geometric center of outer shell
+      z_world = 0.011 when placed on floor (z=0)
 
-    Geometry strategy:
-      - Use 5 geoms: 1 floor slab + 4 wall geoms (box primitives)
-      - This avoids a hollow mesh and keeps contact simulation clean
-      - All sizes in MuJoCo half-extents (meters, so divide mm by 2000)
+    Interior reference planes (body-local):
+      Floor top   z_local = -0.011 + 0.003 = -0.008m
+      Rim top     z_local = +0.011m
 
-    ABS plastic material properties:
-      density  : ~1050 kg/m³
-      friction : [1.0, 0.005, 0.0001] (slide, roll, spin) — typical ABS on steel fixture
+    Assembly stack (no sound foam — dropped from BOM):
+      Case floor top     z_world = 0.011 - 0.008 = 0.003m
+      EPDM foam (1.5mm): 0.003 → 0.00450m
+      Aluminum plate     : 0.00450 → 0.00600m
+      Switches seat on plate top at z_world = 0.00600m
 
-    Mounting features:
-      4 screw boss sites at corners (M3, inset 8mm from edges)
-      1 site at body center for fixture registration / dowel pin
+    Geometry strategy: 5 box geoms (1 floor + 4 walls)
+    ABS plastic: density 1050 kg/m³, rgba charcoal
+
+    Note: Battery rib tray positions are unchanged — battery footprint
+    (90×60mm) and case-relative X offset (+25mm) are unchanged.
+    Screw boss XY positions updated to new outer dimensions.
   -->
 
   <compiler angle="radian" autolimits="true"/>
@@ -36,7 +49,7 @@
   <option gravity="0 0 -9.81" timestep="0.002"/>
 
   <default>
-    <geom rgba="0.15 0.15 0.18 1"/>   <!-- dark charcoal ABS -->
+    <geom rgba="0.15 0.15 0.18 1"/>
   </default>
 
   <asset>
@@ -49,7 +62,6 @@
 
   <worldbody>
 
-    <!-- ── Static ground plane (fixture table) ────────────────────────── -->
     <geom name="ground" type="plane" size="1 1 0.1"
           pos="0 0 0" euler="0 0 0"
           friction="0.8 0.005 0.0001"
@@ -57,33 +69,26 @@
 
     <!-- ══════════════════════════════════════════════════════════════════
          BOTTOM CASE BODY
-         Center of body placed at (0, 0, z_center)
-         z_center = half of case height = 0.011m (11mm) above ground
+         Outer: 312.8mm × 122.3mm × 22mm
+         Body center at z=0.011 (half of 22mm height)
          ══════════════════════════════════════════════════════════════════ -->
     <body name="bottom_case" pos="0 0 0.011">
 
-      <!-- ── Inertial properties (ABS plastic, ~1050 kg/m³) ────────────
-           Approximate mass for a 325x115x22mm ABS shell ~ 85g
-           MuJoCo will auto-compute inertia from geom masses if density set,
-           but we provide explicit mass for assembly logging clarity.
-      -->
       <inertial pos="0 0 0"
                 mass="0.085"
                 diaginertia="3.2e-5 2.4e-4 2.5e-4"/>
 
-      <!-- Free joint — becomes welded/fixed once placed in fixture.
-           Comment this out if placing as a static fixture anchor. -->
+      <!-- freejoint: comment out to make case a static fixture anchor -->
       <freejoint name="bottom_case_free"/>
 
       <!-- ── FLOOR SLAB ──────────────────────────────────────────────────
-           Outer dims: 325mm(x) × 115mm(y) × 3mm(z floor thickness)
-           Half-extents: 0.1625, 0.0575, 0.0015
-           Positioned at bottom of case interior:
-             z_local = -0.011 + 0.0015 = -0.0095  (floor center from body origin)
+           Outer footprint: 312.8mm (X) × 122.3mm (Y) × 3mm thick
+           Half-extents: 0.1564, 0.06115, 0.0015
+           z_local center = -0.011 + 0.0015 = -0.0095
       -->
       <geom name="floor_slab"
             type="box"
-            size="0.1625 0.0575 0.0015"
+            size="0.1564 0.06115 0.0015"
             pos="0 0 -0.0095"
             material="abs_black"
             density="1050"
@@ -91,218 +96,187 @@
             condim="4"
             priority="1"/>
 
-      <!-- ── WALL: Left (-X side) ── Y flipped for correct viewer orientation
-           Viewer shows wall from outside (-X direction):
-             Left in viewer  = +Y (rear of keyboard)
-             Right in viewer = -Y (front of keyboard)
-           
-           So to appear LEFT→RIGHT as USB-C | Power | OS:
-             USB-C  must be at most POSITIVE Y → Y=+0.028
-             Power  at Y=+0.0105
-             OS     at Y=-0.0095
-           
-           Segments between/outside features:
-             Seg A: rear end to USB-C
-                    Y +0.0575 to +0.0325  center=+0.045  half=0.0125
-             Seg B: USB-C to Power
-                    Y +0.0235 to +0.0165  center=+0.0200  half=0.003
-             Seg C: Power to OS
-                    Y +0.0035 to -0.0025  center=+0.0005  half=0.003
-             Seg D: OS to front end
-                    Y -0.0165 to -0.0575  center=-0.037  half=0.0205
-           ────────────────────────────────────────────────────────── -->
+      <!-- ── WALL: Left (−X side) — port cutout side ───────────────────
+           Wall full height above floor: from floor top to rim top
+             floor top z_local = -0.008m
+             rim top   z_local = +0.011m
+             wall height = 0.019m → half = 0.0095m
+             wall center z_local = -0.008 + 0.0095 = +0.0015m
+           Wall X position: outer face at X = -0.1564, center at -0.1564+0.0015 = -0.1549
+           Wall Y span: full ±0.06115 (split around cutouts below)
 
-      <!-- SEGMENT A: rear section, before USB-C (leftmost in viewer) -->
+           USB-C cutout: Y = +0.028 ± 0.0045, Z = 0.003 to 0.007 above floor top
+           Power switch: Y = +0.0105 ± 0.007, Z = 0.004 to 0.008 above floor top  (toggle)
+           OS switch   : Y = -0.0095 ± 0.007, Z = 0.004 to 0.008 above floor top  (toggle)
+
+           Cutout Z (body-local):
+             USB-C: Z = (-0.008+0.003) to (-0.008+0.007) = -0.005 to -0.001
+                    center=-0.003, half=0.002
+             Pwr/OS: Z = (-0.008+0.004) to (-0.008+0.008) = -0.004 to 0.000
+                    center=-0.002, half=0.002 (slightly lower profile than USB)
+      -->
+
+      <!-- Segment A: rear section, before USB-C (+Y side) -->
+      <!-- Y: +0.06115 down to USB-C rear edge +0.0325 → half=(0.06115-0.0325)/2=0.01433, center=0.06115-0.01433=0.04682 -->
       <geom name="wall_left_A"
             type="box"
-            size="0.0015 0.0125 0.0095"
-            pos="-0.161 0.045 0.0015"
+            size="0.0015 0.01433 0.0095"
+            pos="-0.1549 0.04682 0.0015"
             material="abs_black"
             density="1050"
             friction="1.0 0.005 0.0001"
             condim="4" priority="1"/>
 
-      <!-- USB-C fill BELOW -->
+      <!-- USB-C fill BELOW cutout -->
       <geom name="wall_left_usbc_below"
             type="box"
             size="0.0015 0.0045 0.0045"
-            pos="-0.161 0.028 -0.0035"
+            pos="-0.1549 0.028 -0.0035"
             material="abs_black"
             density="1050"
             friction="1.0 0.005 0.0001"
             condim="4" priority="1"/>
 
-      <!-- USB-C fill ABOVE -->
+      <!-- USB-C fill ABOVE cutout -->
       <geom name="wall_left_usbc_above"
             type="box"
             size="0.0015 0.0045 0.003"
-            pos="-0.161 0.028 0.008"
+            pos="-0.1549 0.028 0.008"
             material="abs_black"
             density="1050"
             friction="1.0 0.005 0.0001"
             condim="4" priority="1"/>
 
-      <!-- SEGMENT B: between USB-C and power switch — widen gap -->
+      <!-- Segment B: between USB-C and power switch -->
+      <!-- Y: USB-C front edge 0.0235 to power rear edge 0.0175 → half=0.003, center=0.020 -->
       <geom name="wall_left_B"
             type="box"
-            size="0.0015 0.005 0.0095"
-            pos="-0.161 0.0185 0.0015"
+            size="0.0015 0.003 0.0095"
+            pos="-0.1549 0.0205 0.0015"
             material="abs_black"
             density="1050"
             friction="1.0 0.005 0.0001"
             condim="4" priority="1"/>
 
-      <!-- POWER SWITCH fill BELOW -->
+      <!-- Power switch fill BELOW -->
       <geom name="wall_left_pwr_below"
             type="box"
             size="0.0015 0.007 0.004"
-            pos="-0.161 0.0105 -0.004"
+            pos="-0.1549 0.0105 -0.004"
             material="abs_black"
             density="1050"
             friction="1.0 0.005 0.0001"
             condim="4" priority="1"/>
 
-      <!-- POWER SWITCH fill ABOVE -->
+      <!-- Power switch fill ABOVE -->
       <geom name="wall_left_pwr_above"
             type="box"
             size="0.0015 0.007 0.0025"
-            pos="-0.161 0.0105 0.0085"
+            pos="-0.1549 0.0105 0.0085"
             material="abs_black"
             density="1050"
             friction="1.0 0.005 0.0001"
             condim="4" priority="1"/>
 
-      <!-- SEGMENT C: between power switch and OS switch -->
+      <!-- Segment C: between power switch and OS switch -->
       <geom name="wall_left_C"
             type="box"
             size="0.0015 0.005 0.0095"
-            pos="-0.161 -0.0005 0.0015"
+            pos="-0.1549 -0.0005 0.0015"
             material="abs_black"
             density="1050"
             friction="1.0 0.005 0.0001"
             condim="4" priority="1"/>
 
-      <!-- OS SWITCH fill BELOW -->
+      <!-- OS switch fill BELOW -->
       <geom name="wall_left_os_below"
             type="box"
             size="0.0015 0.007 0.004"
-            pos="-0.161 -0.0095 -0.004"
+            pos="-0.1549 -0.0095 -0.004"
             material="abs_black"
             density="1050"
             friction="1.0 0.005 0.0001"
             condim="4" priority="1"/>
 
-      <!-- OS SWITCH fill ABOVE -->
+      <!-- OS switch fill ABOVE -->
       <geom name="wall_left_os_above"
             type="box"
             size="0.0015 0.007 0.0025"
-            pos="-0.161 -0.0095 0.0085"
+            pos="-0.1549 -0.0095 0.0085"
             material="abs_black"
             density="1050"
             friction="1.0 0.005 0.0001"
             condim="4" priority="1"/>
 
-      <!-- SEGMENT D: front section, after OS switch (rightmost in viewer) -->
+      <!-- Segment D: front section, after OS switch (−Y side) -->
+      <!-- Y: OS front edge -0.0165 down to -0.06115 → half=(0.06115-0.0165)/2=0.02233, center=-(0.0165+0.02233)=-0.03883 -->
       <geom name="wall_left_D"
             type="box"
-            size="0.0015 0.0205 0.0095"
-            pos="-0.161 -0.037 0.0015"
+            size="0.0015 0.02233 0.0095"
+            pos="-0.1549 -0.03883 0.0015"
             material="abs_black"
             density="1050"
             friction="1.0 0.005 0.0001"
             condim="4" priority="1"/>
 
-      <!-- ── CUTOUT INDICATOR SITES — all at Z=+0.003 ──────────────────
-           LED dot pushed slightly inside wall face (X=-0.160)
-           so it renders visible inside the gap
-      -->
-      <!-- USB-C — blue, leftmost in viewer -->
+      <!-- ── CUTOUT INDICATOR SITES ─────────────────────────────────── -->
       <site name="usbc_cutout"
             type="box"
             size="0.001 0.0045 0.002"
-            pos="-0.162 0.028 0.003"
+            pos="-0.1565 0.028 0.003"
             rgba="0 0.5 1 0.9"/>
 
-      <!-- LED indicator — centered between USB-C and power switch -->
-      <site name="led_indicator"
-            type="sphere"
-            size="0.0008"
-            pos="-0.163 -0.0245 0.003"
-            rgba="1 1 0 1.0"/>
-
-      <!-- Power switch — orange -->
-      <site name="power_switch_cutout"
+      <site name="power_cutout"
             type="box"
-            size="0.001 0.007 0.003"
-            pos="-0.162 0.0105 0.003"
-            rgba="1 0.5 0 0.9"/>
+            size="0.001 0.007 0.002"
+            pos="-0.1565 0.0105 0.003"
+            rgba="0.2 0.9 0.2 0.9"/>
 
-      <!-- OS switch — orange, matches power switch -->
-      <site name="os_switch_cutout"
+      <site name="os_cutout"
             type="box"
-            size="0.001 0.007 0.003"
-            pos="-0.162 -0.0095 0.003"
-            rgba="1 0.5 0 0.9"/>
+            size="0.001 0.007 0.002"
+            pos="-0.1565 -0.0095 0.003"
+            rgba="0.9 0.6 0.1 0.9"/>
 
-      <!-- ── WALL: Right (-X side) ──────────────────────────────────────-->
+      <!-- ── WALL: Right (+X side) — clean, no cutouts ─────────────── -->
       <geom name="wall_right"
             type="box"
-            size="0.0015 0.0575 0.0095"
-            pos="0.161 0 0.0015"
+            size="0.0015 0.06115 0.0095"
+            pos="0.1549 0 0.0015"
             material="abs_black"
             density="1050"
             friction="1.0 0.005 0.0001"
-            condim="4"
-            priority="1"/>
+            condim="4" priority="1"/>
 
-      <!-- ── WALL: Front (+Y side, toward user) ─────────────────────────
-           Spans full X width (inner span = 325-6mm = 319mm → half = 0.1595)
-           Front wall: y_local = -(0.0575 - 0.0015) = -0.056
-      -->
-      <geom name="wall_front"
-            type="box"
-            size="0.1595 0.0015 0.0095"
-            pos="0 -0.056 0.0015"
-            material="abs_black"
-            density="1050"
-            friction="1.0 0.005 0.0001"
-            condim="4"
-            priority="1"/>
-
-      <!-- ── WALL: Rear (-Y side, away from user) ───────────────────────-->
+      <!-- ── WALL: Rear (+Y side) ───────────────────────────────────── -->
       <geom name="wall_rear"
             type="box"
-            size="0.1595 0.0015 0.0095"
-            pos="0 0.056 0.0015"
+            size="0.1564 0.0015 0.0095"
+            pos="0 0.05965 0.0015"
             material="abs_black"
             density="1050"
             friction="1.0 0.005 0.0001"
-            condim="4"
-            priority="1"/>
+            condim="4" priority="1"/>
 
-      <!-- ══════════════════════════════════════════════════════════════════
-           BATTERY LOCATING RIBS
-           Battery model: 606090 LiPo (6mm × 60mm × 90mm)
-           Battery footprint in case:
-             X (length): 90mm → half = 0.045m
-             Y (width) : 60mm → half = 0.030m
-           Battery centered in Y (left-right center of case)
-           Battery offset in X: pushed toward rear (+X) to clear
-             USB-C port cutout at front (-X) wall
-             Battery X center = +0.025m from case center
-           
-           Rib geometry:
-             Thickness : 1.5mm → half = 0.00075m
-             Height    : 4mm   → half = 0.002m
-             Rib bottom: sits on floor top face
-               floor top z_local = -0.0095 + 0.0015 = -0.008m
-               rib center z      = -0.008 + 0.002   = -0.006m
-           
-           4 ribs: left wall, right wall, front wall, rear wall
-           forming a tray that locates battery precisely
-           ══════════════════════════════════════════════════════════════════ -->
+      <!-- ── WALL: Front (−Y side) ──────────────────────────────────── -->
+      <geom name="wall_front"
+            type="box"
+            size="0.1564 0.0015 0.0095"
+            pos="0 -0.05965 0.0015"
+            material="abs_black"
+            density="1050"
+            friction="1.0 0.005 0.0001"
+            condim="4" priority="1"/>
 
-      <!-- Battery rib: Left side (−Y face of battery footprint) -->
+      <!-- ══════════════════════════════════════════════════════════════
+           BATTERY RIB TRAY
+           Battery: 90mm (X) × 60mm (Y) × 6mm (Z), center at X=+25mm
+           Rib bottom: sits on floor top face (z_local = -0.008m)
+           Rib height: 4mm → rib center z_local = -0.006m
+           Rib thickness: 1.5mm
+           ══════════════════════════════════════════════════════════════ -->
+
+      <!-- Battery rib: Left side (−Y) -->
       <geom name="battery_rib_left"
             type="box"
             size="0.045 0.00075 0.002"
@@ -310,10 +284,9 @@
             material="abs_black"
             density="1050"
             friction="1.0 0.005 0.0001"
-            condim="4"
-            priority="1"/>
+            condim="4" priority="1"/>
 
-      <!-- Battery rib: Right side (+Y face of battery footprint) -->
+      <!-- Battery rib: Right side (+Y) -->
       <geom name="battery_rib_right"
             type="box"
             size="0.045 0.00075 0.002"
@@ -321,26 +294,9 @@
             material="abs_black"
             density="1050"
             friction="1.0 0.005 0.0001"
-            condim="4"
-            priority="1"/>
+            condim="4" priority="1"/>
 
-      <!-- Battery rib: Front (−X face, toward USB port)
-           Split into TWO pieces with 10mm gap at center
-           for JST connector clearance.
-           
-           JST connector sits on battery -X face at Y=0
-           Connector width ~8mm → gap = 10mm (5mm each side)
-           
-           Original full rib: Y = -30mm to +30mm (half=0.030)
-           
-           Left piece:  Y = -30mm to -5mm
-             half-Y = (30-5)/2 = 12.5mm = 0.0125
-             center-Y = -(5 + 12.5) = -17.5mm = -0.0175
-           
-           Right piece: Y = +5mm to +30mm
-             half-Y = (30-5)/2 = 12.5mm = 0.0125
-             center-Y = +(5 + 12.5) = +17.5mm = +0.0175
-      -->
+      <!-- Battery rib: Front (−X), split for JST connector clearance -->
       <geom name="battery_rib_front_left"
             type="box"
             size="0.00075 0.0125 0.002"
@@ -348,8 +304,7 @@
             material="abs_black"
             density="1050"
             friction="1.0 0.005 0.0001"
-            condim="4"
-            priority="1"/>
+            condim="4" priority="1"/>
 
       <geom name="battery_rib_front_right"
             type="box"
@@ -358,10 +313,9 @@
             material="abs_black"
             density="1050"
             friction="1.0 0.005 0.0001"
-            condim="4"
-            priority="1"/>
+            condim="4" priority="1"/>
 
-      <!-- Battery rib: Rear (+X face, toward rear wall) -->
+      <!-- Battery rib: Rear (+X) -->
       <geom name="battery_rib_rear"
             type="box"
             size="0.00075 0.030 0.002"
@@ -369,146 +323,119 @@
             material="abs_black"
             density="1050"
             friction="1.0 0.005 0.0001"
-            condim="4"
-            priority="1"/>
+            condim="4" priority="1"/>
 
-      <!-- ══════════════════════════════════════════════════════════════════
+      <!-- ══════════════════════════════════════════════════════════════
            SCREW BOSSES (M3 plate-to-case screws)
-           4 cylindrical posts rising from case floor
-           Boss OD: 6mm → radius = 0.003m
-           Boss height: 8mm rising from floor top
-             floor top z_local  = -0.008m
-             boss center z      = -0.008 + 0.004 = -0.004m
-             boss top z         = -0.008 + 0.008 = 0.000m (at body midplane)
-           Positions match screw_boss sites (same XY, adjusted Z)
-           Inset 8mm from outer wall centerlines:
-             X: ±(0.1625 - 0.008) = ±0.1545m
-             Y: ±(0.0575 - 0.008) = ±0.0495m
-           ══════════════════════════════════════════════════════════════════ -->
+           Updated XY positions for new outer dimensions:
+             X: ±(0.1564 - 0.008) = ±0.1484m  (8mm inset from outer wall)
+             Y: ±(0.06115 - 0.008) = ±0.05315m
+           Boss: radius 3mm, height 8mm rising from floor top
+             floor top z_local = -0.008m
+             boss center z = -0.008 + 0.004 = -0.004m
+           ══════════════════════════════════════════════════════════════ -->
 
-      <!-- Screw boss: Front-Left — moved inward 3mm from wall to avoid clipping -->
+      <!-- Screw boss: Front-Left (−X, −Y corner) -->
       <geom name="screw_boss_geom_FL"
             type="cylinder"
             size="0.003 0.004"
-            pos="-0.1515 -0.0495 -0.004"
+            pos="-0.1484 -0.05315 -0.004"
             material="abs_black"
             density="1050"
             friction="1.0 0.005 0.0001"
-            condim="4"
-            priority="1"/>
+            condim="4" priority="1"/>
 
-      <!-- Screw boss: Front-Right -->
+      <!-- Screw boss: Front-Right (+X, −Y corner) -->
       <geom name="screw_boss_geom_FR"
             type="cylinder"
             size="0.003 0.004"
-            pos="0.1545 -0.0495 -0.004"
+            pos="0.1484 -0.05315 -0.004"
             material="abs_black"
             density="1050"
             friction="1.0 0.005 0.0001"
-            condim="4"
-            priority="1"/>
+            condim="4" priority="1"/>
 
-      <!-- Screw boss: Rear-Left — moved inward 3mm to match FL -->
+      <!-- Screw boss: Rear-Left (−X, +Y corner) -->
       <geom name="screw_boss_geom_RL"
             type="cylinder"
             size="0.003 0.004"
-            pos="-0.1515 0.0495 -0.004"
+            pos="-0.1484 0.05315 -0.004"
             material="abs_black"
             density="1050"
             friction="1.0 0.005 0.0001"
-            condim="4"
-            priority="1"/>
+            condim="4" priority="1"/>
 
-      <!-- Screw boss: Rear-Right -->
+      <!-- Screw boss: Rear-Right (+X, +Y corner) -->
       <geom name="screw_boss_geom_RR"
             type="cylinder"
             size="0.003 0.004"
-            pos="0.1545 0.0495 -0.004"
+            pos="0.1484 0.05315 -0.004"
             material="abs_black"
             density="1050"
             friction="1.0 0.005 0.0001"
-            condim="4"
-            priority="1"/>
+            condim="4" priority="1"/>
 
-      <!-- ══════════════════════════════════════════════════════════════════
+      <!-- ══════════════════════════════════════════════════════════════
            REGISTRATION SITES
-           Used for:
-             - Fixture dowel pin registration (center_fixture)
-             - Screw boss locations (M3, corner positions)
-             - PCB placement reference (pcb_origin)
-             - Gasket placement reference (gasket_origin)
-           All positions in body-local frame (z=0 at body center = mid-height)
-           Rim top face z_local = +0.011m
-           Interior floor face z_local = -0.011 + 0.003 = -0.008m
-           ══════════════════════════════════════════════════════════════════ -->
+           All in body-local frame (z=0 at body center)
+           ══════════════════════════════════════════════════════════════ -->
 
-      <!-- Center of bottom face (fixture registration / dowel) -->
+      <!-- Center of case floor (fixture dowel registration) -->
       <site name="fixture_dowel_center"
             type="cylinder"
             size="0.002 0.001"
             pos="0 0 -0.0095"
-            euler="0 0 0"
             rgba="1 0.8 0 1"/>
 
-      <!-- Corner screw bosses (M3, 8mm inset from outer edge) -->
-      <!-- Front-Left -->
+      <!-- Corner screw boss sites -->
       <site name="screw_boss_FL"
-            type="cylinder"
-            size="0.003 0.001"
-            pos="-0.1545 -0.0495 -0.0085"
+            type="cylinder" size="0.003 0.001"
+            pos="-0.1484 -0.05315 -0.0085"
             rgba="0.8 0.2 0.2 1"/>
-      <!-- Front-Right -->
       <site name="screw_boss_FR"
-            type="cylinder"
-            size="0.003 0.001"
-            pos="0.1545 -0.0495 -0.0085"
+            type="cylinder" size="0.003 0.001"
+            pos="0.1484 -0.05315 -0.0085"
             rgba="0.8 0.2 0.2 1"/>
-      <!-- Rear-Left -->
       <site name="screw_boss_RL"
-            type="cylinder"
-            size="0.003 0.001"
-            pos="-0.1545 0.0495 -0.0085"
+            type="cylinder" size="0.003 0.001"
+            pos="-0.1484 0.05315 -0.0085"
             rgba="0.8 0.2 0.2 1"/>
-      <!-- Rear-Right -->
       <site name="screw_boss_RR"
-            type="cylinder"
-            size="0.003 0.001"
-            pos="0.1545 0.0495 -0.0085"
+            type="cylinder" size="0.003 0.001"
+            pos="0.1484 0.05315 -0.0085"
             rgba="0.8 0.2 0.2 1"/>
 
-      <!-- PCB placement origin (aligns with PCB body pos in pcb.xml) -->
-      <!-- rgba alpha=0.0 — reference site only, not visible in viewer -->
+      <!-- PCB placement origin -->
       <site name="pcb_origin"
-            type="box"
-            size="0.001 0.001 0.0002"
+            type="box" size="0.001 0.001 0.0002"
             pos="0 0 -0.006"
             rgba="0.2 0.8 0.2 0.0"/>
 
-      <!-- Gasket seating surface (rim top, where gaskets rest) -->
-      <!-- rgba alpha=0.0 — reference site only, not visible in viewer -->
-      <site name="gasket_seating_surface"
-            type="box"
-            size="0.16 0.056 0.0002"
-            pos="0 0 0.0095"
+      <!-- Interior floor surface reference (plate/foam rest here) -->
+      <site name="floor_surface"
+            type="box" size="0.1534 0.05815 0.0002"
+            pos="0 0 -0.008"
             rgba="0.9 0.5 0.1 0.0"/>
 
-      <!-- Robot end-effector grasp target (top center of case) -->
-      <!-- Small dim sites — visible but not dominant -->
+      <!-- Rim top face reference (where case mates with top case) -->
+      <site name="rim_top"
+            type="box" size="0.1564 0.06115 0.0002"
+            pos="0 0 0.011"
+            rgba="0.9 0.5 0.1 0.0"/>
+
+      <!-- Robot end-effector grasp targets -->
       <site name="grasp_top_center"
-            type="sphere"
-            size="0.002"
+            type="sphere" size="0.002"
             pos="0 0 0.011"
             rgba="0 0.6 0.8 0.4"/>
 
-      <!-- Offset grasp points for vacuum gripper (left and right of center) -->
       <site name="vacuum_grasp_left"
-            type="sphere"
-            size="0.002"
+            type="sphere" size="0.002"
             pos="-0.08 0 0.011"
             rgba="0 0.6 0.8 0.3"/>
+
       <site name="vacuum_grasp_right"
-            type="sphere"
-            size="0.002"
+            type="sphere" size="0.002"
             pos="0.08 0 0.011"
             rgba="0 0.6 0.8 0.3"/>
 

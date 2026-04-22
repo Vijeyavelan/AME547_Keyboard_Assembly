@@ -1,0 +1,386 @@
+<mujoco model="keyboard_kit_tray">
+  <!--
+    AME 547 - Keyboard Assembly Cell Simulation
+    Component: Kit Tray (S1 Feeder Conveyor)
+
+    Purpose:
+      Aluminium tooling plate with foam-lined pocketed cutouts for the 4
+      keyboard assembly parts. Human operator loads parts at the load station;
+      tray advances on feeder conveyor in +Y toward the UR5e pick zone.
+
+    Tray overall dimensions:
+      350mm (X) × 520mm (Y) × 15mm thick base plate
+      Body origin: CENTER of tray TOP surface (Z=0 body-local)
+      Base plate bottom face at Z = −0.015m (body-local)
+
+    Advance direction: +Y toward robot
+      EPDM foam   — leading edge (+Y end, picked first)
+      Battery     — second
+      PCB         — third
+      Aluminum plate — trailing edge (−Y end, picked last)
+
+    Part layout (body-local Y centers, tray half-Y = 0.260):
+      EPDM foam    center Y = +0.18085m
+      Battery      center Y = +0.06370m  (centered in X)
+      PCB          center Y = −0.04830m
+      Aluminum plate center Y = −0.18745m
+
+    Cutout dimensions (part + 3mm clearance each side):
+      EPDM foam    : half 0.1564 × 0.06415  (313.8mm × 128.3mm)
+      Battery      : half 0.0480 × 0.0330   ( 96.0mm ×  66.0mm)
+      PCB          : half 0.1540 × 0.0590   (308.0mm × 118.0mm)
+      Aluminum plate: half 0.1554 × 0.06015 (310.8mm × 120.3mm)
+
+    Pocket depth: 8mm (uniform for all parts)
+      Pocket floor geom: 3mm thick, dark foam-lining color
+      Floor bottom at Z = −0.008, floor top at Z = −0.005
+      Parts rest on pocket floor top face (Z = −0.005)
+
+    Tray structure (MuJoCo box primitives — no hollow mesh):
+      Layer 1: Base slab — full footprint, 15mm thick
+               bottom face Z = −0.015, top face Z = 0
+      Layer 2: Outer walls (L/R/Top/Bottom) + 3 inter-cutout dividers
+               All walls: 8mm tall above tray top surface
+               Wall half-Z = 0.004, wall center Z = +0.004
+               Wall thickness: 15mm (half = 0.0075)
+      Layer 3: Pocket floors — thin box inside each cutout
+               3mm thick, foam-lining color
+
+    Materials:
+      tray_alu    : brushed aluminium (base slab + walls + dividers)
+      tray_foam   : dark foam lining (pocket floors)
+      tray_id_tag : small orange tag geom at tray leading edge
+
+    Integration:
+      Standalone validation: body pos="0 0 0.015" (base bottom on ground)
+      In station1.xml: freejoint teleported between pre-stage and pick zone
+      Tray ID barcode site at leading (+Y) edge for vision system reference
+
+    Coordinate convention:
+      +X → tray width (left to right, same as keyboard X)
+      +Y → tray length / advance direction (toward robot)
+      +Z → up
+  -->
+
+  <compiler angle="radian" autolimits="true"/>
+
+  <option gravity="0 0 -9.81" timestep="0.002"/>
+
+  <asset>
+    <!-- Brushed aluminium tray body -->
+    <material name="tray_alu"
+              rgba="0.70 0.72 0.75 1"
+              specular="0.7"
+              shininess="0.5"
+              reflectance="0.25"/>
+
+    <!-- Foam pocket lining — dark charcoal, matte -->
+    <material name="tray_foam"
+              rgba="0.22 0.22 0.24 1"
+              specular="0.05"
+              shininess="0.05"
+              reflectance="0.01"/>
+
+    <!-- Tray ID tag — orange stripe at leading edge -->
+    <material name="tray_id_tag"
+              rgba="1.0 0.45 0.0 1"
+              specular="0.1"
+              shininess="0.1"/>
+  </asset>
+
+  <worldbody>
+
+    <geom name="ground" type="plane" size="1 1 0.1"
+          pos="0 0 0"
+          friction="0.8 0.005 0.0001"
+          rgba="0.4 0.4 0.4 1"/>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         KIT TRAY BODY
+         Origin: center of tray top surface
+         Standalone: pos="0 0 0.015" (base bottom sits on ground)
+         Station1: freejoint teleported to pre-stage / pick-zone positions
+         ══════════════════════════════════════════════════════════════════ -->
+    <body name="kit_tray" pos="0 0 0.015">
+
+      <freejoint name="kit_tray_free"/>
+
+      <inertial pos="0 0 -0.0075"
+                mass="3.5"
+                diaginertia="5.0e-2 1.2e-1 1.5e-1"/>
+
+      <!-- ══════════════════════════════════════════════════════════════
+           LAYER 1: BASE SLAB
+           Full tray footprint, 15mm thick
+           half-extents: 0.175 (X) × 0.260 (Y) × 0.0075 (Z)
+           pos Z center = −0.0075 → bottom face at Z=−0.015, top at Z=0
+           ══════════════════════════════════════════════════════════════ -->
+      <geom name="base_slab"
+            type="box"
+            size="0.175 0.260 0.0075"
+            pos="0 0 -0.0075"
+            material="tray_alu"
+            friction="0.8 0.005 0.0001"
+            condim="4"
+            priority="1"/>
+
+      <!-- ══════════════════════════════════════════════════════════════
+           LAYER 2A: OUTER WALLS
+           All walls: half-Z=0.004, center Z=+0.004 → top face at +0.008
+           Wall thickness half = 0.0075 (15mm)
+           Outer faces flush with base slab edges
+
+           Left wall  (−X): center X = −(0.175 − 0.0075) = −0.1675
+           Right wall (+X): center X = +(0.175 − 0.0075) = +0.1675
+           Top wall   (+Y): center Y = +(0.260 − 0.0075) = +0.2525
+           Bottom wall(−Y): center Y = −(0.260 − 0.0075) = −0.2525
+
+           Left/Right walls: full Y span (half-Y = 0.260)
+           Top/Bottom walls: inner span only (half-X = 0.175 − 2×0.0075 = 0.1675)
+             → avoids double-counting the corners
+           ══════════════════════════════════════════════════════════════ -->
+
+      <!-- Left outer wall (−X) -->
+      <geom name="wall_left"
+            type="box"
+            size="0.0075 0.260 0.004"
+            pos="-0.1675 0 0.004"
+            material="tray_alu"
+            contype="0" conaffinity="0"/>
+
+      <!-- Right outer wall (+X) -->
+      <geom name="wall_right"
+            type="box"
+            size="0.0075 0.260 0.004"
+            pos="0.1675 0 0.004"
+            material="tray_alu"
+            contype="0" conaffinity="0"/>
+
+      <!-- Top outer wall (+Y, leading edge — EPDM side) -->
+      <geom name="wall_top"
+            type="box"
+            size="0.1600 0.0075 0.004"
+            pos="0 0.2525 0.004"
+            material="tray_alu"
+            contype="0" conaffinity="0"/>
+
+      <!-- Bottom outer wall (−Y, trailing edge — Aluminum Plate side) -->
+      <geom name="wall_bottom"
+            type="box"
+            size="0.1600 0.0075 0.004"
+            pos="0 -0.2525 0.004"
+            material="tray_alu"
+            contype="0" conaffinity="0"/>
+
+      <!-- ══════════════════════════════════════════════════════════════
+           LAYER 2B: INTER-CUTOUT DIVIDERS
+           3 dividers between the 4 cutouts, each 20mm wide (half=0.010)
+           Same height as outer walls (half-Z=0.004, center Z=+0.004)
+           Inner span only in X (half-X = 0.1600, avoids outer walls)
+
+           Divider Y centers (midpoints of 20mm gaps):
+             Div 1 (EPDM ↔ Battery):
+               EPDM bottom edge   = +0.18085 − 0.06415 = +0.11670
+               Battery top edge   = +0.06370 + 0.03300 = +0.09670
+               Gap center Y       = (+0.11670 + 0.09670) / 2 = +0.10670
+
+             Div 2 (Battery ↔ PCB):
+               Battery bottom edge = +0.06370 − 0.03300 = +0.03070
+               PCB top edge        = −0.04830 + 0.05900 = +0.01070
+               Gap center Y        = (+0.03070 + 0.01070) / 2 = +0.02070
+
+             Div 3 (PCB ↔ Aluminum Plate):
+               PCB bottom edge     = −0.04830 − 0.05900 = −0.10730
+               Plate top edge      = −0.18745 + 0.06015 = −0.12730
+               Gap center Y        = (−0.10730 + −0.12730) / 2 = −0.11730
+           ══════════════════════════════════════════════════════════════ -->
+
+      <!-- Divider 1: between EPDM and Battery -->
+      <geom name="divider_1"
+            type="box"
+            size="0.1600 0.010 0.004"
+            pos="0 0.10670 0.004"
+            material="tray_alu"
+            contype="0" conaffinity="0"/>
+
+      <!-- Divider 2: between Battery and PCB -->
+      <geom name="divider_2"
+            type="box"
+            size="0.1600 0.010 0.004"
+            pos="0 0.02070 0.004"
+            material="tray_alu"
+            contype="0" conaffinity="0"/>
+
+      <!-- Divider 3: between PCB and Aluminum Plate -->
+      <geom name="divider_3"
+            type="box"
+            size="0.1600 0.010 0.004"
+            pos="0 -0.11730 0.004"
+            material="tray_alu"
+            contype="0" conaffinity="0"/>
+
+      <!-- ══════════════════════════════════════════════════════════════
+           BATTERY LATERAL STOPS
+           Battery is 90mm wide (X) vs tray inner width ~320mm — needs
+           short inner walls to locate it in X.
+           Stop thickness half = 0.0075 (15mm)
+           Stop Y span = battery cutout half-Y = 0.0330
+           Stop inner X face at ±battery_cutout_half_X = ±0.0480
+           Stop center X = ±(0.0480 + 0.0075) = ±0.0555
+           ══════════════════════════════════════════════════════════════ -->
+
+      <!-- Battery lateral stop: Left (−X) -->
+      <geom name="battery_stop_left"
+            type="box"
+            size="0.0075 0.0330 0.004"
+            pos="-0.0555 0.06370 0.004"
+            material="tray_alu"
+            contype="0" conaffinity="0"/>
+
+      <!-- Battery lateral stop: Right (+X) -->
+      <geom name="battery_stop_right"
+            type="box"
+            size="0.0075 0.0330 0.004"
+            pos="0.0555 0.06370 0.004"
+            material="tray_alu"
+            contype="0" conaffinity="0"/>
+
+      <!-- ══════════════════════════════════════════════════════════════
+           LAYER 3: POCKET FLOORS (foam lining color)
+           3mm thick geoms at the bottom of each pocket
+           Pocket depth = 8mm from tray top (Z=0)
+             → pocket floor top  Z = −0.008 + 0.003 = −0.005
+             → pocket floor center Z = −0.008 + 0.0015 = −0.0065
+           Footprint = cutout footprint (part + 3mm clearance each side)
+           contype/conaffinity = 0 (cosmetic only — parts sit on floor tops)
+           ══════════════════════════════════════════════════════════════ -->
+
+      <!-- EPDM foam pocket floor -->
+      <!-- half: 0.1564 (X) × 0.06415 (Y), center Y = +0.18085 -->
+      <geom name="pocket_floor_epdm"
+            type="box"
+            size="0.1564 0.06415 0.0015"
+            pos="0 0.18085 -0.0065"
+            material="tray_foam"
+            contype="0" conaffinity="0"/>
+
+      <!-- Battery pocket floor -->
+      <!-- half: 0.0480 (X) × 0.0330 (Y), center Y = +0.06370 -->
+      <geom name="pocket_floor_battery"
+            type="box"
+            size="0.0480 0.0330 0.0015"
+            pos="0 0.06370 -0.0065"
+            material="tray_foam"
+            contype="0" conaffinity="0"/>
+
+      <!-- PCB pocket floor -->
+      <!-- half: 0.1540 (X) × 0.0590 (Y), center Y = −0.04830 -->
+      <geom name="pocket_floor_pcb"
+            type="box"
+            size="0.1540 0.0590 0.0015"
+            pos="0 -0.04830 -0.0065"
+            material="tray_foam"
+            contype="0" conaffinity="0"/>
+
+      <!-- Aluminum plate pocket floor -->
+      <!-- half: 0.1554 (X) × 0.06015 (Y), center Y = −0.18745 -->
+      <geom name="pocket_floor_plate"
+            type="box"
+            size="0.1554 0.06015 0.0015"
+            pos="0 -0.18745 -0.0065"
+            material="tray_foam"
+            contype="0" conaffinity="0"/>
+
+      <!-- ══════════════════════════════════════════════════════════════
+           TRAY ID TAG
+           Orange stripe at leading edge (+Y outer wall top)
+           Used by vision system as tray-present / tray-ID indicator
+           ══════════════════════════════════════════════════════════════ -->
+      <geom name="tray_id_stripe"
+            type="box"
+            size="0.040 0.0015 0.002"
+            pos="0 0.2600 0.006"
+            material="tray_id_tag"
+            contype="0" conaffinity="0"/>
+
+      <!-- ══════════════════════════════════════════════════════════════
+           REGISTRATION SITES
+           ══════════════════════════════════════════════════════════════ -->
+
+      <!-- Tray center reference -->
+      <site name="tray_center"
+            type="sphere" size="0.003"
+            pos="0 0 0"
+            rgba="1 1 1 0.5"/>
+
+      <!-- Part pick sites — robot IK target for each pick
+           Z = pocket floor top + part half-thickness (approximate)
+           Used as named targets in station1_controller.py
+
+           EPDM:    floor top Z=−0.005, foam half=0.00075 → pick Z=−0.00425
+           Battery: floor top Z=−0.005, battery half=0.003 → pick Z=−0.002
+           PCB:     floor top Z=−0.005, pcb half=0.0008   → pick Z=−0.0042
+           Plate:   floor top Z=−0.005, plate half=0.00075 → pick Z=−0.00425
+      -->
+      <site name="pick_epdm"
+            type="sphere" size="0.004"
+            pos="0 0.18085 -0.00425"
+            rgba="0.18 0.18 0.20 0.9"/>
+
+      <site name="pick_battery"
+            type="sphere" size="0.004"
+            pos="0 0.06370 -0.002"
+            rgba="0.75 0.75 0.78 0.9"/>
+
+      <site name="pick_pcb"
+            type="sphere" size="0.004"
+            pos="0 -0.04830 -0.0042"
+            rgba="0.08 0.35 0.08 0.9"/>
+
+      <site name="pick_plate"
+            type="sphere" size="0.004"
+            pos="0 -0.18745 -0.00425"
+            rgba="0.75 0.75 0.78 0.9"/>
+
+      <!-- Tray leading edge center — vision system / stop pin reference -->
+      <site name="tray_leading_edge"
+            type="sphere" size="0.003"
+            pos="0 0.260 0"
+            rgba="1 0.45 0 0.9"/>
+
+      <!-- Tray trailing edge center — feeder stopper engagement point -->
+      <site name="tray_trailing_edge"
+            type="sphere" size="0.003"
+            pos="0 -0.260 0"
+            rgba="1 0.45 0 0.9"/>
+
+      <!-- Pocket corner sites — visual verification helpers -->
+      <!-- EPDM cutout corners -->
+      <site name="epdm_FL" type="sphere" size="0.002"
+            pos="-0.1564 0.11670 0" rgba="0.2 0.6 1 0.5"/>
+      <site name="epdm_RR" type="sphere" size="0.002"
+            pos=" 0.1564 0.24500 0" rgba="0.2 0.6 1 0.5"/>
+
+      <!-- Battery cutout corners -->
+      <site name="battery_FL" type="sphere" size="0.002"
+            pos="-0.0480 0.03070 0" rgba="0.2 0.6 1 0.5"/>
+      <site name="battery_RR" type="sphere" size="0.002"
+            pos=" 0.0480 0.09670 0" rgba="0.2 0.6 1 0.5"/>
+
+      <!-- PCB cutout corners -->
+      <site name="pcb_FL" type="sphere" size="0.002"
+            pos="-0.1540 -0.10730 0" rgba="0.2 0.6 1 0.5"/>
+      <site name="pcb_RR" type="sphere" size="0.002"
+            pos=" 0.1540  0.01070 0" rgba="0.2 0.6 1 0.5"/>
+
+      <!-- Plate cutout corners -->
+      <site name="plate_FL" type="sphere" size="0.002"
+            pos="-0.1554 -0.24760 0" rgba="0.2 0.6 1 0.5"/>
+      <site name="plate_RR" type="sphere" size="0.002"
+            pos=" 0.1554 -0.12730 0" rgba="0.2 0.6 1 0.5"/>
+
+    </body>
+
+  </worldbody>
+
+</mujoco>
