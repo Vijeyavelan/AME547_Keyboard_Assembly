@@ -1,9 +1,18 @@
 """
-station1_controller.py — All 5 parts: EPDM → Battery → PCB → Sound Foam → Alu Plate
+station1_controller.py — EPDM -> Battery -> PCB -> Alu Plate -> Screws
+Updated for new station1.xml layout (kit tray + pre-stage, no belt conveyor).
 
-Key behaviour: conveyor advances ALL trailing parts simultaneously while the arm
-carries the current part, so the next part arrives at the grasp site by the time
-the arm returns to pick_ready. No idle belt pauses.
+Key fix: parts are gravity-locked at their keyframe positions until picked.
+carry_offset = pick_world - tip_at_pick  (not from d.qpos after physics moved things)
+
+Actual qpos ordering (from XML body declaration order in worldbody):
+  [7:14]  kit_tray_pickzone   [14:21] kit_tray_prestage
+  [21:28] ps_epdm  [28:35] ps_battery  [35:42] ps_pcb  [42:49] ps_plate
+  [49:56] s1_epdm  [56:63] s1_battery  [63:70] s1_pcb  [70:77] s1_alu_plate
+  [77:84] screw_FL [84:91] screw_FR  [91:98] screw_RL  [98:105] screw_RR
+NOTE: The XML keyframe comment has s1_ and ps_ ordering REVERSED.
+The correct order is determined by body declaration order in worldbody.
+ps_ bodies are declared before s1_ bodies in the XML.
 
 Run from repo root:
     mjpython controllers/station1_controller.py
@@ -15,639 +24,406 @@ import numpy as np
 import sys, os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from cycle_timer import CycleTimer
+
 MODEL_PATH   = "models/stations/station1.xml"
 SETTLE_TOL   = 0.015
 SETTLE_STEPS = 50
 
-# ── Part definitions (assembly order) ─────────────────────────────────────
-PARTS = [
-    dict(name="EPDM",       joint="s1_epdm_jnt",
-         belt_z=0.82575, grasp_z_offset=0.00075,
-         place_xy=np.array([0.000, 0.030]), place_kf="place_1",
-         pick_kf="pick_down"),
-    dict(name="Battery",    joint="s1_battery_jnt",
-         belt_z=0.828,   grasp_z_offset=0.003,
-         place_xy=np.array([0.025, 0.030]), place_kf="place_2",
-         pick_kf=None),
-    dict(name="PCB",        joint="s1_pcb_jnt",
-         belt_z=0.8258,  grasp_z_offset=0.0008,
-         place_xy=np.array([0.000, 0.030]), place_kf="place_3",
-         pick_kf=None),
-    dict(name="Sound Foam", joint="s1_sound_foam_jnt",
-         belt_z=0.8255,  grasp_z_offset=0.00075,
-         place_xy=np.array([0.000, 0.030]), place_kf="place_4",
-         pick_kf=None),
-    # Alu Plate placed by pin gripper after tool change (see Phase 7)
-]
-
-# Alu plate definition used in Phase 7
-ALU_PLATE = dict(name="Alu Plate", joint="s1_alu_plate_jnt",
-                 belt_z=0.82575, grasp_z_offset=0.001,
-                 place_xy=np.array([0.000, 0.030]), place_kf="place_5",
-                 pick_kf=None)
-
-INITIAL_BELT_X = {
-    "s1_epdm_jnt":        0.00,
-    "s1_battery_jnt":    -0.43,
-    "s1_pcb_jnt":        -0.68,
-    "s1_sound_foam_jnt": -1.04,
-    "s1_alu_plate_jnt":  -1.40,
+# ---------------------------------------------------------------------------
+# PART DEFINITIONS
+# ---------------------------------------------------------------------------
+# World positions from keyframe (s1_ bodies at qpos indices 49-76)
+PICK_WORLD = {
+    "s1_epdm":      np.array([-0.3000,  0.31915, 0.81075]),
+    "s1_battery":   np.array([-0.3000,  0.43630, 0.81300]),
+    "s1_pcb":       np.array([-0.3000,  0.54830, 0.81080]),
+    "s1_alu_plate": np.array([-0.3000,  0.68745, 0.81375]),
 }
 
-PICK_IK_SEED  = np.array([-1.684, -1.1889, 1.7115, -2.2357, -1.5915, 0.0])
-BELT_STEPS    = 450    # smooth-step slide duration (~0.9s at 2ms timestep)
-
-# ── Tool change & screwdriving constants ───────────────────────────────────
-SCREW_NAMES = ["FL", "FR", "RL", "RR"]
-
-SCREW_INSTALL_POS = {
-    "FL": np.array([-0.1515, -0.0195, 0.822]),
-    "FR": np.array([ 0.1545, -0.0195, 0.822]),
-    "RL": np.array([-0.1515,  0.0795, 0.822]),
-    "RR": np.array([ 0.1545,  0.0795, 0.822]),
+# Gripper tip Z above part body origin at pick
+GRASP_Z_OFFSET = {
+    "s1_epdm":      0.005,
+    "s1_battery":   0.010,
+    "s1_pcb":       0.006,
+    "s1_alu_plate": 0.004,
 }
 
-DOCK_VACUUM_W2  = np.array([-0.38, -0.240, 0.882])  # gripper_tip at body origin
-DOCK_PIN_W2     = np.array([-0.38, -0.150, 0.882])  # gripper_tip at body origin
-DOCK_SCREW_W2   = np.array([-0.38, -0.060, 0.882])  # gripper_tip at SD body origin
+# Where the part body origin should land in the case (world frame)
+# Case: pos=(0,0,0.821), euler Z=pi  -> world_x = -body_x, world_y = -body_y
+# Battery body-local X=-0.025 -> world X=+0.025
+PLACE_PART_WORLD = {
+    # EPDM+Battery parallel on case floor (Z=0.813); PCB on battery top; Plate on PCB
+    "s1_epdm":      np.array([ 0.000,  0.000, 0.81175]),
+    "s1_battery":   np.array([ 0.025,  0.000, 0.81300]),
+    "s1_pcb":       np.array([ 0.000,  0.000, 0.82100]),
+    "s1_alu_plate": np.array([ 0.000,  0.000, 0.82500]),
+}
+
+PARTS = ["s1_epdm", "s1_battery", "s1_pcb", "s1_alu_plate"]
+
+# ---------------------------------------------------------------------------
+# IK SEEDS
+# Robot base: (0.200, 0.400, 0.600), euler Z=pi
+# pan=0 -> faces -X (tray). pan~1.107 -> faces pallet.
+# ---------------------------------------------------------------------------
+PICK_IK_SEED  = np.array([ 0.10, -1.60,  1.80, -1.80, -1.5708, 0.0])
+PLACE_IK_SEED = np.array([ 1.10, -1.60,  1.80, -1.80, -1.5708, 0.0])
+DOCK_IK_SEED  = np.array([ 1.60, -1.50,  1.80, -1.85, -1.5708, 0.0])
+SCREW_IK_SEED = np.array([ 1.10, -1.50,  1.80, -1.85, -1.5708, 0.0])
+
+# ---------------------------------------------------------------------------
+# TOOL DOCK WORLD POSITIONS
+# Dock body: (0.650, 0.400, 0.800)
+# dock_vac_W2 site body-local (0,-0.090,0.090) -> world (0.650, 0.310, 0.890)
+# dock_pin_W2 site body-local (0, 0.000,0.090) -> world (0.650, 0.400, 0.890)
+# dock_sd_W2  site body-local (0,+0.090,0.090) -> world (0.650, 0.490, 0.890)
+# ---------------------------------------------------------------------------
+DOCK_VAC_W2     = np.array([0.650, 0.310, 0.890])
+DOCK_PIN_W2     = np.array([0.650, 0.400, 0.890])
+DOCK_SD_W2      = np.array([0.650, 0.490, 0.890])
 WINGMAN_SLIDE_X = 0.040
-DOCK_IK_SEED    = np.array([-0.8, -1.8, 2.0, -1.8, -1.5, 0.0])
-SCREW_IK_SEED   = np.array([-1.5, -1.5, 2.0, -2.0, -1.5, 0.0])
-ROTATE_STEPS    = 300
+
+# ---------------------------------------------------------------------------
+# SCREW BOSS WORLD POSITIONS
+# Case euler Z=pi: world_x=-body_x, world_y=-body_y
+# Body-local: FL(-0.1484,-0.05315) -> world (+0.1484,+0.05315)
+#             FR(+0.1484,-0.05315) -> world (-0.1484,+0.05315)
+#             RL(-0.1484,+0.05315) -> world (+0.1484,-0.05315)
+#             RR(+0.1484,+0.05315) -> world (-0.1484,-0.05315)
+# Boss Z body-local -0.0085 -> world 0.821-0.0085=0.8125
+# ---------------------------------------------------------------------------
+BOSS_Z  = 0.8125
+SCREW_NAMES = ["FL", "FR", "RL", "RR"]
+SCREW_INSTALL_POS = {
+    "FL": np.array([ 0.1484,  0.05315, BOSS_Z]),
+    "FR": np.array([-0.1484,  0.05315, BOSS_Z]),
+    "RL": np.array([ 0.1484, -0.05315, BOSS_Z]),
+    "RR": np.array([-0.1484, -0.05315, BOSS_Z]),
+}
+
+ROTATE_STEPS = 300
+SD_Z_OFFSET  = 0.046  # Z from gripper_tip down to screwdriver cup tip
 
 
-# ── BeltSlide ──────────────────────────────────────────────────────────────
 
-class BeltSlide:
-    """Smooth-step slide of one part along the belt X axis."""
-    def __init__(self, fj_adr, fv_adr, start_x, target_x, belt_y, belt_z, total_steps, name):
-        self.fj_adr = fj_adr;  self.fv_adr = fv_adr
-        self.start_x = start_x;  self.target_x = target_x
-        self.belt_y = belt_y;  self.belt_z = belt_z
-        self.total_steps = total_steps;  self.name = name
-        self.step = 0;  self.done = False
-
-    def tick(self, d):
-        if self.done:
-            return
-        t      = min(self.step / max(self.total_steps - 1, 1), 1.0)
-        t_ease = t * t * (3 - 2 * t)
-        d.qpos[self.fj_adr]     = self.start_x + (self.target_x - self.start_x) * t_ease
-        d.qpos[self.fj_adr + 1] = self.belt_y
-        d.qpos[self.fj_adr + 2] = self.belt_z
-        d.qpos[self.fj_adr+3:self.fj_adr+7] = [1, 0, 0, 0]
-        d.qvel[self.fv_adr:self.fv_adr+6]   = 0
-        self.step += 1
-        if self.step >= self.total_steps:
-            self.done = True
-
-
-# ── Helpers ────────────────────────────────────────────────────────────────
-
-def get_ctrl(m, kf_index):
-    ctrl = np.zeros(m.nu); ctrl[:] = m.key_ctrl[kf_index, :m.nu]; return ctrl
-
-def get_joint_info(m, name):
-    jid = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_JOINT, name)
-    return m.jnt_qposadr[jid], m.jnt_dofadr[jid]
-
-def get_tip(m, d):
-    sid = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_SITE, "gripper_tip")
-    mujoco.mj_forward(m, d)
-    return d.site_xpos[sid].copy()
-
-def place_tip_z_fk(m, ctrl6):
-    """FK tip Z for given arm joints (uses a throwaway MjData)."""
-    d_ref = mujoco.MjData(m); d_ref.qpos[:6] = ctrl6
-    mujoco.mj_forward(m, d_ref)
-    sid = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_SITE, "gripper_tip")
-    return d_ref.site_xpos[sid][2]
-
-def solve_ik(m, d, target_xyz, seed_joints, max_iter=500, tol=5e-4):
-    d_ik = mujoco.MjData(m); d_ik.qpos[:] = d.qpos[:]; d_ik.qpos[:6] = seed_joints
-    sid  = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_SITE, "gripper_tip")
-    jacp = np.zeros((3, m.nv)); err = 999.0
-    for i in range(max_iter):
-        mujoco.mj_forward(m, d_ik)
-        ev = target_xyz - d_ik.site_xpos[sid]; err = np.linalg.norm(ev)
-        if err < tol: print(f"    IK converged {i} iters, err={err*1000:.2f}mm"); break
-        mujoco.mj_jacSite(m, d_ik, jacp, None, sid)
-        J = jacp[:, :6]; d_ik.qpos[:6] += J.T @ np.linalg.solve(J@J.T + 1e-4*np.eye(3), ev) * 0.5
-        d_ik.qpos[:6] = np.clip(d_ik.qpos[:6], -2*np.pi, 2*np.pi)
-    else:
-        print(f"    IK did not converge (err={err*1000:.2f}mm)")
-    return d_ik.qpos[:6].copy()
-
-
-def slerp_quat(q0, q1, t):
-    """Spherical linear interpolation between two unit quaternions."""
-    dot = np.clip(np.dot(q0, q1), -1.0, 1.0)
-    if dot < 0:          # ensure shortest path
-        q1 = -q1; dot = -dot
-    if dot > 0.9995:     # nearly identical — linear interpolation is fine
-        return q0 + t * (q1 - q0)
-    theta0 = np.arccos(dot)
-    theta  = theta0 * t
-    sin0   = np.sin(theta0)
-    return (np.sin(theta0 - theta) / sin0) * q0 + (np.sin(theta) / sin0) * q1
-
-
-def pcb_tilt_and_insert(m, d, v, fj_adr, fv_adr, carry_offset,
-                         hover_ctrl, place_ctrl, slides=None):
-    """
-    PCB-specific placement:
-      1. Carry to hover pose (100mm above case, flat)
-      2. Tilt PCB 20° around Y (-X edge down) over 60 steps
-      3. Dwell 5s for JST connector handoff
-      4. Insert: simultaneously descend arm + rotate PCB back to flat (200 steps)
-    carry_offset held constant throughout (Option A).
-    """
-    Q_FLAT = np.array([1.0, 0.0, 0.0, 0.0])
-    Q_TILT = np.array([0.9962, 0.0, -0.0872, 0.0])   # -10° around Y
-
-    # ── Phase 1: carry flat to hover pose ─────────────────────────────
-    carry_to(m, d, v, fj_adr, fv_adr, carry_offset,
-             hover_ctrl, "  carry → PCB hover (flat)", slides=slides)
-
-    # ── Phase 2: tilt PCB to 20° while arm holds at hover ─────────────
-    print("  Tilting PCB 20° (-X edge down)...")
-    for i in range(60):
-        t      = (i + 1) / 60
-        t_ease = t * t * (3 - 2 * t)
-        q      = slerp_quat(Q_FLAT, Q_TILT, t_ease)
-        d.ctrl[:] = hover_ctrl
-        tip = get_tip(m, d)
-        d.qpos[fj_adr:fj_adr+3]   = tip + carry_offset
-        d.qpos[fj_adr+3:fj_adr+7] = q
-        d.qvel[fv_adr:fv_adr+6]   = 0
-        mujoco.mj_step(m, d); v.sync()
-    print("  ✓ PCB tilted")
-
-    # ── Phase 3: dwell 5 seconds ───────────────────────────────────────
-    DWELL = 2500
-    print(f"  [HOLD] Waiting for JST connector — 5s dwell ({DWELL} steps)...")
-    for _ in range(DWELL):
-        d.ctrl[:] = hover_ctrl
-        tip = get_tip(m, d)
-        d.qpos[fj_adr:fj_adr+3]   = tip + carry_offset
-        d.qpos[fj_adr+3:fj_adr+7] = Q_TILT
-        d.qvel[fv_adr:fv_adr+6]   = 0
-        mujoco.mj_step(m, d); v.sync()
-    print("  ✓ JST dwell complete")
-
-    # ── Phase 4: insertion — descend + rotate to flat simultaneously ───
-    INSERT = 200
-    print(f"  Inserting PCB ({INSERT} steps, tilt → flat + descend)...")
-    start_joints = d.qpos[:6].copy()
-    end_joints   = place_ctrl[:6]
-    for i in range(INSERT):
-        t      = (i + 1) / INSERT
-        t_ease = t * t * (3 - 2 * t)
-        # Interpolate arm joints
-        interp_joints = start_joints + (end_joints - start_joints) * t_ease
-        d.ctrl[:6] = interp_joints
-        tip = get_tip(m, d)
-        d.qpos[fj_adr:fj_adr+3]   = tip + carry_offset
-        # Rotate PCB from tilt back to flat
-        q = slerp_quat(Q_TILT, Q_FLAT, t_ease)
-        d.qpos[fj_adr+3:fj_adr+7] = q
-        d.qvel[fv_adr:fv_adr+6]   = 0
-        mujoco.mj_step(m, d); v.sync()
-    print("  ✓ PCB inserted flat")
-
-def move_to(m, d, v, ctrl, label, slides=None):
-    d.ctrl[:] = ctrl; consecutive = 0; steps = 0
-    while consecutive < SETTLE_STEPS:
-        if slides:
-            for s in slides: s.tick(d)
-        mujoco.mj_step(m, d); v.sync()
-        err = np.max(np.abs(d.qpos[:6] - ctrl[:6]))
-        consecutive = consecutive + 1 if err < SETTLE_TOL else 0
-        steps += 1
-        if steps > 8000: print(f"  WARNING: {label} timed out"); break
-    print(f"  ✓ {label} (err={np.max(np.abs(d.qpos[:6]-ctrl[:6])):.4f}rad, {steps} steps)")
-
-def carry_to(m, d, v, fj_adr, fv_adr, carry_offset, ctrl, label, slides=None):
-    d.ctrl[:] = ctrl; consecutive = 0; steps = 0
-    while consecutive < SETTLE_STEPS:
-        if slides:
-            for s in slides: s.tick(d)
-        tip = get_tip(m, d)
-        d.qpos[fj_adr:fj_adr+3]   = tip + carry_offset
-        d.qpos[fj_adr+3:fj_adr+7] = [1, 0, 0, 0]
-        d.qvel[fv_adr:fv_adr+6]   = 0
-        mujoco.mj_step(m, d); v.sync()
-        err = np.max(np.abs(d.qpos[:6] - ctrl[:6]))
-        consecutive = consecutive + 1 if err < SETTLE_TOL else 0
-        steps += 1
-        if steps > 8000: print(f"  WARNING: {label} timed out"); break
-    print(f"  ✓ {label} (err={np.max(np.abs(d.qpos[:6]-ctrl[:6])):.4f}rad, {steps} steps)")
-
-def release_and_retract(m, d, v, fj_adr, fv_adr, carry_offset, hold_ctrl, retract_ctrl, label):
-    for _ in range(100):
-        d.ctrl[:] = hold_ctrl
-        tip = get_tip(m, d)
-        d.qpos[fj_adr:fj_adr+3]   = tip + carry_offset
-        d.qpos[fj_adr+3:fj_adr+7] = [1, 0, 0, 0]
-        d.qvel[fv_adr:fv_adr+6]   = 0
-        mujoco.mj_step(m, d); v.sync()
-    d.qvel[fv_adr:fv_adr+6] = 0
-    for _ in range(500):
-        d.ctrl[:] = retract_ctrl
-        mujoco.mj_step(m, d); v.sync()
-    print(f"  ✓ {label} released, arm retracted")
-
-def make_slides(trailing_parts, advance_dx):
-    slides = []
-    for pi in trailing_parts:
-        cur_x = pi["current_belt_x"]
-        tgt_x = cur_x + advance_dx
-        slides.append(BeltSlide(
-            fj_adr=pi["fj_adr"], fv_adr=pi["fv_adr"],
-            start_x=cur_x, target_x=tgt_x,
-            belt_y=pi["belt_y"], belt_z=pi["belt_z"],
-            total_steps=BELT_STEPS, name=pi["name"]
-        ))
-        pi["current_belt_x"] = tgt_x
-    return slides
-
-
-# ── Main ──────────────────────────────────────────────────────────────────
-
-
+# ---------------------------------------------------------------------------
+# HELPERS
+# ---------------------------------------------------------------------------
 
 def get_body_jnt(m, body_name):
-    """Return (fj_adr, fv_adr) for the freejoint of a body."""
-    bid  = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_BODY, body_name)
-    jid  = m.body_jntadr[bid]
+    bid = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_BODY, body_name)
+    jid = m.body_jntadr[bid]
     return m.jnt_qposadr[jid], m.jnt_dofadr[jid]
 
+def lock_part(d, fj, fv, pos, quat=None):
+    d.qpos[fj:fj+3]   = pos
+    d.qpos[fj+3:fj+7] = quat if quat is not None else [1, 0, 0, 0]
+    d.qvel[fv:fv+6]   = 0
 
-def get_site_world(m, d, site_name):
+def solve_ik(m, d, target, seed, max_iter=600, tol=5e-4):
+    d2 = mujoco.MjData(m)
+    d2.qpos[:] = d.qpos[:]
+    d2.qpos[:6] = seed
+    sid  = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_SITE, "gripper_tip")
+    jacp = np.zeros((3, m.nv))
+    err  = 999.0
+    for i in range(max_iter):
+        mujoco.mj_forward(m, d2)
+        ev  = target - d2.site_xpos[sid]
+        err = np.linalg.norm(ev)
+        if err < tol:
+            print(f"    IK ok {i+1} iters err={err*1000:.2f}mm"); break
+        mujoco.mj_jacSite(m, d2, jacp, None, sid)
+        J = jacp[:, :6]
+        d2.qpos[:6] += J.T @ np.linalg.solve(J@J.T + 1e-4*np.eye(3), ev) * 0.5
+        d2.qpos[:6]  = np.clip(d2.qpos[:6], -2*np.pi, 2*np.pi)
+    else:
+        print(f"    IK no-converge err={err*1000:.2f}mm")
+    return d2.qpos[:6].copy()
+
+def slerp(q0, q1, t):
+    dot = np.clip(np.dot(q0, q1), -1.0, 1.0)
+    if dot < 0: q1 = -q1; dot = -dot
+    if dot > 0.9995: return q0 + t*(q1-q0)
+    th = np.arccos(dot); s = np.sin(th)
+    return (np.sin(th*(1-t))/s)*q0 + (np.sin(th*t)/s)*q1
+
+def get_tip(m, d):
     mujoco.mj_forward(m, d)
-    sid = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_SITE, site_name)
+    sid = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_SITE, "gripper_tip")
     return d.site_xpos[sid].copy()
 
-
-def ik_move(m, d, v, target_xyz, seed, label):
-    """IK to target, then move_to."""
-    joints = solve_ik(m, d, target_xyz, seed_joints=seed)
-    ctrl   = np.zeros(m.nu); ctrl[:6] = joints
-    move_to(m, d, v, ctrl, label)
-    return ctrl
-
-
-def wingman_put(m, d, v, W2_world, holder_world_pos, tool_fj_adr, tool_fv_adr, label):
-    """
-    Put current tool into holder:
-      W4 (current) → slide back to W2 → lift to W1 → tool teleports to holder.
-    Simplified: just IK to W2, then IK to W1 (W2+100mm Z), then teleport.
-    """
-    print(f"  [PUT {label}] Moving to W2...")
-    # W1: 80mm above W2
-    W1_world = W2_world + np.array([0, 0, 0.080])
-    ik_move(m, d, v, W1_world, DOCK_IK_SEED, f"  {label} → W1 approach")
-    # Descend to W2
-    W2_ctrl = ik_move(m, d, v, W2_world, DOCK_IK_SEED, f"  {label} → W2 engage")
-    # Slide to W4 (put: slide −X to re-enter holder, actually just hold W2)
-    # For put: hold W2 briefly, then lift away
-    for _ in range(60):
-        d.ctrl[:] = W2_ctrl
+def move_to(m, d, v, ctrl, label, locked=None):
+    d.ctrl[:] = ctrl
+    cons = 0; steps = 0
+    while cons < SETTLE_STEPS:
+        if locked:
+            for fj,fv,pos,q in locked: lock_part(d,fj,fv,pos,q)
         mujoco.mj_step(m, d); v.sync()
-    # Teleport tool to holder resting position
-    d.qpos[tool_fj_adr:tool_fj_adr+3] = holder_world_pos
-    d.qpos[tool_fj_adr+3:tool_fj_adr+7] = [1, 0, 0, 0]
-    d.qvel[tool_fv_adr:tool_fv_adr+6] = 0
-    mujoco.mj_forward(m, d)
-    print(f"  ✓ {label} returned to dock")
+        err = np.max(np.abs(d.qpos[:6]-ctrl[:6]))
+        cons = cons+1 if err < SETTLE_TOL else 0
+        steps += 1
+        if steps > 8000: print(f"  TIMEOUT {label}"); break
+    print(f"  ✓ {label} ({steps}st err={np.max(np.abs(d.qpos[:6]-ctrl[:6])):.4f}rad)")
+
+def carry_to(m, d, v, fj, fv, co, ctrl, label, locked=None):
+    d.ctrl[:] = ctrl
+    sid = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_SITE, "gripper_tip")
+    cons = 0; steps = 0
+    while cons < SETTLE_STEPS:
+        if locked:
+            for lfj,lfv,pos,q in locked: lock_part(d,lfj,lfv,pos,q)
+        mujoco.mj_forward(m, d)
+        tip = d.site_xpos[sid].copy()
+        d.qpos[fj:fj+3]   = tip + co
+        d.qpos[fj+3:fj+7] = [1,0,0,0]
+        d.qvel[fv:fv+6]   = 0
+        mujoco.mj_step(m, d); v.sync()
+        err = np.max(np.abs(d.qpos[:6]-ctrl[:6]))
+        cons = cons+1 if err < SETTLE_TOL else 0
+        steps += 1
+        if steps > 8000: print(f"  TIMEOUT {label}"); break
+    print(f"  ✓ {label} ({steps}st err={np.max(np.abs(d.qpos[:6]-ctrl[:6])):.4f}rad)")
+        
+def release_retract(m, d, v, fj, fv, co, hold_ctrl, ret_ctrl, label, locked=None,
+                    place_pos=None):
+    """Hold at tip+co, snap to place_pos, retract with part hard-locked every step."""
+    sid = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_SITE, "gripper_tip")
+    for _ in range(100):
+        d.ctrl[:] = hold_ctrl
+        if locked:
+            for lfj,lfv,pos,q in locked: lock_part(d,lfj,lfv,pos,q)
+        mujoco.mj_forward(m, d)
+        tip = d.site_xpos[sid].copy()
+        d.qpos[fj:fj+3]   = tip + co
+        d.qpos[fj+3:fj+7] = [1,0,0,0]
+        d.qvel[fv:fv+6]   = 0
+        mujoco.mj_step(m, d); v.sync()
+    if place_pos is not None:
+        d.qpos[fj:fj+3]   = place_pos
+        d.qpos[fj+3:fj+7] = [1,0,0,0]
+    d.qvel[fv:fv+6] = 0
+    for _ in range(500):
+        d.ctrl[:] = ret_ctrl
+        if place_pos is not None:
+            d.qpos[fj:fj+3]   = place_pos
+            d.qpos[fj+3:fj+7] = [1,0,0,0]
+            d.qvel[fv:fv+6]   = 0
+        if locked:
+            for lfj,lfv,pos,q in locked: lock_part(d,lfj,lfv,pos,q)
+        mujoco.mj_step(m, d); v.sync()
+    print(f"  ✓ {label} released")
+def ikc(m, d, tgt, seed):
+    j = solve_ik(m, d, tgt, seed)
+    c = np.zeros(m.nu); c[:6] = j; return c
+
+def ik_move(m, d, v, tgt, seed, label, locked=None):
+    c = ikc(m, d, tgt, seed)
+    move_to(m, d, v, c, label, locked=locked)
+    return c
 
 
-def wingman_get(m, d, v, W2_world, tool_fj_adr, tool_fv_adr, label):
-    """
-    Get tool from holder:
-      Approach W1 → descend W2 → slide to W4 → tool teleports to gripper tip.
-    Returns the ctrl for W4 position.
-    """
-    print(f"  [GET {label}] Approaching...")
-    W1_world = W2_world + np.array([0, 0, 0.080])
-    ik_move(m, d, v, W1_world, DOCK_IK_SEED, f"  {label} → W1")
-    W2_ctrl = ik_move(m, d, v, W2_world, DOCK_IK_SEED, f"  {label} → W2")
-    # Slide to W4 (+X)
-    W4_world = W2_world + np.array([WINGMAN_SLIDE_X, 0, 0])
-    W4_ctrl  = ik_move(m, d, v, W4_world, DOCK_IK_SEED, f"  {label} → W4 lock")
-    # Tool is now "attached" — keep it at gripper tip via carry
-    print(f"  ✓ {label} picked up")
-    return W4_ctrl
+# ---------------------------------------------------------------------------
+# PCB TILT-AND-INSERT
+# ---------------------------------------------------------------------------
 
+def pcb_tilt_and_insert(m, d, v, fj, fv, co, hover_ctrl, place_ctrl, locked=None):
+    Q0 = np.array([1.0, 0.0, 0.0, 0.0])
+    Qt = np.array([0.9962, 0.0, -0.0872, 0.0])  # -10 deg around Y
+    sid = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_SITE, "gripper_tip")
 
-def carry_tool_to(m, d, v, tool_fj_adr, tool_fv_adr, carry_offset, ctrl, label):
-    """Like carry_to but for tool bodies (same pattern)."""
-    carry_to(m, d, v, tool_fj_adr, tool_fv_adr, carry_offset, ctrl, label)
+    carry_to(m, d, v, fj, fv, co, hover_ctrl, "  PCB hover", locked=locked)
 
-
-def drive_screw(m, d, v, screw_name, screw_fj_adr, screw_fv_adr):
-    """
-    Full screw driving cycle:
-      1. IK to screw box pick site
-      2. Screw teleports to screwdriver tip
-      3. IK carry to hover above boss
-      4. IK carry descend to boss
-      5. Rotate wrist 3 turns
-      6. Screw teleports to installed position
-      7. Retract
-    """
-    boss_world = SCREW_INSTALL_POS[screw_name]
-    hover_z    = boss_world[2] + 0.050
-
-    print(f"\n  [SCREW {screw_name}]")
-
-    # ── Pick from box ──────────────────────────────────────────────
-    pick_target = np.array([0.28, -0.18, 0.854])   # gripper_tip 0.046m above screwdriver_tip at box
-    pick_ctrl = ik_move(m, d, v, pick_target, SCREW_IK_SEED,
-                        f"  SD → screw box pick ({screw_name})")
-
-    # Teleport screw to screwdriver tip
-    tip = get_tip(m, d) if True else None
-    mujoco.mj_forward(m, d)
-    sid = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_SITE, "screwdriver_tip")
-    tip_pos = d.site_xpos[sid].copy()
-    # Screw sits 8mm below tip (shaft pointing down)
-    # SD tip (screwdriver_tip site) is at body_origin + [0,0,-0.102]
-    # Use screwdriver_tip site directly
-    mujoco.mj_forward(m, d)
-    sd_tip_sid = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_SITE, "screwdriver_tip")
-    sd_tip_pos = d.site_xpos[sd_tip_sid].copy()
-    # screwdriver_tip aligns with screw head top (z+0.012 above body origin)
-    # screw body origin = sd_tip_pos - [0,0,0.012]
-    screw_carried_pos = sd_tip_pos - np.array([0, 0, 0.012])
-    d.qpos[screw_fj_adr:screw_fj_adr+3] = screw_carried_pos
-    d.qpos[screw_fj_adr+3:screw_fj_adr+7] = [1, 0, 0, 0]
-    d.qvel[screw_fv_adr:screw_fv_adr+6] = 0
-    screw_offset = screw_carried_pos - sd_tip_pos  # = [0,0,-0.012]
-    print(f"  ✓ {screw_name} picked from box")
-
-    # ── Carry to hover above boss ───────────────────────────────────
-    # screwdriver_tip is 0.046m further in +Y than gripper_tip (world -Z)
-    # To place SD tip at hover_z: gripper_tip at hover_z + 0.046
-    hover_target = np.array([boss_world[0],
-                              boss_world[1],
-                              hover_z + 0.046])
-    hover_ctrl = ik_move(m, d, v, hover_target, SCREW_IK_SEED,
-                         f"  SD → hover {screw_name}")
-    # Keep screw + SD together during move
-    for _ in range(80):
+    print("  Tilt 10 deg...")
+    for i in range(60):
+        te = ((i+1)/60)**2*(3-2*(i+1)/60)
         d.ctrl[:] = hover_ctrl
+        if locked:
+            for lfj,lfv,pos,q in locked: lock_part(d,lfj,lfv,pos,q)
         mujoco.mj_forward(m, d)
-        sid2 = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_SITE, "screwdriver_tip")
-        tip2 = d.site_xpos[sid2].copy()
-        d.qpos[screw_fj_adr:screw_fj_adr+3] = tip2 + screw_offset
-        d.qvel[screw_fv_adr:screw_fv_adr+6] = 0
+        tip = d.site_xpos[sid].copy()
+        d.qpos[fj:fj+3]   = tip + co
+        d.qpos[fj+3:fj+7] = slerp(Q0, Qt, te)
+        d.qvel[fv:fv+6]   = 0
         mujoco.mj_step(m, d); v.sync()
+    print("  ✓ tilted")
 
-    # ── Descend to boss ─────────────────────────────────────────────
-    # Want SD tip at boss: gripper_tip 0.046m above boss
-    insert_target = np.array([boss_world[0],
-                               boss_world[1],
-                               boss_world[2] + 0.046])
-    insert_ctrl = ik_move(m, d, v, insert_target, SCREW_IK_SEED,
-                          f"  SD → insert {screw_name}")
-    for _ in range(80):
-        d.ctrl[:] = insert_ctrl
+    print("  JST dwell 2500 steps...")
+    for _ in range(2500):
+        d.ctrl[:] = hover_ctrl
+        if locked:
+            for lfj,lfv,pos,q in locked: lock_part(d,lfj,lfv,pos,q)
         mujoco.mj_forward(m, d)
-        sid2 = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_SITE, "screwdriver_tip")
-        tip2 = d.site_xpos[sid2].copy()
-        d.qpos[screw_fj_adr:screw_fj_adr+3] = tip2 + screw_offset
-        d.qvel[screw_fv_adr:screw_fv_adr+6] = 0
+        tip = d.site_xpos[sid].copy()
+        d.qpos[fj:fj+3]   = tip + co
+        d.qpos[fj+3:fj+7] = Qt
+        d.qvel[fv:fv+6]   = 0
         mujoco.mj_step(m, d); v.sync()
+    print("  ✓ dwell done")
 
-    # ── Rotate wrist 3 turns ────────────────────────────────────────
-    print(f"  Rotating {screw_name}...")
-    start_w3 = d.qpos[5]
-    for i in range(ROTATE_STEPS):
-        t = i / ROTATE_STEPS
-        d.ctrl[5] = start_w3 + t * (3 * 2 * np.pi)
+    print("  Insert 200 steps...")
+    sj = d.qpos[:6].copy(); ej = place_ctrl[:6]
+    for i in range(200):
+        te = ((i+1)/200)**2*(3-2*(i+1)/200)
+        d.ctrl[:6] = sj + (ej-sj)*te
+        if locked:
+            for lfj,lfv,pos,q in locked: lock_part(d,lfj,lfv,pos,q)
         mujoco.mj_forward(m, d)
-        sid2 = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_SITE, "screwdriver_tip")
-        tip2 = d.site_xpos[sid2].copy()
-        d.qpos[screw_fj_adr:screw_fj_adr+3] = tip2 + screw_offset
-        d.qvel[screw_fv_adr:screw_fv_adr+6] = 0
+        tip = d.site_xpos[sid].copy()
+        d.qpos[fj:fj+3]   = tip + co
+        d.qpos[fj+3:fj+7] = slerp(Qt, Q0, te)
+        d.qvel[fv:fv+6]   = 0
         mujoco.mj_step(m, d); v.sync()
-
-    # ── Snap screw to installed position ────────────────────────────
-    # Installed: shaft tip 5mm into boss, head sits 2mm proud of plate
-    d.qpos[screw_fj_adr:screw_fj_adr+3] = boss_world - np.array([0, 0, 0.005])
-    d.qpos[screw_fj_adr+3:screw_fj_adr+7] = [1, 0, 0, 0]
-    d.qvel[screw_fv_adr:screw_fv_adr+6] = 0
-    print(f"  ✓ {screw_name} installed")
-
-    # ── Retract to hover ────────────────────────────────────────────
-    d.ctrl[5] = start_w3   # reset wrist rotation
-    move_to(m, d, v, hover_ctrl, f"  SD retract from {screw_name}")
+    print("  ✓ PCB inserted")
 
 
-def set_geom_rgba(m, d, geom_name, rgba):
-    """Set a geom's rgba (alpha=0 hides it, alpha=1 shows it)."""
-    gid = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_GEOM, geom_name)
-    m.geom_rgba[gid] = rgba
+# ---------------------------------------------------------------------------
+# TOOL VISUAL SWAP
+# ---------------------------------------------------------------------------
 
-VACUUM_GEOMS     = ["gripper_flange","gripper_body","gripper_accent","gripper_cup"]
-PIN_GEOMS        = ["pin_body_blk","pin_left","pin_right"]
-SD_GEOMS         = ["sd_flange","sd_spring","sd_body","sd_shaft","sd_bit"]
-TOOL_SWAP_STEPS  = 200   # ~0.4s fade for tool swap animation
+def _body_alpha(m, bname, a):
+    bid = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_BODY, bname)
+    if bid < 0: return
+    for i in range(m.body_geomnum[bid]):
+        m.geom_rgba[m.body_geomadr[bid]+i][3] = a
+
+def hide_dock_vis(m, tool):
+    _body_alpha(m, "dock_pin_vis" if tool=="pin" else "dock_sd_vis", 0.0)
+
+def show_dock_vis(m, tool):
+    _body_alpha(m, "dock_pin_vis" if tool=="pin" else "dock_sd_vis", 1.0)
+
+VAC_G = ["g_flange","g_body","g_accent","g_cup"]
+PIN_G = ["pin_body","pin_l","pin_r"]
+SD_G  = ["sd_flange","sd_spring","sd_body","sd_shaft","sd_bit"]
 
 def show_tool(m, tool, d=None, v=None):
-    """Fade-swap gripper visuals. If d+v provided, animates over TOOL_SWAP_STEPS."""
-    TOOLS = {"vacuum": VACUUM_GEOMS, "pin": PIN_GEOMS, "screwdriver": SD_GEOMS}
-    show_geoms = TOOLS[tool]
-    hide_geoms = [g for geoms in TOOLS.values() for g in geoms if g not in show_geoms]
+    all_g = {"vacuum": VAC_G, "pin": PIN_G, "screwdriver": SD_G}
+    sg = all_g[tool]
+    hg = [g for k, glist in all_g.items() if k != tool for g in glist]
+    N  = 200 if d is not None else 1
+    for s in range(N):
+        te = ((s+1)/N)**2*(3-2*(s+1)/N)
+        for g in sg:
+            gid = mujoco.mj_name2id(m,mujoco.mjtObj.mjOBJ_GEOM,g)
+            if gid>=0: m.geom_rgba[gid][3] = te
+        for g in hg:
+            gid = mujoco.mj_name2id(m,mujoco.mjtObj.mjOBJ_GEOM,g)
+            if gid>=0: m.geom_rgba[gid][3] = 1.0-te
+        if d is not None: mujoco.mj_step(m,d); v.sync()
 
-    if d is None or v is None:
-        # Instant toggle (no viewer)
-        for g in show_geoms:
-            gid = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_GEOM, g)
-            m.geom_rgba[gid][3] = 1.0
-        for g in hide_geoms:
-            gid = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_GEOM, g)
-            m.geom_rgba[gid][3] = 0.0
-        return
+def drive_screw(m, d, v, name, sfj, sfv):
+    boss = SCREW_INSTALL_POS[name]
+    sid  = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_SITE, "gripper_tip")
+    print(f"\n  [SCREW {name}]")
 
-    # Animated cross-fade
-    for step in range(TOOL_SWAP_STEPS):
-        t = (step + 1) / TOOL_SWAP_STEPS
-        t_e = t * t * (3 - 2 * t)   # smooth-step
-        for g in show_geoms:
-            gid = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_GEOM, g)
-            m.geom_rgba[gid][3] = t_e
-        for g in hide_geoms:
-            gid = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_GEOM, g)
-            m.geom_rgba[gid][3] = 1.0 - t_e
+    # Pick from box
+    pick_tgt  = np.array([0.650, 0.200, 0.819 + SD_Z_OFFSET])
+    pick_ctrl = ik_move(m, d, v, pick_tgt, SCREW_IK_SEED, f"  SD->box ({name})")
+
+    # Attach screw to SD tip
+    mujoco.mj_forward(m, d)
+    g_tip        = d.site_xpos[sid].copy()
+    sd_tip       = g_tip - np.array([0, 0, SD_Z_OFFSET])
+    screw_origin = sd_tip - np.array([0, 0, 0.012])
+    screw_off    = screw_origin - sd_tip   # [0,0,-0.012]
+    d.qpos[sfj:sfj+3]   = screw_origin
+    d.qpos[sfj+3:sfj+7] = [1,0,0,0]
+    d.qvel[sfv:sfv+6]   = 0
+    print(f"  ✓ {name} attached to SD")
+
+    def carry_screw(ctrl, n=80):
+        for _ in range(n):
+            d.ctrl[:] = ctrl
+            mujoco.mj_forward(m, d)
+            g_t = d.site_xpos[sid].copy()
+            sd_t = g_t - np.array([0,0,SD_Z_OFFSET])
+            d.qpos[sfj:sfj+3] = sd_t + screw_off
+            d.qvel[sfv:sfv+6] = 0
+            mujoco.mj_step(m, d); v.sync()
+
+    # Hover
+    hover_tgt  = np.array([boss[0], boss[1], boss[2]+0.050+SD_Z_OFFSET])
+    hover_ctrl = ik_move(m, d, v, hover_tgt, SCREW_IK_SEED, f"  hover {name}")
+    carry_screw(hover_ctrl)
+
+    # Insert
+    ins_tgt  = np.array([boss[0], boss[1], boss[2]+SD_Z_OFFSET])
+    ins_ctrl = ik_move(m, d, v, ins_tgt, SCREW_IK_SEED, f"  insert {name}")
+    carry_screw(ins_ctrl)
+
+    # Rotate 3 turns
+    print(f"  Rotating {name}...")
+    w3_0 = d.qpos[5]
+    for i in range(ROTATE_STEPS):
+        d.ctrl[5] = w3_0 + (i/ROTATE_STEPS)*(3*2*np.pi)
+        mujoco.mj_forward(m, d)
+        g_t = d.site_xpos[sid].copy()
+        sd_t = g_t - np.array([0,0,SD_Z_OFFSET])
+        d.qpos[sfj:sfj+3] = sd_t + screw_off
+        d.qvel[sfv:sfv+6] = 0
         mujoco.mj_step(m, d); v.sync()
 
-def hide_dock_visual(m, tool):
-    """Hide the static dock visual when robot picks up that tool."""
-    if tool == "pin":
-        for g in ["dpv_body","dpv_pin_l","dpv_pin_r"]:
-            set_geom_rgba(m, None, g, [0.15, 0.15, 0.15, 0.0])
-    elif tool == "screwdriver":
-        for g in ["dsv_flange","dsv_spring","dsv_body","dsv_shaft","dsv_bit"]:
-            set_geom_rgba(m, None, g, [0.5, 0.5, 0.5, 0.0])
+    # Snap to installed
+    d.qpos[sfj:sfj+3]   = boss - np.array([0,0,0.005])
+    d.qpos[sfj+3:sfj+7] = [1,0,0,0]
+    d.qvel[sfv:sfv+6]   = 0
+    print(f"  ✓ {name} installed")
 
-def show_dock_visual(m, tool):
-    """Show the static dock visual when robot returns that tool."""
-    if tool == "pin":
-        set_geom_rgba(m, None, "dpv_body",  [0.15, 0.15, 0.15, 1.0])
-        set_geom_rgba(m, None, "dpv_pin_l", [0.7,  0.7,  0.7,  1.0])
-        set_geom_rgba(m, None, "dpv_pin_r", [0.7,  0.7,  0.7,  1.0])
-    elif tool == "screwdriver":
-        for g, c in [("dsv_flange",[0.278,0.278,0.278,1]),("dsv_spring",[0.7,0.7,0.7,1]),
-                     ("dsv_body",[1,0.45,0,1]),("dsv_shaft",[0.8,0.8,0.82,1]),("dsv_bit",[0.5,0.5,0.5,1])]:
-            set_geom_rgba(m, None, g, c)
+    d.ctrl[5] = w3_0
+    move_to(m, d, v, hover_ctrl, f"  retract {name}")
 
 
-def tool_change_and_screw(m, d, v, kf, kf_idx, parts_rt, timer):
-    """
-    Phases 6-9:
-      6. Tool change: vacuum → pin gripper
-      7. Pick & place aluminum plate (reuse carry logic)
-      8. Tool change: pin → screwdriver
-      9. Drive 4 screws
-    """
-    # ── Resolve freejoint addresses for screws ────────────────────────────
-    screws = {name: get_body_jnt(m, f"screw_{name}") for name in SCREW_NAMES}
+# ---------------------------------------------------------------------------
+# TOOL CHANGE PHASES
+# ---------------------------------------------------------------------------
 
-    # ── Phase 6: PUT vacuum gripper, GET pin gripper ──────────────────────
-    print()
-    print("=" * 60)
-    print("[PHASE 6] Tool change: Vacuum → Pin Gripper")
-    print("=" * 60)
-
-    W1 = DOCK_VACUUM_W2 + np.array([0, 0, 0.080])
-    ik_move(m, d, v, W1, DOCK_IK_SEED, "  vacuum W1 approach")
-    ik_move(m, d, v, DOCK_VACUUM_W2, DOCK_IK_SEED, "  vacuum W2 engage")
-    W4v = DOCK_VACUUM_W2 + np.array([WINGMAN_SLIDE_X, 0, 0])
-    ik_move(m, d, v, W4v, DOCK_IK_SEED, "  vacuum W4 slide out")
-
-    W1p = DOCK_PIN_W2 + np.array([0, 0, 0.080])
-    ik_move(m, d, v, W1p, DOCK_IK_SEED, "  pin W1 approach")
-    ik_move(m, d, v, DOCK_PIN_W2, DOCK_IK_SEED, "  pin W2 engage")
-    W4p = DOCK_PIN_W2 + np.array([WINGMAN_SLIDE_X, 0, 0])
-    ik_move(m, d, v, W4p, DOCK_IK_SEED, "  pin W4 lock")
-
-    # Toggle visuals: hide vacuum, show pin gripper, hide dock pin visual
+def phase6_vac_to_pin(m, d, v, timer):
+    print(); print("="*60); print("[PHASE 6] Vacuum -> Pin Gripper"); print("="*60)
+    ik_move(m, d, v, DOCK_VAC_W2+[0,0,0.08],         DOCK_IK_SEED, "  vac W1")
+    ik_move(m, d, v, DOCK_VAC_W2,                     DOCK_IK_SEED, "  vac W2")
+    ik_move(m, d, v, DOCK_VAC_W2+[WINGMAN_SLIDE_X,0,0], DOCK_IK_SEED, "  vac W4")
+    ik_move(m, d, v, DOCK_PIN_W2+[0,0,0.08],         DOCK_IK_SEED, "  pin W1")
+    ik_move(m, d, v, DOCK_PIN_W2,                     DOCK_IK_SEED, "  pin W2")
+    ik_move(m, d, v, DOCK_PIN_W2+[WINGMAN_SLIDE_X,0,0], DOCK_IK_SEED, "  pin W4")
     show_tool(m, "pin", d, v)
-    hide_dock_visual(m, "pin")
+    hide_dock_vis(m, "pin")
     print("  ✓ Pin gripper active")
-    timer.mark(d, "Tool change: vacuum → pin")
+    timer.mark(d, "Tool change: vac->pin")
 
-    # ── Phase 7: Pick & place aluminum plate with pin gripper ─────────────
-    print()
-    print("=" * 60)
-    print("[PHASE 7] Pick & place aluminum plate (pin gripper)")
-    print("=" * 60)
-
-    # Alu plate = parts_rt[4], belt-advanced to x=0 during 4-part assembly
-    plate = parts_rt[4]
-    fj_adr = plate["fj_adr"]; fv_adr = plate["fv_adr"]
-
-    move_to(m, d, v, kf[kf_idx["pick_ready"]], "  pick_ready")
-
-    grasp_xyz = np.array([plate["current_belt_x"],
-                          plate["belt_y"],
-                          plate["belt_z"] + plate["grasp_z_offset"]])
-    print(f"  IK pick plate → {np.round(grasp_xyz, 4)}")
-    pick_joints = solve_ik(m, d, grasp_xyz, seed_joints=PICK_IK_SEED)
-    pick_ctrl   = np.zeros(m.nu); pick_ctrl[:6] = pick_joints
-    move_to(m, d, v, pick_ctrl, "  pick plate (IK)")
-
-    # Attach plate
-    tip = get_tip(m, d)
-    carry_offset = d.qpos[fj_adr:fj_adr+3].copy() - tip
-    for i in range(60):
-        t = (i+1)/60; t_e = t*t*(3-2*t)
-        d.ctrl[:] = pick_ctrl; tip = get_tip(m, d)
-        d.qpos[fj_adr:fj_adr+3] = d.qpos[fj_adr:fj_adr+3]*(1-t_e) + (tip+carry_offset)*t_e
-        d.qpos[fj_adr+3:fj_adr+7] = [1,0,0,0]
-        d.qvel[fv_adr:fv_adr+6] = 0
-        # Keep pin gripper at tip too
-        mujoco.mj_step(m, d); v.sync()
-
-    # Carry to place
-    carry_to(m, d, v, fj_adr, fv_adr, carry_offset,
-             kf[kf_idx["pick_ready"]], "  lift → pick_ready")
-    carry_to(m, d, v, fj_adr, fv_adr, carry_offset,
-             kf[kf_idx["place_ready"]], "  swing → place_ready")
-
-    ref_z     = place_tip_z_fk(m, kf[kf_idx["place_5"]][:6])
-    place_tgt = np.array([plate["place_xy"][0] - carry_offset[0],
-                          plate["place_xy"][1] - carry_offset[1], ref_z])
-    place_joints = solve_ik(m, d, place_tgt, seed_joints=kf[kf_idx["place_5"]][:6])
-    place_ctrl   = np.zeros(m.nu); place_ctrl[:6] = place_joints
-
-    carry_to(m, d, v, fj_adr, fv_adr, carry_offset,
-             place_ctrl, "  descend → place_5")
-    release_and_retract(m, d, v, fj_adr, fv_adr, carry_offset,
-                        hold_ctrl=place_ctrl,
-                        retract_ctrl=kf[kf_idx["place_ready"]],
-                        label="Alu Plate (pin)")
-    print(f"  Plate final: {np.round(d.qpos[fj_adr:fj_adr+3], 4)}")
-    timer.mark(d, "Plate placed (pin gripper)")
-
-    # ── Phase 8: PUT pin gripper, GET screwdriver ─────────────────────────
-    print()
-    print("=" * 60)
-    print("[PHASE 8] Tool change: Pin → Screwdriver")
-    print("=" * 60)
-
-    move_to(m, d, v, kf[kf_idx["home"]], "  home before tool change")
-
-    # Put pin gripper
-    W1p2 = DOCK_PIN_W2 + np.array([0, 0, 0.080])
-    ik_move(m, d, v, W1p2, DOCK_IK_SEED, "  pin return W1")
-    ik_move(m, d, v, DOCK_PIN_W2, DOCK_IK_SEED, "  pin return W2")
-    W4pr = DOCK_PIN_W2 - np.array([WINGMAN_SLIDE_X, 0, 0])
-    ik_move(m, d, v, W4pr, DOCK_IK_SEED, "  pin W4 slide back (put)")
-    show_dock_visual(m, "pin")
-
-    # Get screwdriver
-    W1s = DOCK_SCREW_W2 + np.array([0, 0, 0.080])
-    ik_move(m, d, v, W1s, DOCK_IK_SEED, "  SD W1 approach")
-    ik_move(m, d, v, DOCK_SCREW_W2, DOCK_IK_SEED, "  SD W2 engage")
-    W4s = DOCK_SCREW_W2 + np.array([WINGMAN_SLIDE_X, 0, 0])
-    ik_move(m, d, v, W4s, DOCK_IK_SEED, "  SD W4 lock")
-
-    # Toggle visuals: hide pin, show screwdriver, hide dock SD visual
+def phase8_pin_to_sd(m, d, v, home_ctrl, timer):
+    print(); print("="*60); print("[PHASE 8] Pin -> Screwdriver"); print("="*60)
+    move_to(m, d, v, home_ctrl, "  home")
+    ik_move(m, d, v, DOCK_PIN_W2+[0,0,0.08],          DOCK_IK_SEED, "  pin return W1")
+    ik_move(m, d, v, DOCK_PIN_W2,                      DOCK_IK_SEED, "  pin return W2")
+    ik_move(m, d, v, DOCK_PIN_W2-[WINGMAN_SLIDE_X,0,0], DOCK_IK_SEED, "  pin W4 back")
+    show_dock_vis(m, "pin")
+    ik_move(m, d, v, DOCK_SD_W2+[0,0,0.08],           DOCK_IK_SEED, "  SD W1")
+    ik_move(m, d, v, DOCK_SD_W2,                       DOCK_IK_SEED, "  SD W2")
+    ik_move(m, d, v, DOCK_SD_W2+[WINGMAN_SLIDE_X,0,0],  DOCK_IK_SEED, "  SD W4")
     show_tool(m, "screwdriver", d, v)
-    hide_dock_visual(m, "screwdriver")
+    hide_dock_vis(m, "screwdriver")
     print("  ✓ Screwdriver active")
-    timer.mark(d, "Tool change: pin → screwdriver")
+    timer.mark(d, "Tool change: pin->SD")
 
-    # ── Phase 9: Drive 4 screws ───────────────────────────────────────────
-    print()
-    print("=" * 60)
-    print("[PHASE 9] Screwdriving — 4 screws")
-    print("=" * 60)
+def phase9_screws(m, d, v, home_ctrl, timer):
+    print(); print("="*60); print("[PHASE 9] Screwdriving"); print("="*60)
+    screws = {n: get_body_jnt(m, f"screw_{n}") for n in SCREW_NAMES}
+    for name in SCREW_NAMES:
+        sfj, sfv = screws[name]
+        drive_screw(m, d, v, name, sfj, sfv)
+        timer.mark(d, f"Screw {name}")
+    print("\n  Returning SD...")
+    ik_move(m, d, v, DOCK_SD_W2+[0,0,0.08], DOCK_IK_SEED, "  SD return W1")
+    ik_move(m, d, v, DOCK_SD_W2,             DOCK_IK_SEED, "  SD return W2")
+    show_dock_vis(m, "screwdriver")
+    move_to(m, d, v, home_ctrl, "  final home")
+    print("✓ All phases complete.")
 
-    for screw_name in SCREW_NAMES:
-        sfj, sfv = screws[screw_name]
-        drive_screw(m, d, v, screw_name, sfj, sfv)
-        timer.mark(d, f"Screw {screw_name} installed")
 
-    # ── Return screwdriver to dock ────────────────────────────────────────
-    print()
-    print("  Returning screwdriver to dock...")
-    W1s2 = DOCK_SCREW_W2 + np.array([0, 0, 0.080])
-    ik_move(m, d, v, W1s2, DOCK_IK_SEED, "  SD return W1")
-    W2s2_ctrl = ik_move(m, d, v, DOCK_SCREW_W2, DOCK_IK_SEED, "  SD return W2")
-    for _ in range(80):
-        d.ctrl[:] = W2s2_ctrl
-        mujoco.mj_step(m, d); v.sync()
-    show_tool(m, "vacuum", d, v)
-    show_dock_visual(m, "screwdriver")
-    print("  ✓ Screwdriver returned to dock")
-
-    move_to(m, d, v, kf[kf_idx["home"]], "  final home")
-    print("\n✓ All phases complete.")
-
+# ---------------------------------------------------------------------------
+# MAIN
+# ---------------------------------------------------------------------------
 
 def main():
     print(f"Loading: {MODEL_PATH}\n")
@@ -656,148 +432,158 @@ def main():
     mujoco.mj_resetDataKeyframe(m, d, 0)
     mujoco.mj_forward(m, d)
 
-    kf     = {i: get_ctrl(m, i) for i in range(m.nkey)}
     kf_idx = {m.key(i).name: i for i in range(m.nkey)}
     print("Keyframes:", list(kf_idx.keys()))
 
-    # Resolve joint addresses and belt Y from initial state
-    parts_rt = []
-    for p in PARTS:
-        fj_adr, fv_adr = get_joint_info(m, p["joint"])
-        parts_rt.append({
-            **p,
-            "fj_adr":         fj_adr,
-            "fv_adr":         fv_adr,
-            "belt_y":         d.qpos[fj_adr + 1],
-            "current_belt_x": INITIAL_BELT_X[p["joint"]],
-        })
-    # Add alu plate to belt tracking (advances with belt but placed by pin gripper)
-    fj_alu0, fv_alu0 = get_joint_info(m, ALU_PLATE["joint"])
-    alu_belt_entry = {
-        **ALU_PLATE, "fj_adr": fj_alu0, "fv_adr": fv_alu0,
-        "belt_y": d.qpos[fj_alu0 + 1],
-        "current_belt_x": INITIAL_BELT_X[ALU_PLATE["joint"]],
-    }
-    parts_rt.append(alu_belt_entry)  # index 4 — belt advance only, not placed
+    home_ctrl    = np.zeros(m.nu)
+    home_ctrl[:] = m.key_ctrl[kf_idx["home"], :m.nu]
+
+    # Disable all plate/tray welds — tray locked via lock_part every step
+    for wname in ["weld_plate_pz", "weld_alu_plate", "weld_tray_pz"]:
+        wid = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_EQUALITY, wname)
+        if wid >= 0:
+            m.eq_active0[wid] = 0
+            d.eq_active[wid]  = 0
+    tray_fj, tray_fv = get_body_jnt(m, "kit_tray_pickzone")
+    tray_home_pos    = d.qpos[tray_fj:tray_fj+3].copy()
+    TRAY_LOCK        = (tray_fj, tray_fv, tray_home_pos, None)
+
+    # Resolve freejoint addresses and verify against expected PICK_WORLD
+    part_jnts = {}
+    print("\nFreejoint address verification:")
+    for bname in PARTS:
+        fj, fv = get_body_jnt(m, bname)
+        actual = d.qpos[fj:fj+3]
+        expect = PICK_WORLD[bname]
+        ok = np.allclose(actual, expect, atol=1e-4)
+        print(f"  {bname}: [{fj}] = {actual.round(5)}  expected {expect.round(5)}"
+              f"  {'OK' if ok else 'MISMATCH - check XML body order!'}")
+        part_jnts[bname] = (fj, fv)
 
     with mujoco.viewer.launch_passive(m, d) as v:
-        v.cam.lookat[:] = [0.0, 0.05, 0.83]
-        v.cam.distance  = 1.0
-        v.cam.elevation = -20
-        v.cam.azimuth   = 150
+        v.cam.lookat[:] = [0.0, 0.3, 0.83]
+        v.cam.distance  = 1.5
+        v.cam.elevation = -22
+        v.cam.azimuth   = 145
 
-        move_to(m, d, v, kf[kf_idx["home"]], "home")
+        all_locks = [(part_jnts[b][0], part_jnts[b][1], PICK_WORLD[b], None)
+                     for b in PARTS] + [TRAY_LOCK]
+        move_to(m, d, v, home_ctrl, "home", locked=all_locks)
+
         timer = CycleTimer("Station 1")
         timer.start(d)
-        for step_idx, part in enumerate(parts_rt):
-            fj_adr = part["fj_adr"]; fv_adr = part["fv_adr"]
-            print()
-            print("=" * 60)
-            print(f"[STEP {step_idx+1}/{len(parts_rt)}] {part['name']}")
-            print("=" * 60)
 
-            # ── PICK ──────────────────────────────────────────────────────
-            move_to(m, d, v, kf[kf_idx["pick_ready"]], "  pick_ready")
+        remaining = list(PARTS)  # pops as each part is picked
 
-            if part["pick_kf"]:
-                pick_ctrl = kf[kf_idx[part["pick_kf"]]]
-                move_to(m, d, v, pick_ctrl, f"  pick_down (kf)")
-            else:
-                grasp_xyz = np.array([
-                    part["current_belt_x"],
-                    part["belt_y"],
-                    part["belt_z"] + part["grasp_z_offset"]
-                ])
-                print(f"  IK pick → {np.round(grasp_xyz, 4)}")
-                pick_joints  = solve_ik(m, d, grasp_xyz, seed_joints=PICK_IK_SEED)
-                pick_ctrl    = np.zeros(m.nu); pick_ctrl[:6] = pick_joints
-                move_to(m, d, v, pick_ctrl, "  pick_down (IK)")
+        for step_idx, bname in enumerate(PARTS):
+            fj_adr, fv_adr = part_jnts[bname]
 
-            # ── ATTACH ────────────────────────────────────────────────────
-            tip          = get_tip(m, d)
-            carry_offset = d.qpos[fj_adr:fj_adr+3].copy() - tip
-            print(f"  carry_offset: {np.round(carry_offset, 4)}")
-            attach_steps = 60
-            part_start = d.qpos[fj_adr:fj_adr+3].copy()  # part's position before attach
-            for i in range(attach_steps):
-                t = (i + 1) / attach_steps
-                t_ease = t * t * (3 - 2 * t)              # smooth-step: no snap on frame 1
+            # Parts still in tray (excluding current)
+            waiting = [(part_jnts[b][0], part_jnts[b][1], PICK_WORLD[b], None)
+                       for b in remaining if b != bname] + [TRAY_LOCK]
+
+            use_pin = (bname == "s1_alu_plate")
+            print(); print("="*60)
+            print(f"[STEP {step_idx+1}/{len(PARTS)}] {bname.upper()}"
+                  f"  ({'pin' if use_pin else 'vacuum'})")
+            print("="*60)
+
+            if use_pin:
+                phase6_vac_to_pin(m, d, v, timer)
+                # Atomically release tray weld and arm gripper weld in the same
+                # sim step so the plate never enters free-fall between the two.
+
+            pw  = PICK_WORLD[bname]
+            plw = PLACE_PART_WORLD[bname]
+
+            # -- PICK -------------------------------------------------------
+            grasp = pw + np.array([0, 0, GRASP_Z_OFFSET[bname]])
+            print(f"  IK pick -> {grasp.round(4)}")
+            pick_ctrl = ikc(m, d, grasp, PICK_IK_SEED)
+            # Lock current part AND waiting parts during arm approach
+            move_to(m, d, v, pick_ctrl, "  pick_down",
+                    locked=[(fj_adr, fv_adr, pw, None)] + waiting)
+
+            # carry_offset from LOCKED position (not d.qpos after physics)
+            mujoco.mj_forward(m, d)
+            sid = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_SITE, "gripper_tip")
+            tip_at_pick  = d.site_xpos[sid].copy()
+            co           = pw - tip_at_pick   # carry_offset
+            print(f"  tip_at_pick:  {tip_at_pick.round(4)}")
+            print(f"  carry_offset: {co.round(4)}  mag={np.linalg.norm(co)*1000:.1f}mm")
+
+            # -- ATTACH: smooth snap 60 steps --------------------------------
+            p0 = pw.copy()
+            for i in range(60):
+                te = ((i+1)/60)**2*(3-2*(i+1)/60)
                 d.ctrl[:] = pick_ctrl
-                tip = get_tip(m, d)
-                target = tip + carry_offset
-                d.qpos[fj_adr:fj_adr+3]   = part_start + (target - part_start) * t_ease
-                d.qpos[fj_adr+3:fj_adr+7] = [1, 0, 0, 0]
+                if waiting:
+                    for lfj,lfv,pos,q in waiting: lock_part(d,lfj,lfv,pos,q)
+                mujoco.mj_forward(m, d)
+                tip = d.site_xpos[sid].copy()
+                tgt = tip + co
+                d.qpos[fj_adr:fj_adr+3]   = p0 + (tgt-p0)*te
+                d.qpos[fj_adr+3:fj_adr+7] = [1,0,0,0]
                 d.qvel[fv_adr:fv_adr+6]   = 0
                 mujoco.mj_step(m, d); v.sync()
-            print(f"  ✓ {part['name']} attached")
+            print(f"  ✓ attached")
 
-            # ── BELT ADVANCE (starts now, runs during carry) ───────────────
-            trailing = parts_rt[step_idx + 1:]
-            if trailing:
-                advance_dx = 0.00 - trailing[0]["current_belt_x"]
-                print(f"  [BELT] {len(trailing)} part(s) → +{advance_dx:.3f}m  ({', '.join(p['name'] for p in trailing)})")
-                slides = make_slides(trailing, advance_dx)
+            remaining.remove(bname)
+
+            # -- LIFT --------------------------------------------------------
+            lift_ctrl = ikc(m, d, grasp+[0,0,0.08], PICK_IK_SEED)
+            carry_to(m, d, v, fj_adr, fv_adr, co, lift_ctrl, "  lift", locked=waiting)
+
+            # -- PLACE -------------------------------------------------------
+            # tip_target = place_world - carry_offset
+            # because: part_pos = tip + co => tip = part_pos - co = plw - co
+            tip_tgt = plw - co
+
+            if bname == "s1_pcb":
+                hover_ctrl = ikc(m, d, tip_tgt+[0.020, 0, 0.060], PLACE_IK_SEED)
+                place_ctrl = ikc(m, d, tip_tgt, PLACE_IK_SEED)
+                swing_ctrl = ikc(m, d, tip_tgt+[0, 0, 0.130], PLACE_IK_SEED)
+                carry_to(m, d, v, fj_adr, fv_adr, co,
+                         swing_ctrl, "  swing pallet", locked=waiting)
+                pcb_tilt_and_insert(m, d, v, fj_adr, fv_adr, co,
+                                    hover_ctrl, place_ctrl, locked=waiting)
+                ret_ctrl = ikc(m, d, tip_tgt+[0,0,0.070], PLACE_IK_SEED)
             else:
-                slides = []
+                hover_ctrl = ikc(m, d, tip_tgt+[0, 0, 0.080], PLACE_IK_SEED)
+                carry_to(m, d, v, fj_adr, fv_adr, co,
+                         hover_ctrl, "  swing+hover", locked=waiting)
+                place_ctrl = ikc(m, d, tip_tgt, PLACE_IK_SEED)
+                carry_to(m, d, v, fj_adr, fv_adr, co,
+                         place_ctrl, f"  place {step_idx+1}", locked=waiting)
+                ret_ctrl = hover_ctrl
 
-            # ── CARRY + PLACE (belt slides in parallel) ────────────────────
-            carry_to(m, d, v, fj_adr, fv_adr, carry_offset,
-                     kf[kf_idx["pick_ready"]],  "  lift → pick_ready",  slides=slides)
-            carry_to(m, d, v, fj_adr, fv_adr, carry_offset,
-                     kf[kf_idx["place_ready"]], "  swing → place_ready", slides=slides)
-
-            ref_z      = place_tip_z_fk(m, kf[kf_idx[part["place_kf"]]][:6])
-            place_tgt  = np.array([
-                part["place_xy"][0] - carry_offset[0],
-                part["place_xy"][1] - carry_offset[1],
-                ref_z
-            ])
-            print(f"  IK place tip → {np.round(place_tgt, 4)}")
-            place_joints = solve_ik(m, d, place_tgt, seed_joints=kf[kf_idx[part["place_kf"]]][:6])
-            place_ctrl   = np.zeros(m.nu); place_ctrl[:6] = place_joints
-
-            if part["name"] == "PCB":
-                # Hover 100mm above place, +20mm X for -X edge clearance during tilt
-                hover_tgt = np.array([place_tgt[0] + 0.02, place_tgt[1], ref_z + 0.05])
-                print(f"  IK hover tip → {np.round(hover_tgt, 4)}")
-                hover_joints = solve_ik(m, d, hover_tgt,
-                                        seed_joints=kf[kf_idx["place_ready"]][:6])
-                hover_ctrl   = np.zeros(m.nu); hover_ctrl[:6] = hover_joints
-
-                pcb_tilt_and_insert(m, d, v, fj_adr, fv_adr, carry_offset,
-                                    hover_ctrl=hover_ctrl,
-                                    place_ctrl=place_ctrl,
-                                    slides=slides)
-            else:
-                carry_to(m, d, v, fj_adr, fv_adr, carry_offset,
-                         place_ctrl, f"  descend → place_{step_idx+1}", slides=slides)
-
-            # ── RELEASE ───────────────────────────────────────────────────
-            release_and_retract(m, d, v, fj_adr, fv_adr, carry_offset,
-                                hold_ctrl=place_ctrl,
-                                retract_ctrl=kf[kf_idx["place_ready"]],
-                                label=part["name"])
-            print(f"  {part['name']} final: {np.round(d.qpos[fj_adr:fj_adr+3], 4)}")
-            timer.mark(d, f"Place & release — {part['name']}")
-        print()
-        move_to(m, d, v, kf[kf_idx["home"]], "home after 5-part assembly")
-        timer.mark(d, "5-part assembly complete")
-
-        # ══════════════════════════════════════════════════════════════
-        # PHASES 6-9: Tool change + plate + screwdriving
-        # ══════════════════════════════════════════════════════════════
-        tool_change_and_screw(m, d, v, kf, kf_idx, parts_rt, timer)
+            # -- RELEASE -----------------------------------------------------
+            release_retract(m, d, v, fj_adr, fv_adr, co,
+                hold_ctrl=place_ctrl, ret_ctrl=ret_ctrl,
+                label=bname, locked=waiting,
+                place_pos=plw)
+            print(f"  landed: {d.qpos[fj_adr:fj_adr+3].round(4)}")
+            timer.mark(d, f"Place {bname}")
+        
 
         print()
-        print("=" * 60)
+        placed_locks = [(part_jnts[b][0], part_jnts[b][1], PLACE_PART_WORLD[b], None)
+                        for b in PARTS] + [TRAY_LOCK]
+        move_to(m, d, v, home_ctrl, "home after assembly", locked=placed_locks)
+        timer.mark(d, "Assembly complete")
+
+        # Phases 8-9: pin->SD, drive screws
+        phase8_pin_to_sd(m, d, v, home_ctrl, timer)
+        phase9_screws(m, d, v, home_ctrl, timer)
+
+        print(); print("="*60)
         print("Station 1 complete. Close viewer to exit.")
-        print("=" * 60)
+        print("="*60)
         timer.finish(d)
-        timer.print_report(ref_key="pick_place_fast")
+        timer.print_report()
 
         while v.is_running():
             mujoco.mj_step(m, d); v.sync()
-
 
 
 if __name__ == "__main__":
