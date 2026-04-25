@@ -577,9 +577,10 @@
     </body>
 
     <!-- ══════════════════════════════════════════════════════════════════
-         TOOL DOCK — (0.550, 0.400, 0.800)
-         Same Y as robot and tray. +X side. Robot reach: 0.350m ✓
+         TOOL DOCK — (0.500, 0.400, 0.870)
+         Same Y as robot and tray. +X side. Robot reach: ~0.300m ✓
          Cups along +Y: vacuum(−Y), pin(ctr), screwdriver(+Y)
+         Cup/site world Z = 0.870 + 0.090 = 0.960.
          ══════════════════════════════════════════════════════════════════ -->
     <body name="tool_dock" pos="0.500 0.400 0.870">
       <geom name="dock_base" type="box"      size="0.060 0.160 0.004" pos="0 0 -0.05"     material="mat_dock" contype="1" conaffinity="1" mass="2.0"/>
@@ -593,10 +594,13 @@
       <geom name="dock_leg_rr" type="box" size="0.008 0.008 0.408" pos=" 0.050  0.150 -0.46" material="mat_dock" contype="1" conaffinity="1"/>
       <geom name="cup_vac"   type="cylinder" size="0.022 0.008" pos="0 -0.090 0.082" material="mat_cup" contype="0" conaffinity="0"/>
       <site name="dock_vac_W2" type="sphere" size="0.003" pos="0 -0.090 0.090" rgba="0 1 0 0.9"/>
+      <site name="dock_vac_flat_axis" type="box" size="0.032 0.002 0.002" pos="0 -0.090 0.098" rgba="1 1 0 0.45"/>
       <geom name="cup_pin"   type="cylinder" size="0.022 0.008" pos="0  0.000 0.082" material="mat_cup" contype="0" conaffinity="0"/>
       <site name="dock_pin_W2" type="sphere" size="0.003" pos="0  0.000 0.090" rgba="0 1 0 0.9"/>
+      <site name="dock_pin_flat_axis" type="box" size="0.032 0.002 0.002" pos="0  0.000 0.098" rgba="1 1 0 0.45"/>
       <geom name="cup_sd"    type="cylinder" size="0.022 0.008" pos="0  0.090 0.082" material="mat_cup" contype="0" conaffinity="0"/>
       <site name="dock_sd_W2"  type="sphere" size="0.003" pos="0  0.090 0.090" rgba="0 1 0 0.9"/>
+      <site name="dock_sd_flat_axis" type="box" size="0.032 0.002 0.002" pos="0  0.090 0.098" rgba="1 1 0 0.45"/>
       <!-- Parked tools — all start hidden; shown when returned to dock -->
       <!-- euler="3.1416 0 0": flips local +Z to -Z so tips point DOWN toward table -->
       <!-- VAC: starts hidden (robot begins with vacuum attached) -->
@@ -644,6 +648,11 @@
       <geom name="sbox_wl"    type="box" size="0.003 0.033 0.010" pos="-0.033 0 0.010" material="mat_screw_box" contype="0" conaffinity="0"/>
       <geom name="sbox_wrr"   type="box" size="0.003 0.033 0.010" pos=" 0.033 0 0.010" material="mat_screw_box" contype="0" conaffinity="0"/>
       <site name="screw_pick_site" type="sphere" size="0.004" pos="0 0 0.020" rgba="1 0.5 0 0.9"/>
+      <!-- Individual screw pick locations: 2x2 grid, matching screw_FL/FR/RL/RR bodies. -->
+      <site name="screw_pick_FL" type="sphere" size="0.003" pos="-0.010 -0.010 0.022" rgba="1 0.5 0 0.9"/>
+      <site name="screw_pick_FR" type="sphere" size="0.003" pos=" 0.010 -0.010 0.022" rgba="1 0.5 0 0.9"/>
+      <site name="screw_pick_RL" type="sphere" size="0.003" pos="-0.010  0.010 0.022" rgba="1 0.5 0 0.9"/>
+      <site name="screw_pick_RR" type="sphere" size="0.003" pos=" 0.010  0.010 0.022" rgba="1 0.5 0 0.9"/>
     </body>
 
     <!-- ══════════════════════════════════════════════════════════════════
@@ -754,10 +763,10 @@
             -0.3000  0.43630 0.81300 0 0 0 1
             -0.3000  0.54830 0.81200 0 0 0 1
             -0.3000  0.68745 0.81375 1 0 0 0
-             0.6400  0.1900  0.80800 1 0 0 0
-             0.6600  0.1900  0.80800 1 0 0 0
-             0.6400  0.2100  0.80800 1 0 0 0
-             0.6600  0.2100  0.80800 1 0 0 0
+             0.6400  0.1900  0.80600 1 0 0 0
+             0.6600  0.1900  0.80600 1 0 0 0
+             0.6400  0.2100  0.80600 1 0 0 0
+             0.6600  0.2100  0.80600 1 0 0 0
              0.000"
         ctrl="-1.5708 -1.5708 1.5708 -1.5708 -1.5708 0
             0.000"/>
@@ -769,11 +778,19 @@
     <weld name="weld_pcb"       body1="gripper" body2="s1_pcb"       active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
     <weld name="weld_alu_plate" body1="gripper" body2="s1_alu_plate" active="false" solref="0.01 1" solimp="0.99 0.999 0.001"/>
     <weld name="weld_plate_world" body1="world" body2="s1_alu_plate" active="false" relpose="0.002361 0 0.82500 1 0 0 0" solref="0.002 1" solimp="0.999 0.9999 0.0001"/>
-    <!-- Screw welds — activated after each screw is driven into boss -->
-    <weld name="weld_screw_FL" body1="world" body2="screw_FL" active="false" relpose=" 0.1484  0.05315 0.8070 1 0 0 0" solref="0.002 1" solimp="0.999 0.9999 0.0001"/>
-    <weld name="weld_screw_FR" body1="world" body2="screw_FR" active="false" relpose="-0.1484  0.05315 0.8070 1 0 0 0" solref="0.002 1" solimp="0.999 0.9999 0.0001"/>
-    <weld name="weld_screw_RL" body1="world" body2="screw_RL" active="false" relpose=" 0.1484 -0.05315 0.8070 1 0 0 0" solref="0.002 1" solimp="0.999 0.9999 0.0001"/>
-    <weld name="weld_screw_RR" body1="world" body2="screw_RR" active="false" relpose="-0.1484 -0.05315 0.8070 1 0 0 0" solref="0.002 1" solimp="0.999 0.9999 0.0001"/>
+    <!-- Screw-box fixture welds: active initially so all four screws sit neatly in the box.
+         Controller releases one weld at a time before pickup. relpose is local to screw_box. -->
+    <weld name="weld_box_screw_FL" body1="screw_box" body2="screw_FL" active="true" relpose="-0.010 -0.010 0.006 1 0 0 0" solref="0.002 1" solimp="0.999 0.9999 0.0001"/>
+    <weld name="weld_box_screw_FR" body1="screw_box" body2="screw_FR" active="true" relpose=" 0.010 -0.010 0.006 1 0 0 0" solref="0.002 1" solimp="0.999 0.9999 0.0001"/>
+    <weld name="weld_box_screw_RL" body1="screw_box" body2="screw_RL" active="true" relpose="-0.010  0.010 0.006 1 0 0 0" solref="0.002 1" solimp="0.999 0.9999 0.0001"/>
+    <weld name="weld_box_screw_RR" body1="screw_box" body2="screw_RR" active="true" relpose=" 0.010  0.010 0.006 1 0 0 0" solref="0.002 1" solimp="0.999 0.9999 0.0001"/>
+
+    <!-- Installed screw welds: activated after each screw is driven.
+         body1 is the bottom case, so the screws are attached to the assembled case. -->
+    <weld name="weld_screw_FL" body1="s1_bottom_case" body2="screw_FL" active="false" relpose=" 0.1484  0.05315 -0.0140 1 0 0 0" solref="0.002 1" solimp="0.999 0.9999 0.0001"/>
+    <weld name="weld_screw_FR" body1="s1_bottom_case" body2="screw_FR" active="false" relpose="-0.1484  0.05315 -0.0140 1 0 0 0" solref="0.002 1" solimp="0.999 0.9999 0.0001"/>
+    <weld name="weld_screw_RL" body1="s1_bottom_case" body2="screw_RL" active="false" relpose=" 0.1484 -0.05315 -0.0140 1 0 0 0" solref="0.002 1" solimp="0.999 0.9999 0.0001"/>
+    <weld name="weld_screw_RR" body1="s1_bottom_case" body2="screw_RR" active="false" relpose="-0.1484 -0.05315 -0.0140 1 0 0 0" solref="0.002 1" solimp="0.999 0.9999 0.0001"/>
     <weld name="weld_plate_pz" body1="kit_tray_pickzone" body2="s1_alu_plate" active="true" relpose="0 0.18745 -0.00125 1 0 0 0" solref="0.01 1" solimp="0.99 0.999 0.001"/>
     <weld name="weld_plate_ps" body1="kit_tray_prestage" body2="ps_plate"     active="true" relpose="0 0.18745 -0.00125 1 0 0 0" solref="0.01 1" solimp="0.99 0.999 0.001"/>
   </equality>

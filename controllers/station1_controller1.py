@@ -25,7 +25,7 @@ import sys, os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from cycle_timer import CycleTimer
 
-MODEL_PATH   = "models/stations/station1.xml"
+MODEL_PATH   = "models/stations/station1_A.xml"
 SETTLE_TOL   = 0.015
 SETTLE_STEPS = 50
 # j1 faces the dock, j2/j3 create a high 'elbow-up' arch, j4/j5 point the flange down
@@ -82,27 +82,40 @@ PLACE_IK_SEED = np.array([ 1.10, -1.60,  1.80, -1.80, -1.5708, 0.0])
 DOCK_VAC_SEED = np.array([-2.5866, -1.80, 1.60, -1.40, -1.5708, 0.0])  # j1 faces vac slot
 DOCK_PIN_SEED = np.array([-2.4669, -1.80, 1.60, -1.40, -1.5708, 0.0])  # j1 faces pin slot
 DOCK_SD_SEED  = np.array([-2.3663, -1.80, 1.60, -1.40, -1.5708, 0.0])  # j1 faces SD slot
-# Z targets (gripper_tip world Z) — dock body now at Z=0.870
-DOCK_HOVER_Z  = 1.018   # tip 120mm above cup top (cup top=0.962, wrist needs room)
-DOCK_SEAT_Z   = 0.898   # tip Z when flange base rests on cup top
+# Z targets use gripper_tip world Z. Dock cup/site top is at world Z≈0.960
+# because tool_dock is at 0.870 and dock sites are local z=0.090.
+DOCK_HOVER_Z  = 1.018   # tip hover above cup; wrist has clearance
+DOCK_SEAT_Z   = 0.898   # tip Z when flange/tool base visually seats into dock cup
 SCREW_IK_SEED  = np.array([-2.8431, -1.80, 1.60, -1.40, -1.5708, 0.0])  # j1 faces screw box
-SCREW_HOVER_Z  = 0.964   # gripper_tip Z hovering 100mm above screw head
-SCREW_PICK_Z   = 0.864   # gripper_tip Z when SD tip touches screw head top
-BOSS_HOVER_Z   = 0.960   # gripper_tip Z when 100mm above boss (transit + hover height)
+# Screwdriver geometry: gripper_tip is the vacuum-cup reference site at local Y=0.074.
+# screwdriver_tip is at local Y=0.102. With STRICT_DOWN_QUAT, +Y points world -Z,
+# so the screwdriver tip is 28 mm below gripper_tip.
+SD_TIP_FROM_GRIPPER_Z = 0.028
+SCREW_ENGAGE_Z        = 0.016   # screw body origin -> screw head/bit engagement site
+SCREW_BOX_HOVER_CLEAR = 0.100
+SCREW_DRIVE_CLEAR     = 0.070
+SCREW_BOX_Z           = 0.806   # screw body origin when sitting in the screw box
+SCREW_INSTALLED_Z     = 0.807   # screw body origin after being driven into the case boss
 # Per-boss IK seeds: j1 tuned to face each boss position from robot base
 SCREW_BOSS_SEED = np.array([1.10, -1.50, 1.80, -1.85, -1.5708, 0.0])
 
 # ---------------------------------------------------------------------------
 # TOOL DOCK WORLD POSITIONS
-# Dock body: (0.650, 0.400, 0.800)
-# dock_vac_W2 site body-local (0,-0.090,0.090) -> world (0.650, 0.310, 0.890)
-# dock_pin_W2 site body-local (0, 0.000,0.090) -> world (0.650, 0.400, 0.890)
-# dock_sd_W2  site body-local (0,+0.090,0.090) -> world (0.650, 0.490, 0.890)
+# Dock body: (0.500, 0.400, 0.870)
+# dock_vac_W2 site body-local (0,-0.090,0.090) -> world (0.500, 0.310, 0.960)
+# dock_pin_W2 site body-local (0, 0.000,0.090) -> world (0.500, 0.400, 0.960)
+# dock_sd_W2  site body-local (0,+0.090,0.090) -> world (0.500, 0.490, 0.960)
 # ---------------------------------------------------------------------------
 DOCK_VAC_XY     = np.array([0.500, 0.310])   # world XY of vac slot
 DOCK_PIN_XY     = np.array([0.500, 0.400])   # world XY of pin slot
-DOCK_SD_XY      = np.array([0.550, 0.490])   # world XY of SD slot
-SCREW_BOX_XY    = np.array([0.650, 0.200])   # world XY of screw box (unchanged)
+DOCK_SD_XY      = np.array([0.500, 0.490])   # world XY of SD slot
+SCREW_BOX_XY    = np.array([0.650, 0.200])   # world XY of screw box center
+SCREW_PICK_POS = {
+    "FL": np.array([0.640, 0.190, SCREW_BOX_Z]),
+    "FR": np.array([0.660, 0.190, SCREW_BOX_Z]),
+    "RL": np.array([0.640, 0.210, SCREW_BOX_Z]),
+    "RR": np.array([0.660, 0.210, SCREW_BOX_Z]),
+}
 
 # ---------------------------------------------------------------------------
 # SCREW BOSS WORLD POSITIONS
@@ -123,7 +136,16 @@ SCREW_INSTALL_POS = {
 }
 
 ROTATE_STEPS = 300
-SD_Z_OFFSET  = 0.046  # Z from gripper_tip down to screwdriver cup tip
+
+
+def gripper_target_for_sd_tip(sd_tip_world):
+    """Return gripper_tip target that places screwdriver_tip at sd_tip_world."""
+    return np.array(sd_tip_world) + np.array([0.0, 0.0, SD_TIP_FROM_GRIPPER_Z])
+
+
+def screw_origin_for_sd_tip(sd_tip_world):
+    """Screw origin when its head engagement point is exactly on screwdriver_tip."""
+    return np.array(sd_tip_world) - np.array([0.0, 0.0, SCREW_ENGAGE_Z])
 
 
 
@@ -150,7 +172,7 @@ def solve_ik(m, d, target, seed, max_iter=600, tol=5e-4,
     That is R_x(-90deg) = quat [0.7071, -0.7071, 0, 0] (wxyz).
 
     target_quat=None  → use straight-down default (normal pick/place)
-    target_quat=False → position-only IK (legacy, for tool dock approaches)
+    target_quat=False → position-only IK (avoid for tool dock seating)
     Orientation weighted 0.3x to avoid fighting position convergence.
     """
     ori_enabled = (target_quat is not False)
@@ -390,80 +412,91 @@ def show_tool(m, tool, d=None, v=None):
 
 
 def drive_screw(m, d, v, name, sfj, sfv, placed_locks=None, home_ctrl=None):
-    boss = SCREW_INSTALL_POS[name]
-    sid  = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_SITE, "gripper_tip")
+    """Pick one screw from the screw box and drive it into the matching boss.
+
+    The screw is carried by the real screwdriver_tip site, not an approximate
+    Z offset from gripper_tip. Screws start welded in the screw-box grid; the
+    selected screw is released at pickup, then welded to the bottom case after
+    driving.
+    """
+    pick_origin = SCREW_PICK_POS[name]
+    install_origin = np.array([SCREW_INSTALL_POS[name][0], SCREW_INSTALL_POS[name][1], SCREW_INSTALLED_Z])
+    sid_sd = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_SITE, "screwdriver_tip")
     print(f"\n  [SCREW {name}]")
 
-    # 1. Swing vertical above screw box
-    dock_ik_move(m, d, v, SCREW_BOX_XY, SCREW_HOVER_Z, SCREW_IK_SEED,
-                 f"  SD->box hover ({name})", locked=placed_locks)
+    box_wid = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_EQUALITY, f"weld_box_screw_{name}")
+    if box_wid >= 0:
+        d.eq_active[box_wid] = 0
 
-    # 2. Lower straight down onto screw head
-    dock_lower(m, d, v, SCREW_BOX_XY, SCREW_PICK_Z,
-               f"  SD->box lower ({name})", locked=placed_locks)
+    pick_sd_tip = pick_origin + np.array([0.0, 0.0, SCREW_ENGAGE_Z])
+    pick_hover  = gripper_target_for_sd_tip(pick_sd_tip + np.array([0.0, 0.0, SCREW_BOX_HOVER_CLEAR]))
+    pick_target = gripper_target_for_sd_tip(pick_sd_tip)
 
-    # 3. Snap screw to SD tip
+    ik_move(m, d, v, pick_hover, SCREW_IK_SEED,
+            f"  SD->box hover ({name})", locked=placed_locks)
+    ik_move(m, d, v, pick_target, d.qpos[:6].copy(),
+            f"  SD->box lower ({name})", locked=placed_locks)
+
     mujoco.mj_forward(m, d)
-    g_tip        = d.site_xpos[sid].copy()
-    sd_tip       = g_tip - np.array([0, 0, SD_Z_OFFSET])
-    screw_origin = sd_tip - np.array([0, 0, 0.014])
-    screw_off    = screw_origin - sd_tip
-    d.qpos[sfj:sfj+3]   = screw_origin
-    d.qpos[sfj+3:sfj+7] = [1,0,0,0]
+    sd_tip = d.site_xpos[sid_sd].copy()
+    d.qpos[sfj:sfj+3]   = screw_origin_for_sd_tip(sd_tip)
+    d.qpos[sfj+3:sfj+7] = [1, 0, 0, 0]
     d.qvel[sfv:sfv+6]   = 0
-    print(f"  attached {name} to SD")
+    print(f"  attached {name} to screwdriver_tip")
 
     def carry_screw(ctrl, n=80):
         for _ in range(n):
             d.ctrl[:] = ctrl
             mujoco.mj_forward(m, d)
-            g_t  = d.site_xpos[sid].copy()
-            sd_t = g_t - np.array([0, 0, SD_Z_OFFSET])
-            d.qpos[sfj:sfj+3] = sd_t + screw_off
-            d.qvel[sfv:sfv+6] = 0
+            sd_t = d.site_xpos[sid_sd].copy()
+            d.qpos[sfj:sfj+3]   = screw_origin_for_sd_tip(sd_t)
+            d.qpos[sfj+3:sfj+7] = [1, 0, 0, 0]
+            d.qvel[sfv:sfv+6]   = 0
             if placed_locks:
-                for lfj, lfv, pos, q in placed_locks: lock_part(d, lfj, lfv, pos, q)
+                for lfj, lfv, pos, q in placed_locks:
+                    lock_part(d, lfj, lfv, pos, q)
             mujoco.mj_step(m, d); v.sync()
 
-    # 4. Raise (compute ctrl, run carry_screw so screw tracks during raise)
-    raise_ctrl = ikc(m, d,
-                     np.array([SCREW_BOX_XY[0], SCREW_BOX_XY[1], SCREW_HOVER_Z]),
-                     d.qpos[:6].copy(), pos_only=True)
+    raise_ctrl = ikc(m, d, pick_hover, d.qpos[:6].copy(), pos_only=False)
     carry_screw(raise_ctrl, n=200)
-    # Return to home — resets arm config so IK converges cleanly for any boss position
     move_to(m, d, v, home_ctrl, f"  home before {name}", locked=placed_locks)
 
-    # 5-6. Hover then insert — original seed works from home config
-    hover_tgt  = np.array([boss[0], boss[1], boss[2] + 0.050 + SD_Z_OFFSET])
-    hover_ctrl = ik_move(m, d, v, hover_tgt, SCREW_BOSS_SEED,
+    drive_sd_tip = install_origin + np.array([0.0, 0.0, SCREW_ENGAGE_Z])
+    boss_hover   = gripper_target_for_sd_tip(drive_sd_tip + np.array([0.0, 0.0, SCREW_DRIVE_CLEAR]))
+    boss_drive   = gripper_target_for_sd_tip(drive_sd_tip)
+
+    hover_ctrl = ik_move(m, d, v, boss_hover, SCREW_BOSS_SEED,
                          f"  hover {name}", locked=placed_locks)
     carry_screw(hover_ctrl)
 
-    # 7. Rotate 3 turns
-    print(f"  Rotating {name}...")
+    drive_ctrl = ik_move(m, d, v, boss_drive, d.qpos[:6].copy(),
+                         f"  lower to screw height {name}", locked=placed_locks)
+    carry_screw(drive_ctrl, n=120)
+
+    print(f"  Rotating {name} at drive height...")
     w3_0 = d.qpos[5]
     for i in range(ROTATE_STEPS):
+        d.ctrl[:] = drive_ctrl
         d.ctrl[5] = w3_0 + (i / ROTATE_STEPS) * (3 * 2 * np.pi)
         mujoco.mj_forward(m, d)
-        g_t  = d.site_xpos[sid].copy()
-        sd_t = g_t - np.array([0, 0, SD_Z_OFFSET])
-        d.qpos[sfj:sfj+3] = sd_t + screw_off
-        d.qvel[sfv:sfv+6] = 0
+        sd_t = d.site_xpos[sid_sd].copy()
+        d.qpos[sfj:sfj+3]   = screw_origin_for_sd_tip(sd_t)
+        d.qpos[sfj+3:sfj+7] = [1, 0, 0, 0]
+        d.qvel[sfv:sfv+6]   = 0
         if placed_locks:
-            for lfj, lfv, pos, q in placed_locks: lock_part(d, lfj, lfv, pos, q)
+            for lfj, lfv, pos, q in placed_locks:
+                lock_part(d, lfj, lfv, pos, q)
         mujoco.mj_step(m, d); v.sync()
 
-    # 8. Snap to installed + weld
-    d.qpos[sfj:sfj+3]   = boss - np.array([0, 0, 0.007])
+    d.qpos[sfj:sfj+3]   = install_origin
     d.qpos[sfj+3:sfj+7] = [1, 0, 0, 0]
     d.qvel[sfv:sfv+6]   = 0
-    wid = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_EQUALITY, f"weld_screw_{name}")
-    if wid >= 0:
-        d.eq_active[wid] = 1
+    case_wid = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_EQUALITY, f"weld_screw_{name}")
+    if case_wid >= 0:
+        d.eq_active[case_wid] = 1
     d.ctrl[5] = w3_0
-    print(f"  {name} installed + welded")
+    print(f"  {name} installed + welded to bottom case")
 
-    # 9. Retract
     move_to(m, d, v, hover_ctrl, f"  retract {name}", locked=placed_locks)
 
 
@@ -492,11 +525,21 @@ def dock_ik_move(m, d, v, xy, z, seed, label, locked=None):
     return c
 
 def dock_lower(m, d, v, xy, z, label, locked=None):
-    """Pure vertical descent to dock Z — uses current qpos as seed so arm
-    stays in the vertical configuration set by the preceding swing move."""
+    """Vertical dock descent/retract with the flange kept square to the dock.
+
+    Do NOT use position-only IK here. During tool changes, XYZ is not enough:
+    position-only IK can let wrist_1/2/3 rotate while the tool lowers into the
+    dock, which makes the flange look tilted relative to the docked gripper
+    base. Using the current qpos as the seed preserves the same elbow posture,
+    while STRICT_DOWN_QUAT keeps the flange/tool axis flat and vertical.
+    """
     tgt = np.array([xy[0], xy[1], z])
-    seed = d.qpos[:6].copy()   # keep current shoulder/elbow, only change reach
-    return ik_move(m, d, v, tgt, seed, label, pos_only=True, locked=locked)
+    seed = d.qpos[:6].copy()
+    j = solve_ik(m, d, tgt, seed, target_quat=STRICT_DOWN_QUAT)
+    c = np.zeros(m.nu)
+    c[:6] = j
+    move_to(m, d, v, c, label, locked=locked)
+    return c
 
 
 def phase6_vac_to_pin(m, d, v, placed_locks, timer):
