@@ -25,8 +25,8 @@ import sys, os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from cycle_timer import CycleTimer
 
-MODEL_PATH   = "models/stations/station1_A.xml"
-SETTLE_TOL   = 0.015
+MODEL_PATH   = "models/stations/station1_B.xml"
+SETTLE_TOL   = 0.020   # v7: avoid false timeouts at harmless ~0.018-0.019 rad residual
 SETTLE_STEPS = 50
 # j1 faces the dock, j2/j3 create a high 'elbow-up' arch, j4/j5 point the flange down
 DOCK_VAC_SEED = np.array([-1.57, -1.57, 1.57, -1.57, -1.57, 0.0])
@@ -40,7 +40,7 @@ PICK_WORLD = {
     "s1_epdm":      np.array([-0.3000,  0.31915, 0.81375]),  # lifted to sit on pocket
     "s1_battery":   np.array([-0.3000,  0.43630, 0.81300]),
     "s1_pcb":       np.array([-0.3000,  0.54830, 0.81200]),
-    "s1_alu_plate": np.array([-0.3000,  0.68745, 0.81375]),
+    "s1_alu_plate": np.array([-0.3000,  0.68745, 0.81775]),
 }
 
 # Flange perfectly horizontal, tool pointing straight down along -Z
@@ -52,7 +52,7 @@ GRASP_Z_OFFSET = {
     "s1_epdm":      0.006,
     "s1_battery":   0.011,
     "s1_pcb":       0.007,
-    "s1_alu_plate": 0.004,
+    "s1_alu_plate": 0.000,   # plate uses internal L-hook sequence instead of suction-style top grasp
 }
 
 # Where the part body origin should land in the case (world frame)
@@ -66,11 +66,53 @@ PLACE_PART_WORLD = {
     # EPDM+Battery parallel on case floor (Z=0.813); PCB on battery top; Plate on PCB
     "s1_epdm":      np.array([ 0.000,  0.000, 0.81175]),
     "s1_battery":   np.array([ 0.025,  0.000, 0.81300]),
-    "s1_pcb":       np.array([ 0.000,  0.000, 0.82100]),
-    "s1_alu_plate": np.array([ 0.003061,  0.000, 0.82500]),  # X offset corrects STL centroid
+    "s1_pcb":       np.array([ 0.000,  0.000, 0.82200]),
+    "s1_alu_plate": np.array([ -0.006061,  -0.002, 0.82900]),  # v8: exact case datum; visual mesh offset stays inside geom
 }
 
 PARTS = ["s1_epdm", "s1_battery", "s1_pcb", "s1_alu_plate"]
+
+# Body orientation targets. The aluminum plate is placed with a 180 deg Z rotation
+# so the function-row cutouts end up toward world -Y in the bottom case.
+PLATE_TRAY_QUAT  = np.array([0.0, 0.0, 0.0, 1.0])  # MuJoCo wxyz, Rz(pi) in feeder tray
+PLATE_FINAL_QUAT = np.array([0.0, 0.0, 0.0, 1.0])  # MuJoCo wxyz, Rz(pi) at final placement
+PLACE_PART_QUAT = {
+    "s1_epdm":      None,
+    "s1_battery":   None,
+    "s1_pcb":       None,
+    "s1_alu_plate": PLATE_FINAL_QUAT,
+}
+
+
+# Internal cutout-locking gripper for aluminum plate.
+# Pins are 6 keyboard pitches apart: +/-57.15 mm about the plate center.
+PLATE_LOCK_SITE       = "plate_lock_tcp"
+PLATE_PIN_LEFT_X      = -0.05715
+PLATE_PIN_RIGHT_X     =  0.05715
+PLATE_PIN_Y           =  0.0
+PLATE_APPROACH_CLEAR  =  0.070
+PLATE_INSERT_CLEAR    =  0.002   # version A logical lock: only go just under the thin plate
+PLATE_RELEASE_CLEAR   =  0.000   # place at final seating height before pin retract
+PLATE_SEAT_EXTRA_DOWN =  0.000   # final-pose backsolve: do not drive the carried plate below its tuned seated pose
+
+
+# Visual-only internal pin actuation. We animate pin/hook geoms directly in
+# model-local coordinates; plate carrying remains deterministic/logical.
+PIN_LOCK_TRAVEL = 0.004
+PIN_LOCK_GEOM_BASE = {
+    # Dock-matched robot values: dock local Z -> robot local +Y.
+    "ilock_L_stem": np.array([-0.05715, 0.0540, 0.0]),
+    "ilock_L_hook": np.array([-0.06065, 0.0610, 0.0]),
+    "ilock_R_stem": np.array([ 0.05715, 0.0540, 0.0]),
+    "ilock_R_hook": np.array([ 0.06065, 0.0610, 0.0]),
+}
+PIN_LOCK_SITE_BASE = {
+    # Keep the logical lock/contact sites on the visible hook-tip line, not up at the flange.
+    "pin_L_tip":          np.array([-0.05715, 0.0610, 0.0]),
+    "pin_R_tip":          np.array([ 0.05715, 0.0610, 0.0]),
+    "pin_L_hook_contact": np.array([-0.06065, 0.0610, 0.0]),
+    "pin_R_hook_contact": np.array([ 0.06065, 0.0610, 0.0]),
+}
 
 # ---------------------------------------------------------------------------
 # IK SEEDS
@@ -79,43 +121,54 @@ PARTS = ["s1_epdm", "s1_battery", "s1_pcb", "s1_alu_plate"]
 # ---------------------------------------------------------------------------
 PICK_IK_SEED  = np.array([ 0.10, -1.60,  1.80, -1.80, -1.5708, 0.0])
 PLACE_IK_SEED = np.array([ 1.10, -1.60,  1.80, -1.80, -1.5708, 0.0])
-DOCK_VAC_SEED = np.array([-2.5866, -1.80, 1.60, -1.40, -1.5708, 0.0])  # j1 faces vac slot
-DOCK_PIN_SEED = np.array([-2.4669, -1.80, 1.60, -1.40, -1.5708, 0.0])  # j1 faces pin slot
-DOCK_SD_SEED  = np.array([-2.3663, -1.80, 1.60, -1.40, -1.5708, 0.0])  # j1 faces SD slot
+DOCK_VAC_SEED = np.array([-2.30, -1.80, 1.60, -1.40, -1.5708, 0.0])  # v7: rear dock, slots arranged along X
+DOCK_PIN_SEED = np.array([-2.15, -1.80, 1.60, -1.40, -1.5708, 0.0])
+DOCK_SD_SEED  = np.array([-2.00, -1.80, 1.60, -1.40, -1.5708, 0.0])
 # Z targets use gripper_tip world Z. Dock cup/site top is at world Z≈0.960
 # because tool_dock is at 0.870 and dock sites are local z=0.090.
 DOCK_HOVER_Z  = 1.018   # tip hover above cup; wrist has clearance
-DOCK_SEAT_Z   = 0.898   # tip Z when flange/tool base visually seats into dock cup
-SCREW_IK_SEED  = np.array([-2.8431, -1.80, 1.60, -1.40, -1.5708, 0.0])  # j1 faces screw box
+DOCK_SEAT_Z   = 0.886   # tip Z when flange/tool base visually seats into dock cup
+SCREW_IK_SEED  = np.array([-2.45, -1.65, 1.55, -1.45, -1.5708, 0.0])  # v7: screw box near main conveyor/right side
 # Screwdriver geometry: gripper_tip is the vacuum-cup reference site at local Y=0.074.
 # screwdriver_tip is at local Y=0.102. With STRICT_DOWN_QUAT, +Y points world -Z,
 # so the screwdriver tip is 28 mm below gripper_tip.
 SD_TIP_FROM_GRIPPER_Z = 0.028
-SCREW_ENGAGE_Z        = 0.016   # screw body origin -> screw head/bit engagement site
+SCREW_ENGAGE_Z        = 0.012   # v8: M3 screw body origin -> screw head/bit engagement site
 SCREW_BOX_HOVER_CLEAR = 0.100
 SCREW_DRIVE_CLEAR     = 0.070
 SCREW_BOX_Z           = 0.806   # screw body origin when sitting in the screw box
-SCREW_INSTALLED_Z     = 0.807   # screw body origin after being driven into the case boss
+SCREW_INSTALLED_Z     = 0.8145  # v8: head top sits at the aluminum plate top surface
 # Per-boss IK seeds: j1 tuned to face each boss position from robot base
 SCREW_BOSS_SEED = np.array([1.10, -1.50, 1.80, -1.85, -1.5708, 0.0])
 
 # ---------------------------------------------------------------------------
-# TOOL DOCK WORLD POSITIONS
-# Dock body: (0.500, 0.400, 0.870)
-# dock_vac_W2 site body-local (0,-0.090,0.090) -> world (0.500, 0.310, 0.960)
-# dock_pin_W2 site body-local (0, 0.000,0.090) -> world (0.500, 0.400, 0.960)
-# dock_sd_W2  site body-local (0,+0.090,0.090) -> world (0.500, 0.490, 0.960)
+# TOOL DOCK + SCREW BOX WORLD POSITIONS
+# Layout v7:
+# - Tool dock is behind/+Y of the UR5e, reserved only for tool exchange.
+# - Screw box is moved close to the main conveyor/pallet side so the repeated
+#   screw task follows a short feeder -> boss -> feeder path.
+# Dock body: (0.280, 0.680, 0.870)
+# dock_vac_W2 site body-local (-0.070,0,0.090) -> world (0.210, 0.680, 0.960)
+# dock_pin_W2 site body-local ( 0.000,0,0.090) -> world (0.280, 0.680, 0.960)
+# dock_sd_W2  site body-local (+0.070,0,0.090) -> world (0.350, 0.680, 0.960)
 # ---------------------------------------------------------------------------
-DOCK_VAC_XY     = np.array([0.500, 0.310])   # world XY of vac slot
-DOCK_PIN_XY     = np.array([0.500, 0.400])   # world XY of pin slot
-DOCK_SD_XY      = np.array([0.500, 0.490])   # world XY of SD slot
-SCREW_BOX_XY    = np.array([0.650, 0.200])   # world XY of screw box center
+DOCK_VAC_XY     = np.array([0.160, 0.680])   # v7: wider dock slot spacing to clear pin gripper
+DOCK_PIN_XY     = np.array([0.280, 0.680])   # internal-lock slot remains centered behind robot
+DOCK_SD_XY      = np.array([0.400, 0.680])   # wider spacing keeps screwdriver clear too
+
+SCREW_BOX_XY    = np.array([0.520, 0.200])   # v7: shifted +Y to clear main conveyor
 SCREW_PICK_POS = {
-    "FL": np.array([0.640, 0.190, SCREW_BOX_Z]),
-    "FR": np.array([0.660, 0.190, SCREW_BOX_Z]),
-    "RL": np.array([0.640, 0.210, SCREW_BOX_Z]),
-    "RR": np.array([0.660, 0.210, SCREW_BOX_Z]),
+    "FL": np.array([0.510, 0.190, SCREW_BOX_Z]),
+    "FR": np.array([0.530, 0.190, SCREW_BOX_Z]),
+    "RL": np.array([0.510, 0.210, SCREW_BOX_Z]),
+    "RR": np.array([0.530, 0.210, SCREW_BOX_Z]),
 }
+
+# Local screw-transfer waypoint: keeps the screwdriver path between feeder and pallet,
+# instead of swinging around the dock/feeder tray on the long IK branch. This is a
+# gripper_tip target, not screwdriver_tip; it is intentionally high and inside the
+# direct screw-box -> pallet corridor.
+SCREW_LOCAL_TRANSFER = np.array([0.360, 0.120, 0.980])
 
 # ---------------------------------------------------------------------------
 # SCREW BOSS WORLD POSITIONS
@@ -128,11 +181,16 @@ SCREW_PICK_POS = {
 # ---------------------------------------------------------------------------
 BOSS_Z  = 0.8125
 SCREW_NAMES = ["FL", "FR", "RL", "RR"]
+# v8: screw targets now come from aluminum_plate.xml screw sites, with the
+# plate placed at Rz(pi).  World XY = - plate-local XY.
+# aluminum_plate.xml sites:
+#   screw_FL=(-0.1515,-0.0495), screw_FR=(+0.1545,-0.0495),
+#   screw_RL=(-0.1515,+0.0495), screw_RR=(+0.1545,+0.0495).
 SCREW_INSTALL_POS = {
-    "FL": np.array([ 0.1484,  0.05315, BOSS_Z]),
-    "FR": np.array([-0.1484,  0.05315, BOSS_Z]),
-    "RL": np.array([ 0.1484, -0.05315, BOSS_Z]),
-    "RR": np.array([-0.1484, -0.05315, BOSS_Z]),
+    "FL": np.array([ 0.128,  0.0485, BOSS_Z]),
+    "FR": np.array([-0.1339,  0.0476, BOSS_Z]),
+    "RL": np.array([ 0.1329, -0.0468, BOSS_Z]),
+    "RR": np.array([-0.1338, -0.0472, BOSS_Z]),
 }
 
 ROTATE_STEPS = 300
@@ -243,6 +301,32 @@ def get_tip(m, d):
     sid = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_SITE, "gripper_tip")
     return d.site_xpos[sid].copy()
 
+def get_site_pos(m, d, site_name):
+    """World position of a named MuJoCo site."""
+    mujoco.mj_forward(m, d)
+    sid = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_SITE, site_name)
+    if sid < 0:
+        raise ValueError(f"Site not found: {site_name}")
+    return d.site_xpos[sid].copy()
+
+def ikc_site(m, d, target, seed, site_name="gripper_tip", target_quat=None):
+    """IK to place an arbitrary tool site at target.
+
+    solve_ik() is hard-wired to gripper_tip. For the internal plate gripper we
+    need to command plate_lock_tcp, which sits between the two L-hooks. This
+    small wrapper temporarily aliases the requested site by solving a local
+    equivalent target for gripper_tip based on the current tool geometry.
+    """
+    if site_name == "gripper_tip":
+        return ikc(m, d, target, seed, target_quat=target_quat)
+    mujoco.mj_forward(m, d)
+    grip = get_site_pos(m, d, "gripper_tip")
+    site = get_site_pos(m, d, site_name)
+    # Under a fixed straight-down tool orientation, this site-to-gripper offset
+    # is stable in world during the motion.
+    equiv_gripper_target = np.array(target) - (site - grip)
+    return ikc(m, d, equiv_gripper_target, seed, target_quat=target_quat)
+
 def move_to(m, d, v, ctrl, label, locked=None):
     d.ctrl[:] = ctrl
     cons = 0; steps = 0
@@ -256,6 +340,84 @@ def move_to(m, d, v, ctrl, label, locked=None):
         if steps > 8000: print(f"  TIMEOUT {label}"); break
     print(f"  ✓ {label} ({steps}st err={np.max(np.abs(d.qpos[:6]-ctrl[:6])):.4f}rad)")
 
+
+def dwell_seconds(m, d, v, seconds=1.0, locked=None, label="dwell"):
+    """Hold the current robot pose for a fixed time while staged parts stay locked."""
+    steps = max(1, int(seconds / m.opt.timestep))
+    for _ in range(steps):
+        if locked:
+            for fj, fv, pos, q in locked:
+                lock_part(d, fj, fv, pos, q)
+        mujoco.mj_step(m, d)
+        v.sync()
+    print(f"  ✓ {label} ({seconds:.1f}s hold)")
+
+
+def set_pin_lock_visual(m, amount):
+    """Set visual L-hook lock amount: 0=inward/unlocked, 1=outward/locked."""
+    a = float(np.clip(amount, 0.0, 1.0))
+    for name, base in PIN_LOCK_GEOM_BASE.items():
+        gid = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_GEOM, name)
+        if gid >= 0:
+            direction = -1.0 if "_L_" in name else 1.0
+            pos = base.copy()
+            pos[0] += direction * PIN_LOCK_TRAVEL * a
+            m.geom_pos[gid] = pos
+    for name, base in PIN_LOCK_SITE_BASE.items():
+        sid = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_SITE, name)
+        if sid >= 0:
+            direction = -1.0 if "_L_" in name else 1.0
+            pos = base.copy()
+            pos[0] += direction * PIN_LOCK_TRAVEL * a
+            m.site_pos[sid] = pos
+
+
+def animate_pin_lock(m, d, v, start, end, seconds=1.0, locked=None, label="animate pins"):
+    """Animate visual L-hooks outward/inward while the robot holds position."""
+    steps = max(1, int(seconds / m.opt.timestep))
+    ctrl_hold = d.ctrl.copy()
+    for i in range(steps):
+        t = (i + 1) / steps
+        s = t * t * (3.0 - 2.0 * t)
+        set_pin_lock_visual(m, start + (end - start) * s)
+        d.ctrl[:] = ctrl_hold
+        if locked:
+            for fj, fv, pos, q in locked:
+                lock_part(d, fj, fv, pos, q)
+        mujoco.mj_step(m, d)
+        v.sync()
+    print(f"  ✓ {label} ({seconds:.1f}s)")
+
+
+def animate_pin_lock_carry(m, d, v, fj, fv, co, start, end, seconds=1.0,
+                           site_name=PLATE_LOCK_SITE, locked=None,
+                           label="animate pins while carrying"):
+    """Animate L-hooks while the plate is still carried by plate_lock_tcp.
+
+    This prevents the plate from snapping/dropping to its final freejoint pose
+    before the visual pin retraction has completed.
+    """
+    steps = max(1, int(seconds / m.opt.timestep))
+    ctrl_hold = d.ctrl.copy()
+    sid = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_SITE, site_name)
+    for i in range(steps):
+        t = (i + 1) / steps
+        s = t * t * (3.0 - 2.0 * t)
+        set_pin_lock_visual(m, start + (end - start) * s)
+        d.ctrl[:] = ctrl_hold
+        if locked:
+            for lfj, lfv, pos, q in locked:
+                lock_part(d, lfj, lfv, pos, q)
+        mujoco.mj_forward(m, d)
+        site = d.site_xpos[sid].copy()
+        d.qpos[fj:fj+3]   = site + co
+        d.qpos[fj+3:fj+7] = PLATE_FINAL_QUAT
+        d.qvel[fv:fv+6]   = 0
+        mujoco.mj_step(m, d)
+        v.sync()
+    print(f"  ✓ {label} ({seconds:.1f}s)")
+
+
 def carry_to(m, d, v, fj, fv, co, ctrl, label, locked=None):
     d.ctrl[:] = ctrl
     sid = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_SITE, "gripper_tip")
@@ -267,7 +429,7 @@ def carry_to(m, d, v, fj, fv, co, ctrl, label, locked=None):
         tip = d.site_xpos[sid].copy()
         d.qpos[fj:fj+3]   = tip + co
 
-        d.qpos[fj+3:fj+7] = [1,0,0,0]
+        d.qpos[fj+3:fj+7] = PLATE_FINAL_QUAT
         d.qvel[fv:fv+6]   = 0
         mujoco.mj_step(m, d); v.sync()
         err = np.max(np.abs(d.qpos[:6]-ctrl[:6]))
@@ -276,6 +438,26 @@ def carry_to(m, d, v, fj, fv, co, ctrl, label, locked=None):
         if steps > 8000: print(f"  TIMEOUT {label}"); break
     print(f"  ✓ {label} ({steps}st err={np.max(np.abs(d.qpos[:6]-ctrl[:6])):.4f}rad)")
         
+def carry_to_site(m, d, v, fj, fv, co, ctrl, label, site_name, locked=None):
+    """Carry a free body using any tool site, not only gripper_tip."""
+    d.ctrl[:] = ctrl
+    sid = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_SITE, site_name)
+    cons = 0; steps = 0
+    while cons < SETTLE_STEPS:
+        if locked:
+            for lfj,lfv,pos,q in locked: lock_part(d,lfj,lfv,pos,q)
+        mujoco.mj_forward(m, d)
+        site = d.site_xpos[sid].copy()
+        d.qpos[fj:fj+3]   = site + co
+        d.qpos[fj+3:fj+7] = PLATE_FINAL_QUAT
+        d.qvel[fv:fv+6]   = 0
+        mujoco.mj_step(m, d); v.sync()
+        err = np.max(np.abs(d.qpos[:6]-ctrl[:6]))
+        cons = cons+1 if err < SETTLE_TOL else 0
+        steps += 1
+        if steps > 8000: print(f"  TIMEOUT {label}"); break
+    print(f"  ✓ {label} ({steps}st err={np.max(np.abs(d.qpos[:6]-ctrl[:6])):.4f}rad)")
+
 def release_retract(m, d, v, fj, fv, co, hold_ctrl, ret_ctrl, label, locked=None,
                     place_pos=None):
     """Hold at tip+co, snap to place_pos, retract with part hard-locked every step."""
@@ -304,8 +486,9 @@ def release_retract(m, d, v, fj, fv, co, hold_ctrl, ret_ctrl, label, locked=None
             for lfj,lfv,pos,q in locked: lock_part(d,lfj,lfv,pos,q)
         mujoco.mj_step(m, d); v.sync()
     print(f"  ✓ {label} released")
-def ikc(m, d, tgt, seed, pos_only=False):
-    j = solve_ik(m, d, tgt, seed, target_quat=(False if pos_only else None))
+def ikc(m, d, tgt, seed, pos_only=False, target_quat=None):
+    tq = False if pos_only else target_quat
+    j = solve_ik(m, d, tgt, seed, target_quat=tq)
     c = np.zeros(m.nu); c[:6] = j; return c
 
 def ik_move(m, d, v, tgt, seed, label, locked=None, pos_only=False):
@@ -378,64 +561,122 @@ def _body_alpha(m, bname, a):
     for i in range(m.body_geomnum[bid]):
         m.geom_rgba[m.body_geomadr[bid]+i][3] = a
 
-def hide_dock_vis(m, tool):
+def hide_dock_vis(m, tool, d=None, v=None):
     body = {"vac": "dock_vac_vis", "pin": "dock_pin_vis", "screwdriver": "dock_sd_vis"}[tool]
     _body_alpha(m, body, 0.0)
+    if d is not None:
+        mujoco.mj_forward(m, d)
+    if v is not None:
+        v.sync()
 
-def show_dock_vis(m, tool):
+
+def show_dock_vis(m, tool, d=None, v=None):
     body = {"vac": "dock_vac_vis", "pin": "dock_pin_vis", "screwdriver": "dock_sd_vis"}[tool]
     _body_alpha(m, body, 1.0)
+    if d is not None:
+        mujoco.mj_forward(m, d)
+    if v is not None:
+        v.sync()
 
 VAC_G = ["g_mount_flange","g_base_body","g_base_ring","g_neck","g_bellows","g_bellows2","g_cup_rim"]
-PIN_G = ["pin_mount_flange","pin_base_body","pin_base_ring","pin_block",
-         "pin_L_web","pin_L_foot","pin_R_web","pin_R_foot"]
+PIN_G = ["pin_mount_flange","pin_base_body","pin_base_ring",
+         "ilock_base_block", "ilock_L_stem", "ilock_L_hook",
+         "ilock_R_stem", "ilock_R_hook"]
 SD_G  = ["sd_flange","sd_spring","sd_body","sd_shaft","sd_bit"]
+# Version A uses a deterministic logical attachment, not physical hook contact.
+# Keep the L-hook geometry visual only to avoid MuJoCo contact explosions when
+# the pins pass through the thin STL/mesh plate.
+PIN_COLLISION_G = set()
 
-def show_tool(m, tool, d=None, v=None):
+def _set_geom_alpha(m, geom_names, alpha):
+    for g in geom_names:
+        gid = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_GEOM, g)
+        if gid >= 0:
+            m.geom_rgba[gid][3] = alpha
+            if g in PIN_COLLISION_G and alpha <= 0.0:
+                m.geom_contype[gid] = 0
+                m.geom_conaffinity[gid] = 0
+            elif g in PIN_COLLISION_G and alpha > 0.0:
+                m.geom_contype[gid] = 1
+                m.geom_conaffinity[gid] = 1
+
+
+def hide_all_robot_tools(m, d=None, v=None, locked=None):
+    """Instantly hide all robot-mounted tool geoms.
+
+    This avoids one-frame flashes during tool swaps. Fading inactive tools can
+    briefly reveal the wrong gripper in MuJoCo's viewer; a hard hide gives a
+    cleaner tool-change visual.
+    """
+    all_robot_tool_geoms = VAC_G + PIN_G + SD_G
+    _set_geom_alpha(m, all_robot_tool_geoms, 0.0)
+    if d is not None:
+        if locked:
+            for fj, fv, pos, q in locked:
+                lock_part(d, fj, fv, pos, q)
+        mujoco.mj_forward(m, d)
+    if v is not None:
+        v.sync()
+
+
+def show_tool(m, tool, d=None, v=None, locked=None):
+    """Show exactly one robot-mounted tool, or none, with no transition flash.
+
+    Valid tool values: 'vacuum', 'pin', 'screwdriver', 'none'.
+    """
     all_g = {"vacuum": VAC_G, "pin": PIN_G, "screwdriver": SD_G}
-    if tool == "none":
-        # Hide all tool geoms — bare flange during tool change
-        sg, hg = [], [g for glist in all_g.values() for g in glist]
-    else:
-        sg = all_g[tool]
-        hg = [g for k, glist in all_g.items() if k != tool for g in glist]
-    N  = 200 if d is not None else 1
-    for s in range(N):
-        te = ((s+1)/N)**2*(3-2*(s+1)/N)
-        for g in sg:
-            gid = mujoco.mj_name2id(m,mujoco.mjtObj.mjOBJ_GEOM,g)
-            if gid>=0: m.geom_rgba[gid][3] = te
-        for g in hg:
-            gid = mujoco.mj_name2id(m,mujoco.mjtObj.mjOBJ_GEOM,g)
-            if gid>=0: m.geom_rgba[gid][3] = 1.0-te
-        if d is not None: mujoco.mj_step(m,d); v.sync()
+    hide_all_robot_tools(m, d=None, v=None, locked=None)
 
+    if tool != "none":
+        if tool == "pin":
+            set_pin_lock_visual(m, 0.0)
+        _set_geom_alpha(m, all_g[tool], 1.0)
 
-def drive_screw(m, d, v, name, sfj, sfv, placed_locks=None, home_ctrl=None):
+    if d is not None:
+        if locked:
+            for fj, fv, pos, q in locked:
+                lock_part(d, fj, fv, pos, q)
+        mujoco.mj_forward(m, d)
+    if v is not None:
+        v.sync()
+
+def drive_screw(m, d, v, name, sfj, sfv, placed_locks=None, home_ctrl=None, screw_box_locks=None):
     """Pick one screw from the screw box and drive it into the matching boss.
 
-    The screw is carried by the real screwdriver_tip site, not an approximate
-    Z offset from gripper_tip. Screws start welded in the screw-box grid; the
-    selected screw is released at pickup, then welded to the bottom case after
-    driving.
+    Visual/robust behavior:
+      - all screws remain locked in the screw box until the selected screw is picked
+      - the selected screw is snapped to the real screwdriver_tip site while traveling
+      - no plain move_to()/ik_move() is used while the selected screw is attached
+      - after driving, the screw is left at its installed pose and welded to bottom case
+        so it visually fastens the aluminum plate to the bottom case (Option C).
     """
+    placed_locks = placed_locks or []
+    screw_box_locks = screw_box_locks or []
+
     pick_origin = SCREW_PICK_POS[name]
     install_origin = np.array([SCREW_INSTALL_POS[name][0], SCREW_INSTALL_POS[name][1], SCREW_INSTALLED_Z])
     sid_sd = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_SITE, "screwdriver_tip")
     print(f"\n  [SCREW {name}]")
 
-    box_wid = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_EQUALITY, f"weld_box_screw_{name}")
-    if box_wid >= 0:
-        d.eq_active[box_wid] = 0
+    current_lock = (sfj, sfv, pick_origin, None)
+    future_box_locks = [lk for lk in screw_box_locks if lk[0] != sfj]
+    pre_pick_locks = placed_locks + future_box_locks + [current_lock]
+    carry_locks    = placed_locks + future_box_locks
 
     pick_sd_tip = pick_origin + np.array([0.0, 0.0, SCREW_ENGAGE_Z])
     pick_hover  = gripper_target_for_sd_tip(pick_sd_tip + np.array([0.0, 0.0, SCREW_BOX_HOVER_CLEAR]))
     pick_target = gripper_target_for_sd_tip(pick_sd_tip)
 
-    ik_move(m, d, v, pick_hover, SCREW_IK_SEED,
-            f"  SD->box hover ({name})", locked=placed_locks)
-    ik_move(m, d, v, pick_target, d.qpos[:6].copy(),
-            f"  SD->box lower ({name})", locked=placed_locks)
+    # Seed from the current posture so the arm chooses the nearby/right-side branch,
+    # not a long rotation through the dock/feeder-tray side of the cell.
+    pick_hover_ctrl = ikc(m, d, pick_hover, d.qpos[:6].copy(), pos_only=False)
+    move_to(m, d, v, pick_hover_ctrl, f"  SD->box hover ({name})", locked=pre_pick_locks)
+    pick_ctrl = ikc(m, d, pick_target, d.qpos[:6].copy(), pos_only=False)
+    move_to(m, d, v, pick_ctrl, f"  SD->box lower ({name})", locked=pre_pick_locks)
+
+    box_wid = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_EQUALITY, f"weld_box_screw_{name}")
+    if box_wid >= 0:
+        d.eq_active[box_wid] = 0
 
     mujoco.mj_forward(m, d)
     sd_tip = d.site_xpos[sid_sd].copy()
@@ -444,48 +685,58 @@ def drive_screw(m, d, v, name, sfj, sfv, placed_locks=None, home_ctrl=None):
     d.qvel[sfv:sfv+6]   = 0
     print(f"  attached {name} to screwdriver_tip")
 
-    def carry_screw(ctrl, n=80):
-        for _ in range(n):
-            d.ctrl[:] = ctrl
+    def carry_screw_to(ctrl, label, max_steps=8000):
+        """Move robot to ctrl while deterministically carrying the screw at the bit."""
+        d.ctrl[:] = ctrl
+        cons = 0; steps = 0
+        while cons < SETTLE_STEPS:
+            if carry_locks:
+                for lfj, lfv, pos, q in carry_locks:
+                    lock_part(d, lfj, lfv, pos, q)
             mujoco.mj_forward(m, d)
             sd_t = d.site_xpos[sid_sd].copy()
             d.qpos[sfj:sfj+3]   = screw_origin_for_sd_tip(sd_t)
             d.qpos[sfj+3:sfj+7] = [1, 0, 0, 0]
             d.qvel[sfv:sfv+6]   = 0
-            if placed_locks:
-                for lfj, lfv, pos, q in placed_locks:
-                    lock_part(d, lfj, lfv, pos, q)
             mujoco.mj_step(m, d); v.sync()
+            err = np.max(np.abs(d.qpos[:6]-ctrl[:6]))
+            cons = cons+1 if err < SETTLE_TOL else 0
+            steps += 1
+            if steps > max_steps:
+                print(f"  TIMEOUT {label}"); break
+        print(f"  ✓ {label} ({steps}st err={np.max(np.abs(d.qpos[:6]-ctrl[:6])):.4f}rad)")
 
     raise_ctrl = ikc(m, d, pick_hover, d.qpos[:6].copy(), pos_only=False)
-    carry_screw(raise_ctrl, n=200)
-    move_to(m, d, v, home_ctrl, f"  home before {name}", locked=placed_locks)
+    carry_screw_to(raise_ctrl, f"  lift screw {name}")
+
+    # v7 motion plan: use a local high transfer waypoint between screw box and pallet.
+    # This prevents the solver from taking the long ~270 deg branch over the tool dock.
+    transfer_ctrl = ikc(m, d, SCREW_LOCAL_TRANSFER, d.qpos[:6].copy(), pos_only=False)
+    carry_screw_to(transfer_ctrl, f"  local transfer to pallet corridor {name}")
 
     drive_sd_tip = install_origin + np.array([0.0, 0.0, SCREW_ENGAGE_Z])
     boss_hover   = gripper_target_for_sd_tip(drive_sd_tip + np.array([0.0, 0.0, SCREW_DRIVE_CLEAR]))
     boss_drive   = gripper_target_for_sd_tip(drive_sd_tip)
 
-    hover_ctrl = ik_move(m, d, v, boss_hover, SCREW_BOSS_SEED,
-                         f"  hover {name}", locked=placed_locks)
-    carry_screw(hover_ctrl)
+    hover_ctrl = ikc(m, d, boss_hover, d.qpos[:6].copy(), pos_only=False)
+    carry_screw_to(hover_ctrl, f"  hover {name}")
 
-    drive_ctrl = ik_move(m, d, v, boss_drive, d.qpos[:6].copy(),
-                         f"  lower to screw height {name}", locked=placed_locks)
-    carry_screw(drive_ctrl, n=120)
+    drive_ctrl = ikc(m, d, boss_drive, d.qpos[:6].copy(), pos_only=False)
+    carry_screw_to(drive_ctrl, f"  lower to screw height {name}")
 
     print(f"  Rotating {name} at drive height...")
     w3_0 = d.qpos[5]
     for i in range(ROTATE_STEPS):
         d.ctrl[:] = drive_ctrl
         d.ctrl[5] = w3_0 + (i / ROTATE_STEPS) * (3 * 2 * np.pi)
+        if carry_locks:
+            for lfj, lfv, pos, q in carry_locks:
+                lock_part(d, lfj, lfv, pos, q)
         mujoco.mj_forward(m, d)
         sd_t = d.site_xpos[sid_sd].copy()
         d.qpos[sfj:sfj+3]   = screw_origin_for_sd_tip(sd_t)
         d.qpos[sfj+3:sfj+7] = [1, 0, 0, 0]
         d.qvel[sfv:sfv+6]   = 0
-        if placed_locks:
-            for lfj, lfv, pos, q in placed_locks:
-                lock_part(d, lfj, lfv, pos, q)
         mujoco.mj_step(m, d); v.sync()
 
     d.qpos[sfj:sfj+3]   = install_origin
@@ -495,10 +746,14 @@ def drive_screw(m, d, v, name, sfj, sfv, placed_locks=None, home_ctrl=None):
     if case_wid >= 0:
         d.eq_active[case_wid] = 1
     d.ctrl[5] = w3_0
-    print(f"  {name} installed + welded to bottom case")
+    print(f"  {name} installed through plate + welded to bottom case")
 
-    move_to(m, d, v, hover_ctrl, f"  retract {name}", locked=placed_locks)
+    move_to(m, d, v, hover_ctrl, f"  retract {name}", locked=carry_locks)
 
+    # Return to the local corridor before the next screw-box approach. This keeps the
+    # next IK solve on the short branch instead of letting the shoulder swing around.
+    transfer_back_ctrl = ikc(m, d, SCREW_LOCAL_TRANSFER, d.qpos[:6].copy(), pos_only=False)
+    move_to(m, d, v, transfer_back_ctrl, f"  transfer back to screw-box corridor {name}", locked=placed_locks + future_box_locks)
 
 
 # ---------------------------------------------------------------------------
@@ -542,6 +797,147 @@ def dock_lower(m, d, v, xy, z, label, locked=None):
     return c
 
 
+def set_equality_active(m, d, weld_name, active):
+    """Enable/disable a named equality weld if it exists.
+
+    The internal plate gripper still updates the free body pose deterministically
+    every step for robustness. This weld flag is used as an explicit logical
+    attach/release marker and is safe if the weld is absent.
+    """
+    wid = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_EQUALITY, weld_name)
+    if wid >= 0:
+        m.eq_active0[wid] = 1 if active else 0
+        d.eq_active[wid] = 1 if active else 0
+        return True
+    return False
+
+
+def phase_place_plate_internal_lock(m, d, v, fj, fv, pw, plw, waiting, timer):
+    """Pick and place the aluminum keyboard plate with the internal L-hook gripper.
+
+    State sequence:
+      1. approach above two symmetric third-row switch cutouts
+      2. insert pins through cutouts
+      3. logical lock: hooks are considered shifted outward under the plate
+      4. attach/carry plate by deterministic snap to plate_lock_tcp
+      5. lift
+      6. move to bottom case
+      7. lower near seating height
+      8. detach/release slightly above final seating height
+      9. unlock
+     10. retract upward
+    """
+    print("  [plate gripper] internal two-pin L-hook sequence")
+    print(f"  selected cutouts: L=({PLATE_PIN_LEFT_X:.5f}, {PLATE_PIN_Y:.5f}) m, "
+          f"R=({PLATE_PIN_RIGHT_X:.5f}, {PLATE_PIN_Y:.5f}) m")
+
+    # The lock TCP is between the two hook contact sites. Target it at the
+    # plate centerline; the hook site is lowered just below the plate underside.
+    insert_site_world = pw + np.array([0.0, 0.0, -PLATE_INSERT_CLEAR])
+    approach_site_world = insert_site_world + np.array([0.0, 0.0, PLATE_APPROACH_CLEAR])
+
+    print(f"  approach lock TCP -> {approach_site_world.round(4)}")
+    approach_ctrl = ikc_site(m, d, approach_site_world, PICK_IK_SEED,
+                             site_name=PLATE_LOCK_SITE, target_quat=STRICT_DOWN_QUAT)
+    move_to(m, d, v, approach_ctrl, "  approach above plate cutouts",
+            locked=[(fj, fv, pw, PLATE_TRAY_QUAT)] + waiting)
+
+    print(f"  insert pins through cutouts -> {insert_site_world.round(4)}")
+    insert_ctrl = ikc_site(m, d, insert_site_world, PICK_IK_SEED,
+                           site_name=PLATE_LOCK_SITE, target_quat=STRICT_DOWN_QUAT)
+    move_to(m, d, v, insert_ctrl, "  insert L-hook pins",
+            locked=[(fj, fv, pw, PLATE_TRAY_QUAT)] + waiting)
+
+    # Visual lock: pins slide outward inside the cutouts, then hold so the
+    # mechanical capture is visible before the robot lifts the plate.
+    animate_pin_lock(m, d, v, 0.0, 1.0, seconds=1.0,
+                     locked=[(fj, fv, pw, PLATE_TRAY_QUAT)] + waiting,
+                     label="engage L-hook pins outward")
+    dwell_seconds(m, d, v, 1.0, locked=[(fj, fv, pw, PLATE_TRAY_QUAT)] + waiting,
+                  label="hold after pin engagement")
+    print("  ✓ hooks locked outward under plate cutout bridges")
+
+    # Attach plate to the dock-matched hook-tip TCP, not to the flange.
+    # This carry offset is intentionally computed from plate_lock_tcp after insertion,
+    # so the plate visually follows the internal pins/hooks while final placement remains tuned.
+    lock_site_at_pick = get_site_pos(m, d, PLATE_LOCK_SITE)
+    co = pw - lock_site_at_pick
+    print(f"  lock_site_at_pick: {lock_site_at_pick.round(4)}")
+    print(f"  plate carry_offset from lock TCP: {co.round(4)}  mag={np.linalg.norm(co)*1000:.1f}mm")
+
+    # Do NOT enable the MJCF weld here. A precompiled equality weld stores a fixed
+    # relative pose from model load time; turning it on after the gripper is at
+    # the plate can create a large constraint impulse and make the arm/plate
+    # explode or the joint controller timeout. We carry the plate deterministically
+    # by snapping the plate freejoint to plate_lock_tcp + carry_offset each step.
+    # set_equality_active(m, d, "weld_alu_plate", True)
+    for i in range(60):
+        te = ((i+1)/60)**2*(3-2*(i+1)/60)
+        d.ctrl[:] = insert_ctrl
+        if waiting:
+            for lfj,lfv,pos,q in waiting: lock_part(d,lfj,lfv,pos,q)
+        site = get_site_pos(m, d, PLATE_LOCK_SITE)
+        tgt = site + co
+        d.qpos[fj:fj+3]   = pw + (tgt-pw)*te
+        d.qpos[fj+3:fj+7] = PLATE_TRAY_QUAT
+        d.qvel[fv:fv+6]   = 0
+        mujoco.mj_step(m, d); v.sync()
+    print("  ✓ plate attached to internal L-hook gripper")
+
+    # Lift while carrying from the internal lock TCP.
+    lift_ctrl = ikc_site(m, d, insert_site_world + np.array([0,0,0.090]),
+                         PICK_IK_SEED, site_name=PLATE_LOCK_SITE,
+                         target_quat=STRICT_DOWN_QUAT)
+    carry_to_site(m, d, v, fj, fv, co, lift_ctrl, "  lift locked plate",
+                  PLATE_LOCK_SITE, locked=waiting)
+
+    # Move to the bottom case and lower. Release slightly above final seating so
+    # the hooks can unlock before the tool retracts through the switch cutouts.
+    PLATE_PLACE_Z_BIAS = 0.007
+    place_lock_site = plw - co + np.array([0.0, 0.0, PLATE_PLACE_Z_BIAS])
+    hover_ctrl = ikc_site(m, d, place_lock_site + np.array([0,0,0.085]),
+                          PLACE_IK_SEED, site_name=PLATE_LOCK_SITE,
+                          target_quat=STRICT_DOWN_QUAT)
+    carry_to_site(m, d, v, fj, fv, co, hover_ctrl, "  move locked plate over case",
+                  PLATE_LOCK_SITE, locked=waiting)
+
+    # Backsolve the gripper/TCP placement from the tuned final plate pose:
+    #   carried_plate_pos = plate_lock_tcp_world + co
+    # therefore:
+    #   plate_lock_tcp_world = final_plate_pos - co
+    # With PLATE_RELEASE_CLEAR=0, release_site == place_lock_site and the carried
+    # plate stays exactly at PLATE_FINAL_POS while the pins retract.
+    release_site = place_lock_site + np.array([0, 0, PLATE_RELEASE_CLEAR])
+    release_ctrl = ikc_site(m, d, release_site, PLACE_IK_SEED,
+                            site_name=PLATE_LOCK_SITE,
+                            target_quat=STRICT_DOWN_QUAT)
+    carry_to_site(m, d, v, fj, fv, co, release_ctrl, "  lower carried plate to final seated pose",
+                  PLATE_LOCK_SITE, locked=waiting)
+
+    # Do not lower below final pose. Retract the pins while the plate is still held
+    # at the backsolved final height, then release/snap to the same final pose.
+    animate_pin_lock_carry(m, d, v, fj, fv, co, 1.0, 0.0, seconds=1.0,
+                           site_name=PLATE_LOCK_SITE, locked=waiting,
+                           label="unlock L-hook pins inward while plate is still held at final pose")
+
+    print("  ✓ hooks unlocked inward; releasing plate at final seated pose")
+    set_equality_active(m, d, "weld_alu_plate", False)
+    d.qpos[fj:fj+3] = plw
+    d.qpos[fj+3:fj+7] = PLATE_FINAL_QUAT
+    d.qvel[fv:fv+6] = 0
+    dwell_seconds(m, d, v, 0.5, locked=waiting + [(fj, fv, plw, PLATE_FINAL_QUAT)],
+                  label="hold after plate release")
+
+    print("  ✓ plate released; retracting internal gripper")
+    retract_ctrl = ikc_site(m, d, release_site + np.array([0,0,0.075]),
+                            PLACE_IK_SEED, site_name=PLATE_LOCK_SITE,
+                            target_quat=STRICT_DOWN_QUAT)
+    move_to(m, d, v, retract_ctrl, "  retract internal gripper",
+            locked=waiting + [(fj, fv, plw, PLATE_FINAL_QUAT)])
+    timer.mark(d, "Place s1_alu_plate")
+    return co
+
+
 def phase6_vac_to_pin(m, d, v, placed_locks, timer):
     print(); print("="*60); print("[PHASE 6] Vacuum -> Pin Gripper"); print("="*60)
 
@@ -551,10 +947,11 @@ def phase6_vac_to_pin(m, d, v, placed_locks, timer):
 
     # 2. Lower straight down onto vac cup
     dock_lower(m, d, v, DOCK_VAC_XY, DOCK_SEAT_Z, "  lower → vac seat", locked=placed_locks)
+    dwell_seconds(m, d, v, 1.0, locked=placed_locks, label="hold at vacuum dock before release")
 
     # 3. Detach vacuum — show empty flange (no tool geoms visible)
-    show_tool(m, "none", d, v)
-    show_dock_vis(m, "vac")
+    show_tool(m, "none", d, v, locked=placed_locks)
+    show_dock_vis(m, "vac", d, v)
     print("  ✓ Vacuum detached — docked")
 
     # 4. Raise straight up from vac slot
@@ -566,10 +963,11 @@ def phase6_vac_to_pin(m, d, v, placed_locks, timer):
 
     # 6. Lower straight down onto pin cup
     dock_lower(m, d, v, DOCK_PIN_XY, DOCK_SEAT_Z, "  lower → pin seat", locked=placed_locks)
+    dwell_seconds(m, d, v, 1.0, locked=placed_locks, label="hold at pin dock before pickup")
 
-    # 7. Attach pin gripper
-    show_tool(m, "pin", d, v)
-    hide_dock_vis(m, "pin")
+    # 7. Attach pin gripper: hide docked visual first, then show robot-mounted tool.
+    hide_dock_vis(m, "pin", d, v)
+    show_tool(m, "pin", d, v, locked=placed_locks)
     print("  ✓ Pin gripper attached")
 
     # 8. Raise straight up with pin gripper
@@ -587,10 +985,11 @@ def phase8_pin_to_sd(m, d, v, placed_locks, timer):
 
     # 2. Lower onto pin cup
     dock_lower(m, d, v, DOCK_PIN_XY, DOCK_SEAT_Z, "  lower → pin seat", locked=placed_locks)
+    dwell_seconds(m, d, v, 1.0, locked=placed_locks, label="hold at pin dock before release")
 
     # 3. Detach pin
-    show_tool(m, "none", d, v)
-    show_dock_vis(m, "pin")
+    show_tool(m, "none", d, v, locked=placed_locks)
+    show_dock_vis(m, "pin", d, v)
     print("  ✓ Pin detached — docked")
 
     # 4. Raise from pin slot
@@ -602,10 +1001,11 @@ def phase8_pin_to_sd(m, d, v, placed_locks, timer):
 
     # 6. Lower onto SD cup
     dock_lower(m, d, v, DOCK_SD_XY, DOCK_SEAT_Z, "  lower → SD seat", locked=placed_locks)
+    dwell_seconds(m, d, v, 1.0, locked=placed_locks, label="hold at screwdriver dock before pickup")
 
-    # 7. Attach screwdriver
-    show_tool(m, "screwdriver", d, v)
-    hide_dock_vis(m, "screwdriver")
+    # 7. Attach screwdriver: hide docked visual first, then show robot-mounted tool.
+    hide_dock_vis(m, "screwdriver", d, v)
+    show_tool(m, "screwdriver", d, v, locked=placed_locks)
     print("  ✓ Screwdriver attached")
 
     # 8. Raise with screwdriver
@@ -616,22 +1016,45 @@ def phase8_pin_to_sd(m, d, v, placed_locks, timer):
 def phase9_screws(m, d, v, home_ctrl, placed_locks, timer):
     print(); print("="*60); print("[PHASE 9] Screwdriving"); print("="*60)
     screws = {n: get_body_jnt(m, f"screw_{n}") for n in SCREW_NAMES}
-    for name in SCREW_NAMES:
+    for i, name in enumerate(SCREW_NAMES):
         sfj, sfv = screws[name]
-        drive_screw(m, d, v, name, sfj, sfv, placed_locks, home_ctrl)
+        remaining_box_locks = [(screws[n][0], screws[n][1], SCREW_PICK_POS[n], None)
+                               for n in SCREW_NAMES[i:]]
+        drive_screw(m, d, v, name, sfj, sfv, placed_locks, home_ctrl,
+                    screw_box_locks=remaining_box_locks)
         timer.mark(d, f"Screw {name}")
 
-    # Return SD to dock: swing to SD hover, lower, detach, raise
+    # Return SD to dock, then pick vacuum gripper before going home.
+    # This leaves the cell in a realistic ready state: robot at home + vacuum attached.
     print("\n  Returning SD...")
     dock_ik_move(m, d, v, DOCK_SD_XY, DOCK_HOVER_Z, DOCK_SD_SEED,
                  "  swing → SD return hover", locked=placed_locks)
     dock_lower(m, d, v, DOCK_SD_XY, DOCK_SEAT_Z, "  lower → SD seat", locked=placed_locks)
-    show_tool(m, "none", d, v)
-    show_dock_vis(m, "screwdriver")
+    dwell_seconds(m, d, v, 1.0, locked=placed_locks, label="hold at screwdriver dock before release")
+    show_tool(m, "none", d, v, locked=placed_locks)
+    show_dock_vis(m, "screwdriver", d, v)
     print("  ✓ SD returned to dock")
     dock_lower(m, d, v, DOCK_SD_XY, DOCK_HOVER_Z, "  raise from SD", locked=placed_locks)
-    move_to(m, d, v, home_ctrl, "  final home", locked=placed_locks)
+
+    print("\n  Re-attaching vacuum gripper before home...")
+    dock_ik_move(m, d, v, DOCK_VAC_XY, DOCK_HOVER_Z, DOCK_VAC_SEED,
+                 "  swing → vac pickup hover", locked=placed_locks)
+    dock_lower(m, d, v, DOCK_VAC_XY, DOCK_SEAT_Z, "  lower → vac pickup seat", locked=placed_locks)
+    dwell_seconds(m, d, v, 1.0, locked=placed_locks, label="hold at vacuum dock before pickup")
+    hide_dock_vis(m, "vac", d, v)
+    show_tool(m, "vacuum", d, v, locked=placed_locks)
+    print("  ✓ Vacuum gripper attached")
+    dock_lower(m, d, v, DOCK_VAC_XY, DOCK_HOVER_Z, "  raise with vacuum", locked=placed_locks)
+
+    move_to(m, d, v, home_ctrl, "  final home with vacuum", locked=placed_locks)
     print("✓ All phases complete.")
+
+
+
+def tray_lock_for_part(b, part_jnts):
+    """Return a tray lock tuple; aluminum plate waits rotated in the feeder tray."""
+    q = PLATE_TRAY_QUAT if b == "s1_alu_plate" else None
+    return (part_jnts[b][0], part_jnts[b][1], PICK_WORLD[b], q)
 
 
 # ---------------------------------------------------------------------------
@@ -673,6 +1096,10 @@ def main():
               f"  {'OK' if ok else 'MISMATCH - check XML body order!'}")
         part_jnts[bname] = (fj, fv)
 
+    screw_jnts = {n: get_body_jnt(m, f"screw_{n}") for n in SCREW_NAMES}
+    screw_box_locks = [(screw_jnts[n][0], screw_jnts[n][1], SCREW_PICK_POS[n], None)
+                       for n in SCREW_NAMES]
+
     with mujoco.viewer.launch_passive(m, d) as v:
         v.cam.lookat[:] = [0.0, 0.3, 0.83]
         v.cam.distance  = 1.5
@@ -681,11 +1108,11 @@ def main():
 
         # Startup state: vacuum is on the robot, pin and SD are in the dock
         show_tool(m, "vacuum")   # show vacuum on robot
-        hide_dock_vis(m, "vac")        # vac slot in dock starts empty
+        hide_dock_vis(m, "vac", d, v)        # vac slot in dock starts empty
         # pin and SD dock visuals start visible (set in XML already)
 
         all_locks = [(part_jnts[b][0], part_jnts[b][1], PICK_WORLD[b], None)
-                     for b in PARTS] + [TRAY_LOCK]
+                     for b in PARTS] + [TRAY_LOCK] + screw_box_locks
         move_to(m, d, v, home_ctrl, "home", locked=all_locks)
 
         timer = CycleTimer("Station 1")
@@ -697,8 +1124,8 @@ def main():
             fj_adr, fv_adr = part_jnts[bname]
 
             # Parts still in tray (excluding current)
-            waiting = [(part_jnts[b][0], part_jnts[b][1], PICK_WORLD[b], None)
-                       for b in remaining if b != bname] + [TRAY_LOCK]
+            waiting = [tray_lock_for_part(b, part_jnts)
+                       for b in remaining if b != bname] + [TRAY_LOCK] + screw_box_locks
 
             use_pin = (bname == "s1_alu_plate")
             print(); print("="*60)
@@ -714,14 +1141,17 @@ def main():
                 # Lock plate at its tray position — weld_plate_pz is disabled,
                 # weld_plate_world not yet active, so plate falls without this
                 plate_fj, plate_fv = part_jnts["s1_alu_plate"]
-                pre_locks += [(plate_fj, plate_fv, PICK_WORLD["s1_alu_plate"], None)]
-                pre_locks += [TRAY_LOCK]
+                pre_locks += [(plate_fj, plate_fv, PICK_WORLD["s1_alu_plate"], PLATE_TRAY_QUAT)]
+                pre_locks += [TRAY_LOCK] + screw_box_locks
                 phase6_vac_to_pin(m, d, v, pre_locks, timer)
-                # Atomically release tray weld and arm gripper weld in the same
-                # sim step so the plate never enters free-fall between the two.
 
             pw  = PICK_WORLD[bname]
             plw = PLACE_PART_WORLD[bname]
+
+            if use_pin:
+                phase_place_plate_internal_lock(m, d, v, fj_adr, fv_adr, pw, plw, waiting, timer)
+                remaining.remove(bname)
+                continue
 
             # -- PICK -------------------------------------------------------
             xy_off = GRASP_XY_OFFSET.get(bname, np.zeros(2))
@@ -799,13 +1229,16 @@ def main():
         wid_pw = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_EQUALITY, "weld_plate_world")
         if wid_pw >= 0:
             d.eq_active[wid_pw] = 1
-        # placed_locks for remaining parts (EPDM, battery, PCB) + tray — plate handled by weld
-        placed_locks = [(part_jnts[b][0], part_jnts[b][1], PLACE_PART_WORLD[b], None)
+        # Base placed locks for assembled keyboard stack + tray.
+        # Add screw_box_locks only during the pin->screwdriver tool change, so screws
+        # stay visually in the screw box. During screwdriving, phase9 manages locks per screw.
+        placed_locks = [(part_jnts[b][0], part_jnts[b][1], PLACE_PART_WORLD[b], PLACE_PART_QUAT.get(b))
                 for b in PARTS] + [TRAY_LOCK]
+        station_locks = placed_locks + screw_box_locks
         timer.mark(d, "Assembly complete")
 
         # Go directly to tool change — no intermediate home swing
-        phase8_pin_to_sd(m, d, v, placed_locks, timer)
+        phase8_pin_to_sd(m, d, v, station_locks, timer)
         phase9_screws(m, d, v, home_ctrl, placed_locks, timer)
 
         print(); print("="*60)
