@@ -25,7 +25,7 @@ import sys, os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from cycle_timer import CycleTimer
 
-MODEL_PATH   = "models/stations/station1_B.xml"
+MODEL_PATH   = "models/stations/station1_A.xml"
 SETTLE_TOL   = 0.020   # v7: avoid false timeouts at harmless ~0.018-0.019 rad residual
 SETTLE_STEPS = 50
 # j1 faces the dock, j2/j3 create a high 'elbow-up' arch, j4/j5 point the flange down
