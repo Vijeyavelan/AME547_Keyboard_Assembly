@@ -40,12 +40,12 @@ import time
 import sys, os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from cycle_timer import CycleTimer
-MODEL_PATH = "models/stations/station3.xml"
+MODEL_PATH = "models/stations/station3_A.xml"
 
 TIMESTEP      = 0.002
 HEAD_Z_STEPS  = 150
-ROTATE_STEPS  = 350
-ADVANCE_STEPS = 350   # belt advance concurrent with rotation — same step count
+ROTATE_STEPS  = 200
+ADVANCE_STEPS = 200  # belt advance concurrent with rotation — same step count
 SETTLE_STEPS  = 30
 
 HEAD_Z_INSERT  = -0.015

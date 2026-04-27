@@ -23,8 +23,8 @@ MODEL_PATH = "models/stations/station4_A.xml"
 
 TIMESTEP       = 0.002
 HEAD_Z_STEPS   = 150
-ROTATE_STEPS   = 350
-ADVANCE_STEPS  = 350
+ROTATE_STEPS   = 200
+ADVANCE_STEPS  = 200
 SETTLE_STEPS   = 30
 
 HEAD_Z_INSERT  = -0.015   # head descends 15mm to press keycap onto stem
@@ -102,6 +102,40 @@ KEYCAP_WIDTHS = {
 }
 
 GAP = 0.002  # 2mm gap between keycaps in tray
+
+
+def build_keycap_tray_x(keys, widths, gap):
+    """
+    Return initial tray X positions for a variable-width keycap row.
+
+    The first keycap center starts exactly at the pickup X reference. Each
+    following keycap is placed one center-to-center step behind it:
+
+        previous_width/2 + gap + current_width/2
+
+    This matches the belt advance used before every pick, so after advancing
+    from key i-1 to key i, the target key's center lands under the pickup tip.
+    """
+    tray_x = {}
+    current_center_x = 0.0
+
+    for i, key in enumerate(keys):
+        if i == 0:
+            tray_x[key] = current_center_x
+            continue
+
+        prev_key = keys[i - 1]
+        step = widths[prev_key] / 2.0 + gap + widths[key] / 2.0
+        current_center_x -= step
+        tray_x[key] = current_center_x
+
+    return tray_x
+
+
+def keycap_advance_amount(prev_key, current_key):
+    """Center-to-center belt step from prev_key to current_key."""
+    return KEYCAP_WIDTHS[prev_key] / 2.0 + GAP + KEYCAP_WIDTHS[current_key] / 2.0
+
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -356,14 +390,12 @@ def main():
     tray_state = {}
     tray_x     = {}
 
-    cursor = 0.0
+    tray_x = build_keycap_tray_x(KEYCAP_KEYS, KEYCAP_WIDTHS, GAP)
     for key in KEYCAP_KEYS:
         qa, da = get_body_jnt(m, f"kc_{key}")
         tray_state[key] = (qa, da)
-        
-        tray_x[key] = -(cursor + KEYCAP_WIDTHS[key] / 2)
-        cursor += KEYCAP_WIDTHS[key] + GAP
     print(f"  {len(tray_state)} keycaps in tray ✓")
+    print("  Tray pickup reference: first keycap center starts at x=0.00mm")
 
     # Place all keycaps at tray positions
     print("Loading tray...")
@@ -460,17 +492,15 @@ def main():
             else:
                 ins_xc, ins_yc = 0.0, 0.0
 
-            print(f"  Rotate → {np.degrees(col_angle):.0f}°  "
-                  f"XY → ({ins_xc*1000:.1f}, {ins_yc*1000:.1f}) mm  "
-                  f"Belt advance +{PITCH*1000:.2f} mm")
-            
             if pick_key is not None and kc_queue_idx > 0:
                 prev_key = KEYCAP_KEYS[kc_queue_idx - 1]
-                advance_amount = (KEYCAP_WIDTHS[prev_key] / 2 +
-                                GAP +
-                                KEYCAP_WIDTHS[pick_key] / 2)
+                advance_amount = keycap_advance_amount(prev_key, pick_key)
             else:
-                advance_amount = PITCH
+                advance_amount = 0.0
+
+            print(f"  Rotate → {np.degrees(col_angle):.0f}°  "
+                  f"XY → ({ins_xc*1000:.1f}, {ins_yc*1000:.1f}) mm  "
+                  f"Belt advance +{advance_amount*1000:.2f} mm")
 
             col_start = d.ctrl[col_aid]
             x_start   = d.ctrl[x_aid_v]
@@ -501,7 +531,13 @@ def main():
             if pick_key is not None:
                 px = tray_x.get(pick_key, None)
                 if px is not None:
-                    print(f"  Tray: kc_{pick_key} at x={px*1000:.2f}mm")
+                    pick_tip_site = f"head_{pick_head+1}_tip_site"
+                    pick_tip_sid = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_SITE, pick_tip_site)
+                    mujoco.mj_forward(m, d)
+                    pick_tip_x = d.site_xpos[pick_tip_sid][0]
+                    print(f"  Tray: kc_{pick_key} at x={px*1000:.2f}mm; "
+                          f"{pick_tip_site} x={pick_tip_x*1000:.2f}mm; "
+                          f"pickup offset={(px-pick_tip_x)*1000:.2f}mm")
 
             do_pick_and_insert(m, d, v,
                                ins_head_idx=insert_head, ins_key=ins_key if has_ins else None,

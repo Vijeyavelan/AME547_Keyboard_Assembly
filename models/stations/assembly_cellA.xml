@@ -1,0 +1,1592 @@
+<mujoco model="assembly_cell">
+  <compiler angle="radian" autolimits="true" />
+  <option integrator="implicitfast" timestep="0.002" />
+  <default>
+    <default class="s1_ur5e">
+      <material specular="0.5" shininess="0.25" />
+      <joint axis="0 1 0" range="-6.28319 6.28319" armature="0.1" />
+      <general gaintype="fixed" biastype="affine" ctrlrange="-6.2831 6.2831" gainprm="2000" biasprm="0 -2000 -400" forcerange="-150 150" />
+      <default class="s1_size3">
+        <default class="s1_size3_limited">
+          <joint range="-3.1415 3.1415" />
+          <general ctrlrange="-3.1415 3.1415" />
+        </default>
+      </default>
+      <default class="s1_size1">
+        <general gainprm="500" biasprm="0 -500 -100" forcerange="-28 28" />
+      </default>
+      <default class="s1_visual">
+        <geom type="mesh" contype="0" conaffinity="0" group="2" />
+      </default>
+      <default class="s1_collision">
+        <geom type="capsule" group="3" />
+        <default class="s1_eef_collision">
+          <geom type="cylinder" />
+        </default>
+      </default>
+      <site size="0.001" rgba="0.5 0.5 0.5 0.3" group="4" />
+    </default>
+  </default>
+  <asset>
+    <texture name="grid" type="2d" builtin="checker" width="512" height="512" rgb1="0.78 0.78 0.78" rgb2="0.86 0.86 0.86" />
+    <material name="floor_mat" texture="grid" texrepeat="12 12" reflectance="0.15" />
+    <material name="conveyor_belt" rgba="0.10 0.10 0.10 1" />
+    <material name="conveyor_rail" rgba="0.55 0.55 0.58 1" />
+    <material name="stopper_mat" rgba="0.95 0.62 0.10 1" />
+    <material name="aluminum_pallet" rgba="0.72 0.74 0.75 1" />
+    <material name="fixture_stop" rgba="0.18 0.18 0.20 1" />
+    <material name="s1_mat" rgba="0.25 0.38 0.72 1" />
+    <material name="s3_mat" rgba="0.25 0.62 0.38 1" />
+    <material name="s4_mat" rgba="0.72 0.52 0.25 1" />
+    <material name="laser_mat" rgba="0.15 0.18 0.22 1" />
+    <material name="package_mat" rgba="0.55 0.40 0.25 1" />
+    <material name="abs_plastic" rgba="0.08 0.08 0.09 1" />
+    <material name="mat_epdm" rgba="0.015 0.015 0.018 1" />
+    <material name="mat_battery" rgba="0.08 0.18 0.10 1" />
+    <material name="mat_fr4" rgba="0.04 0.36 0.12 1" />
+    <material name="mat_plate" rgba="0.80 0.82 0.84 1" />
+    <material name="mat_switch" rgba="0.12 0.12 0.12 1" />
+    <material name="mat_keycap" rgba="0.92 0.90 0.84 1" />
+    <texture type="skybox" builtin="gradient" rgb1="0.3 0.5 0.7" rgb2="0 0 0" width="512" height="3072" />
+    <texture name="s1_grid" type="2d" builtin="checker" rgb1="0.3 0.3 0.3" rgb2="0.4 0.4 0.4" width="512" height="512" />
+    <material name="s1_floor_mat" texture="s1_grid" texrepeat="5 5" reflectance="0.2" />
+    <material name="s1_conveyor_belt" rgba="0.18 0.18 0.18 1" />
+    <material name="s1_conveyor_rail" rgba="0.50 0.52 0.55 1" specular="0.4" shininess="0.3" />
+    <material name="s1_stopper_mat" rgba="1.0  0.85 0.0  1" />
+    <material name="s1_aluminum_pallet" rgba="0.80 0.82 0.85 1" specular="0.6" shininess="0.5" />
+    <material name="s1_fixture_stop" rgba="1.0  0.75 0.0  1" />
+    <material name="s1_abs_plastic" rgba="0.12 0.12 0.15 1" />
+    <material name="s1_tray_alu" rgba="0.92 0.92 0.92 1" specular="0.5" shininess="0.4" />
+    <material name="s1_tray_foam_epdm" rgba="0.12 0.12 0.14 1" specular="0.02" />
+    <material name="s1_tray_foam_batt" rgba="0.12 0.12 0.14 1" specular="0.02" />
+    <material name="s1_tray_foam_pcb" rgba="0.12 0.12 0.14 1" specular="0.02" />
+    <material name="s1_tray_foam_plate" rgba="0.12 0.12 0.14 1" specular="0.02" />
+    <material name="s1_tray_id" rgba="1.0  0.40 0.0  1" />
+    <material name="s1_stack_mat" rgba="0.28 0.30 0.33 1" />
+    <material name="s1_mat_epdm" rgba="0.35 0.35 0.35 1" specular="0.02" shininess="0.02" />
+    <material name="s1_mat_lipo" rgba="0.01 0.01 0.012 1" specular="0.25" shininess="0.25" />
+    <material name="s1_mat_connector" rgba="0.90 0.90 0.92 1" specular="0.9" shininess="0.8" />
+    <material name="s1_mat_fr4" rgba="0.05 0.40 0.10 1" specular="0.3" shininess="0.4" />
+    <material name="s1_mat_conn_dark" rgba="0.12 0.12 0.12 1" specular="0.5" shininess="0.6" />
+    <material name="s1_mat_alu_silver" rgba="0.95 0.10 0.10 1" specular="0.4" shininess="0.3" />
+    <material name="s1_mat_dock" rgba="0.30 0.32 0.35 1" />
+    <material name="s1_mat_cup" rgba="0.55 0.55 0.58 1" />
+    <material name="s1_mat_screw_box" rgba="0.25 0.25 0.28 1" />
+    <material name="s1_mat_screw" rgba="0.005 0.005 0.006 1" specular="0.35" shininess="0.35" />
+    <material name="s1_stab_white" rgba="0.86 0.86 0.86 1" specular="0.25" shininess="0.20" />
+    <material name="s1_stab_wire" rgba="0.70 0.70 0.72 1" specular="0.7" shininess="0.7" />
+    <material class="s1_ur5e" name="s1_black" rgba="0.033 0.033 0.033 1" />
+    <material class="s1_ur5e" name="s1_jointgray" rgba="0.278 0.278 0.278 1" />
+    <material class="s1_ur5e" name="s1_linkgray" rgba="0.82  0.82  0.82  1" />
+    <material class="s1_ur5e" name="s1_urblue" rgba="0.49  0.678 0.8   1" />
+    <mesh file="../robots/mujoco_menagerie/universal_robots_ur5e/assets/base_0.obj" name="s1_base_0" />
+    <mesh file="../robots/mujoco_menagerie/universal_robots_ur5e/assets/base_1.obj" name="s1_base_1" />
+    <mesh file="../robots/mujoco_menagerie/universal_robots_ur5e/assets/shoulder_0.obj" name="s1_shoulder_0" />
+    <mesh file="../robots/mujoco_menagerie/universal_robots_ur5e/assets/shoulder_1.obj" name="s1_shoulder_1" />
+    <mesh file="../robots/mujoco_menagerie/universal_robots_ur5e/assets/shoulder_2.obj" name="s1_shoulder_2" />
+    <mesh file="../robots/mujoco_menagerie/universal_robots_ur5e/assets/upperarm_0.obj" name="s1_upperarm_0" />
+    <mesh file="../robots/mujoco_menagerie/universal_robots_ur5e/assets/upperarm_1.obj" name="s1_upperarm_1" />
+    <mesh file="../robots/mujoco_menagerie/universal_robots_ur5e/assets/upperarm_2.obj" name="s1_upperarm_2" />
+    <mesh file="../robots/mujoco_menagerie/universal_robots_ur5e/assets/upperarm_3.obj" name="s1_upperarm_3" />
+    <mesh file="../robots/mujoco_menagerie/universal_robots_ur5e/assets/forearm_0.obj" name="s1_forearm_0" />
+    <mesh file="../robots/mujoco_menagerie/universal_robots_ur5e/assets/forearm_1.obj" name="s1_forearm_1" />
+    <mesh file="../robots/mujoco_menagerie/universal_robots_ur5e/assets/forearm_2.obj" name="s1_forearm_2" />
+    <mesh file="../robots/mujoco_menagerie/universal_robots_ur5e/assets/forearm_3.obj" name="s1_forearm_3" />
+    <mesh file="../robots/mujoco_menagerie/universal_robots_ur5e/assets/wrist1_0.obj" name="s1_wrist1_0" />
+    <mesh file="../robots/mujoco_menagerie/universal_robots_ur5e/assets/wrist1_1.obj" name="s1_wrist1_1" />
+    <mesh file="../robots/mujoco_menagerie/universal_robots_ur5e/assets/wrist1_2.obj" name="s1_wrist1_2" />
+    <mesh file="../robots/mujoco_menagerie/universal_robots_ur5e/assets/wrist2_0.obj" name="s1_wrist2_0" />
+    <mesh file="../robots/mujoco_menagerie/universal_robots_ur5e/assets/wrist2_1.obj" name="s1_wrist2_1" />
+    <mesh file="../robots/mujoco_menagerie/universal_robots_ur5e/assets/wrist2_2.obj" name="s1_wrist2_2" />
+    <mesh file="../robots/mujoco_menagerie/universal_robots_ur5e/assets/wrist3.obj" name="s1_wrist3" />
+    <mesh name="s1_aluminum_plate_mesh" file="../robots/mujoco_menagerie/universal_robots_ur5e/assets/aluminum_plate.stl" scale="0.001 0.001 0.001" />
+    <mesh name="s1_stabilizer_mesh" file="../robots/mujoco_menagerie/universal_robots_ur5e/assets/Stabilizer_Decimated.stl" scale="0.001 0.001 0.001" refpos="-23.958 0.000 -1.712" refquat="0.7071 -0.7071 0 0" />
+    <texture type="skybox" builtin="gradient" rgb1="0.3 0.5 0.7" rgb2="0 0 0" width="512" height="3072" />
+    <texture name="s3_grid" type="2d" builtin="checker" rgb1="0.3 0.3 0.3" rgb2="0.4 0.4 0.4" width="512" height="512" />
+    <material name="s3_floor_mat" texture="s3_grid" texrepeat="5 5" reflectance="0.2" />
+    <material name="s3_aluminum_plate" rgba="0.75 0.75 0.78 1" specular="0.7" shininess="0.6" reflectance="0.20" />
+    <material name="s3_fixture_stop" rgba="1.0 0.85 0.0 1" />
+    <material name="s3_mat_fr4" rgba="0.06 0.30 0.08 1" specular="0.15" shininess="0.25" />
+    <material name="s3_mat_epdm" rgba="0.35 0.35 0.35 1" specular="0.02" shininess="0.02" />
+    <material name="s3_mat_screw" rgba="0.005 0.005 0.006 1" specular="0.35" shininess="0.35" />
+    <material name="s3_stab_white" rgba="0.86 0.86 0.86 1" specular="0.25" shininess="0.20" />
+    <material name="s3_stab_wire" rgba="0.70 0.70 0.72 1" specular="0.7" shininess="0.7" />
+    <material name="s3_abs_plastic" rgba="0.15 0.15 0.15 1" />
+    <material name="s3_table_surface" rgba="0.55 0.45 0.35 1" />
+    <material name="s3_steel_dark" rgba="0.25 0.25 0.28 1" />
+    <material name="s3_steel_mid" rgba="0.40 0.40 0.43 1" />
+    <material name="s3_steel_light" rgba="0.60 0.60 0.63 1" />
+    <material name="s3_gantry_mat" rgba="0.30 0.30 0.32 1" />
+    <material name="s3_gantry_beam" rgba="0.25 0.25 0.27 1" />
+    <material name="s3_column_mat" rgba="0.35 0.35 0.38 1" />
+    <material name="s3_arm_mat" rgba="0.50 0.50 0.53 1" />
+    <material name="s3_head_body" rgba="0.55 0.55 0.58 1" />
+    <material name="s3_head_tip" rgba="0.15 0.15 0.15 1" />
+    <material name="s3_tray_mat" rgba="0.70 0.72 0.75 1" />
+    <material name="s3_slide_rail" rgba="0.50 0.50 0.53 1" />
+    <material name="s3_abs_dark" rgba="0.88 0.88 0.82 1" specular="0.15" shininess="0.25" reflectance="0.03" />
+    <material name="s3_abs_dark_collision" rgba="0.12 0.12 0.12 0.0" />
+    <mesh name="s3_switch_mesh" file="../meshes/Switch_Decimated.stl" scale="0.001 0.001 0.001" refpos="-7.350 0.053 -7.350" refquat="0.7071 -0.7071 0 0" />
+    <mesh name="s3_aluminum_plate_mesh" file="../meshes/aluminum_plate.stl" scale="0.001 0.001 0.001" />
+    <mesh name="s3_stabilizer_mesh" file="../meshes/Stabilizer_Decimated.stl" scale="0.001 0.001 0.001" refpos="-23.958 0.000 -1.712" refquat="0.7071 -0.7071 0 0" />
+    <texture type="skybox" builtin="gradient" rgb1="0.3 0.5 0.7" rgb2="0 0 0" width="512" height="3072" />
+    <texture name="s4_grid" type="2d" builtin="checker" rgb1="0.3 0.3 0.3" rgb2="0.4 0.4 0.4" width="512" height="512" />
+    <material name="s4_floor_mat" texture="s4_grid" texrepeat="5 5" reflectance="0.2" />
+    <material name="s4_aluminum_plate" rgba="0.75 0.75 0.78 1" specular="0.7" shininess="0.6" reflectance="0.20" />
+    <material name="s4_fixture_stop" rgba="1.0 0.85 0.0 1" />
+    <material name="s4_mat_fr4" rgba="0.06 0.30 0.08 1" specular="0.15" shininess="0.25" />
+    <material name="s4_mat_epdm" rgba="0.35 0.35 0.35 1" specular="0.02" shininess="0.02" />
+    <material name="s4_mat_screw" rgba="0.005 0.005 0.006 1" specular="0.35" shininess="0.35" />
+    <material name="s4_stab_white" rgba="0.86 0.86 0.86 1" specular="0.25" shininess="0.20" />
+    <material name="s4_stab_wire" rgba="0.70 0.70 0.72 1" specular="0.7" shininess="0.7" />
+    <material name="s4_abs_plastic" rgba="0.15 0.15 0.15 1" />
+    <material name="s4_table_surface" rgba="0.55 0.45 0.35 1" />
+    <material name="s4_steel_dark" rgba="0.25 0.25 0.28 1" />
+    <material name="s4_steel_mid" rgba="0.40 0.40 0.43 1" />
+    <material name="s4_steel_light" rgba="0.60 0.60 0.63 1" />
+    <material name="s4_gantry_mat" rgba="0.30 0.30 0.32 1" />
+    <material name="s4_gantry_beam" rgba="0.25 0.25 0.27 1" />
+    <material name="s4_column_mat" rgba="0.35 0.35 0.38 1" />
+    <material name="s4_arm_mat" rgba="0.50 0.50 0.53 1" />
+    <material name="s4_head_body" rgba="0.55 0.55 0.58 1" />
+    <material name="s4_head_tip" rgba="0.15 0.15 0.15 1" />
+    <material name="s4_tray_mat" rgba="0.70 0.72 0.75 1" />
+    <material name="s4_slide_rail" rgba="0.50 0.50 0.53 1" />
+    <material name="s4_abs_dark" rgba="0.88 0.88 0.82 1" specular="0.15" shininess="0.25" reflectance="0.03" />
+    <material name="s4_pbt_gray" rgba="0.82 0.82 0.85 1" specular="0.1" shininess="0.2" reflectance="0.02" />
+    <mesh name="s4_switch_mesh" file="../meshes/Switch_Decimated.stl" scale="0.001 0.001 0.001" refpos="-7.350 0.053 -7.350" refquat="0.7071 -0.7071 0 0" />
+    <mesh name="s4_aluminum_plate_mesh" file="../meshes/aluminum_plate.stl" scale="0.001 0.001 0.001" />
+    <mesh name="s4_stabilizer_mesh" file="../meshes/Stabilizer_Decimated.stl" scale="0.001 0.001 0.001" refpos="-23.958 0.000 -1.712" refquat="0.7071 -0.7071 0 0" />
+    <mesh name="s4_keycap_1u" file="../meshes/keycap_1u.stl" />
+    <mesh name="s4_keycap_1_25u" file="../meshes/keycap_1_25u.stl" />
+    <mesh name="s4_keycap_1_5u" file="../meshes/keycap_1_5u.stl" />
+    <mesh name="s4_keycap_1_75u" file="../meshes/keycap_1_75u.stl" />
+    <mesh name="s4_keycap_2u" file="../meshes/keycap_2u.stl" />
+    <mesh name="s4_keycap_2_25u" file="../meshes/keycap_2_25u.stl" />
+    <mesh name="s4_keycap_6_25u" file="../meshes/keycap_6_25u.stl" />
+  </asset>
+  <worldbody>
+    <light name="key_light" pos="3 -5 6" dir="-0.4 0.6 -1" directional="true" diffuse="0.8 0.8 0.8" />
+    <light name="fill_light" pos="9 4 5" dir="-0.3 -0.4 -1" directional="true" diffuse="0.35 0.35 0.35" />
+    <geom name="floor" type="plane" size="16 6 0.05" material="floor_mat" />
+    <body name="cell_cdlr" pos="6.425 0 0">
+      <geom name="cdlr_belt" type="box" size="6.725 0.080 0.005" pos="0 0 0.795" material="conveyor_belt" contype="1" conaffinity="1" />
+      <geom name="cdlr_rail_front" type="box" size="6.725 0.0075 0.010" pos="0 -0.0875 0.800" material="conveyor_rail" contype="1" conaffinity="1" />
+      <geom name="cdlr_rail_rear" type="box" size="6.725 0.0075 0.010" pos="0 0.0875 0.800" material="conveyor_rail" contype="1" conaffinity="1" />
+      <geom name="leg_00_f" type="box" size="0.015 0.015 0.392" pos="-6.000 -0.085 0.392" material="conveyor_rail" />
+      <geom name="leg_00_r" type="box" size="0.015 0.015 0.392" pos="-6.000 0.085 0.392" material="conveyor_rail" />
+      <geom name="leg_01_f" type="box" size="0.015 0.015 0.392" pos="-5.000 -0.085 0.392" material="conveyor_rail" />
+      <geom name="leg_01_r" type="box" size="0.015 0.015 0.392" pos="-5.000 0.085 0.392" material="conveyor_rail" />
+      <geom name="leg_02_f" type="box" size="0.015 0.015 0.392" pos="-4.000 -0.085 0.392" material="conveyor_rail" />
+      <geom name="leg_02_r" type="box" size="0.015 0.015 0.392" pos="-4.000 0.085 0.392" material="conveyor_rail" />
+      <geom name="leg_03_f" type="box" size="0.015 0.015 0.392" pos="-3.000 -0.085 0.392" material="conveyor_rail" />
+      <geom name="leg_03_r" type="box" size="0.015 0.015 0.392" pos="-3.000 0.085 0.392" material="conveyor_rail" />
+      <geom name="leg_04_f" type="box" size="0.015 0.015 0.392" pos="-2.000 -0.085 0.392" material="conveyor_rail" />
+      <geom name="leg_04_r" type="box" size="0.015 0.015 0.392" pos="-2.000 0.085 0.392" material="conveyor_rail" />
+      <geom name="leg_05_f" type="box" size="0.015 0.015 0.392" pos="-1.000 -0.085 0.392" material="conveyor_rail" />
+      <geom name="leg_05_r" type="box" size="0.015 0.015 0.392" pos="-1.000 0.085 0.392" material="conveyor_rail" />
+      <geom name="leg_06_f" type="box" size="0.015 0.015 0.392" pos="0.000 -0.085 0.392" material="conveyor_rail" />
+      <geom name="leg_06_r" type="box" size="0.015 0.015 0.392" pos="0.000 0.085 0.392" material="conveyor_rail" />
+      <geom name="leg_07_f" type="box" size="0.015 0.015 0.392" pos="1.000 -0.085 0.392" material="conveyor_rail" />
+      <geom name="leg_07_r" type="box" size="0.015 0.015 0.392" pos="1.000 0.085 0.392" material="conveyor_rail" />
+      <geom name="leg_08_f" type="box" size="0.015 0.015 0.392" pos="2.000 -0.085 0.392" material="conveyor_rail" />
+      <geom name="leg_08_r" type="box" size="0.015 0.015 0.392" pos="2.000 0.085 0.392" material="conveyor_rail" />
+      <geom name="leg_09_f" type="box" size="0.015 0.015 0.392" pos="3.000 -0.085 0.392" material="conveyor_rail" />
+      <geom name="leg_09_r" type="box" size="0.015 0.015 0.392" pos="3.000 0.085 0.392" material="conveyor_rail" />
+      <geom name="leg_10_f" type="box" size="0.015 0.015 0.392" pos="4.000 -0.085 0.392" material="conveyor_rail" />
+      <geom name="leg_10_r" type="box" size="0.015 0.015 0.392" pos="4.000 0.085 0.392" material="conveyor_rail" />
+      <geom name="leg_11_f" type="box" size="0.015 0.015 0.392" pos="5.000 -0.085 0.392" material="conveyor_rail" />
+      <geom name="leg_11_r" type="box" size="0.015 0.015 0.392" pos="5.000 0.085 0.392" material="conveyor_rail" />
+      <geom name="leg_12_f" type="box" size="0.015 0.015 0.392" pos="6.000 -0.085 0.392" material="conveyor_rail" />
+      <geom name="leg_12_r" type="box" size="0.015 0.015 0.392" pos="6.000 0.085 0.392" material="conveyor_rail" />
+    </body>
+    <site name="s1_stop" type="sphere" size="0.006" pos="0.185 -0.140 0.830" rgba="1 0.85 0 0.8" />
+    <site name="s3_stop" type="sphere" size="0.006" pos="3.000 -0.140 0.830" rgba="0.1 0.9 0.25 0.8" />
+    <site name="s4_stop" type="sphere" size="0.006" pos="8.000 -0.140 0.830" rgba="1 0.55 0.1 0.8" />
+    <site name="s5_stop" type="sphere" size="0.006" pos="11.148 -0.140 0.830" rgba="0.2 0.45 1 0.8" />
+    <site name="s6_stop" type="sphere" size="0.006" pos="12.648 -0.140 0.830" rgba="0.6 0.25 1 0.8" />
+    <body name="s4_kc_End2" pos="3.4188 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_End2_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_Right" pos="3.4379 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_Right_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_Down" pos="3.4569 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_Down_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_Left" pos="3.476 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_Left_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_Fn" pos="3.495 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_Fn_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_RAlt" pos="3.5141 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_RAlt_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_Space" pos="3.5332 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_Space_geom" type="mesh" mesh="s4_keycap_6_25u" pos="0 -0.00047 0" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_LAlt" pos="3.5522 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_LAlt_geom" type="mesh" mesh="s4_keycap_1_25u" pos="0 -0.00015 0" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_LWin" pos="3.5713 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_LWin_geom" type="mesh" mesh="s4_keycap_1_25u" pos="0 -0.00015 0" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_LCtrl" pos="3.5903 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_LCtrl_geom" type="mesh" mesh="s4_keycap_1_25u" pos="0 -0.00015 0" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_End" pos="3.6093 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_End_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_Up" pos="3.6284 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_Up_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_RShift" pos="3.6474 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_RShift_geom" type="mesh" mesh="s4_keycap_1_75u" pos="0 0.00100 0" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_Slash" pos="3.6665 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_Slash_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_Period" pos="3.6855 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_Period_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_Comma" pos="3.7046 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_Comma_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_M" pos="3.7236 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_M_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_N" pos="3.7427 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_N_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_B" pos="3.7617 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_B_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_V" pos="3.7808 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_V_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_C" pos="3.7998 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_C_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_X" pos="3.8189 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_X_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_Z" pos="3.8379 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_Z_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_LShift" pos="3.857 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_LShift_geom" type="mesh" mesh="s4_keycap_2_25u" pos="0 0.00100 0" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_Home" pos="3.876 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_Home_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_Enter" pos="3.8951 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_Enter_geom" type="mesh" mesh="s4_keycap_2_25u" pos="0 0.00100 0" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_Quote" pos="3.9142 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_Quote_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_Semicol" pos="3.9332 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_Semicol_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_L" pos="3.9523 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_L_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_K" pos="3.9713 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_K_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_J" pos="3.9903 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_J_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_H" pos="4.0094 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_H_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_G" pos="4.0284 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_G_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_F" pos="4.0475 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_F_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_D" pos="4.0665 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_D_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_S" pos="4.0856 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_S_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_A" pos="4.1046 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_A_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_Caps" pos="4.1237 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_Caps_geom" type="mesh" mesh="s4_keycap_1_75u" pos="0 0.00100 0" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_PgDn" pos="4.1427 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_PgDn_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_Bkslash" pos="4.1618 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_Bkslash_geom" type="mesh" mesh="s4_keycap_1_5u" pos="0 0.00100 0" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_RBrace" pos="4.1808 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_RBrace_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_LBrace" pos="4.1999 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_LBrace_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_P" pos="4.2189 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_P_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_O" pos="4.238 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_O_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_I" pos="4.2571 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_I_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_U" pos="4.2761 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_U_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_Y" pos="4.2951 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_Y_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_T" pos="4.3142 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_T_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_R" pos="4.3332 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_R_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_E" pos="4.3523 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_E_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_W" pos="4.3713 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_W_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_Q" pos="4.3904 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_Q_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_Tab" pos="4.4094 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_Tab_geom" type="mesh" mesh="s4_keycap_1_5u" pos="0 0.00100 0" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_PgUp" pos="4.4285 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_PgUp_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_Bksp" pos="4.4476 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_Bksp_geom" type="mesh" mesh="s4_keycap_2u" pos="0 0.00100 0" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_Equal" pos="4.4666 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_Equal_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_Minus" pos="4.4857 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_Minus_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_0" pos="4.5047 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_0_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_9" pos="4.5237 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_9_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_8" pos="4.5428 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_8_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_7" pos="4.5618 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_7_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_6" pos="4.5809 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_6_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_5" pos="4.5999 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_5_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_4" pos="4.619 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_4_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_3" pos="4.6381 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_3_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_2" pos="4.6571 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_2_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_1" pos="4.6761 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_1_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_Grave" pos="4.6952 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_Grave_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_Del" pos="4.7142 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_Del_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_Pause" pos="4.7333 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_Pause_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_PrtSc" pos="4.7523 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_PrtSc_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_F12" pos="4.7714 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_F12_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_F11" pos="4.7904 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_F11_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_F10" pos="4.8095 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_F10_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_F9" pos="4.8285 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_F9_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_F8" pos="4.8476 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_F8_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_F7" pos="4.8667 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_F7_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_F6" pos="4.8857 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_F6_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_F5" pos="4.9047 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_F5_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_F4" pos="4.9238 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_F4_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_F3" pos="4.9428 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_F3_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_F2" pos="4.9619 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_F2_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_F1" pos="4.9809 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_F1_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_kc_Esc" pos="5 0.3 0.8261">
+      <freejoint />
+      <inertial pos="0 0 0.0036" mass="0.003" diaginertia="1e-7 1e-7 1e-7" />
+      <geom name="s4_kc_Esc_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_tray_feeder" pos="5 0.33 0">
+      <geom name="s4_feeder_leg_FL" type="box" size="0.015 0.015 0.4056" pos="-0.958 -0.030 0.4056" material="s4_steel_dark" mass="2.0" contype="0" conaffinity="0" />
+      <geom name="s4_feeder_leg_FR" type="box" size="0.015 0.015 0.4056" pos="0.010 -0.030 0.4056" material="s4_steel_dark" mass="2.0" contype="0" conaffinity="0" />
+      <geom name="s4_feeder_base" type="box" size="0.155 0.040 0.008" pos="-0.143 0 0.008" material="s4_steel_dark" mass="2.0" contype="0" conaffinity="0" />
+      <geom name="s4_tray_shelf" type="box" size="0.9581 0.035 0.005" pos="-0.800 -0.025 0.8311" material="s4_steel_mid" mass="1.0" contype="0" conaffinity="0" />
+      <geom name="s4_tray_body" type="box" size="0.9581 0.015 0.004" pos="-0.800 -0.030 0.8371" material="s4_tray_mat" mass="6.0" contype="0" conaffinity="0" />
+      <geom name="s4_tray_rail_F" type="box" size="0.9581 0.002 0.006" pos="-0.800 -0.043 0.8441" material="s4_steel_mid" mass="0.8" contype="0" conaffinity="0" />
+      <geom name="s4_tray_rail_R" type="box" size="0.9581 0.002 0.006" pos="-0.800 -0.017 0.8441" material="s4_steel_mid" mass="0.8" contype="0" conaffinity="0" />
+      <geom name="s4_tray_rail_back" type="box" size="0.002 0.015 0.008" pos="-1.614 -0.030 0.8431" material="s4_steel_mid" mass="0.1" contype="0" conaffinity="0" />
+      <site name="s4_pick_position" pos="0 -0.030 0.8411" size="0.006" rgba="0 1 0 0.9" />
+    </body>
+    <body name="s4_rotating_column" pos="5 0.17 0.914">
+      <joint name="s4_column_rotation" type="hinge" axis="0 0 1" range="-3.1416 3.1416" damping="2" stiffness="0" />
+      <geom name="s4_column_disc" type="cylinder" size="0.040 0.020" pos="0 0 0" material="s4_column_mat" mass="3.0" />
+      <geom name="s4_arm_1" type="box" size="0.012 0.045 0.010" pos="0 -0.085 -0.005" material="s4_arm_mat" mass="0.3" />
+      <geom name="s4_arm_2" type="box" size="0.012 0.045 0.010" pos="0 0.085 -0.005" material="s4_arm_mat" mass="0.3" />
+      <body name="s4_head_1_slide" pos="0 0 0">
+        <inertial pos="0 0 0" mass="0.01" diaginertia="1e-6 1e-6 1e-6" />
+        <joint name="s4_head_1_z" type="slide" axis="0 0 1" range="-0.150 0" damping="50" stiffness="0" />
+        <geom name="s4_head_1_body" type="cylinder" size="0.010 0.025" pos="0 -0.130 -0.005" material="s4_head_body" mass="0.5" />
+        <geom name="s4_rod_1_L" type="cylinder" size="0.003 0.030" pos="-0.012 -0.130 -0.010" material="s4_steel_light" mass="0.05" contype="0" conaffinity="0" />
+        <geom name="s4_rod_1_R" type="cylinder" size="0.003 0.030" pos="0.012 -0.130 -0.010" material="s4_steel_light" mass="0.05" contype="0" conaffinity="0" />
+        <geom name="s4_head_1_tip" type="box" size="0.009 0.009 0.008" pos="0 -0.130 -0.038" material="s4_head_tip" mass="0.1" />
+        <geom name="s4_keycap_1_visual" type="box" size="0.009 0.009 0.004" pos="0 -0.130 -0.050" rgba="0.82 0.82 0.85 1" contype="0" conaffinity="0" />
+        <geom name="s4_hose_1" type="cylinder" size="0.003 0.020" pos="0.010 -0.085 0.018" rgba="0.7 0.15 0.10 1" contype="0" conaffinity="0" />
+        <site name="s4_head_1_tip_site" pos="0 -0.130 -0.058" size="0.004" rgba="1 1 0 0.9" />
+      </body>
+      <body name="s4_head_2_slide" pos="0 0 0">
+        <inertial pos="0 0 0" mass="0.01" diaginertia="1e-6 1e-6 1e-6" />
+        <joint name="s4_head_2_z" type="slide" axis="0 0 1" range="-0.150 0" damping="50" stiffness="0" />
+        <geom name="s4_head_2_body" type="cylinder" size="0.010 0.025" pos="0 0.130 -0.005" material="s4_head_body" mass="0.5" />
+        <geom name="s4_rod_2_L" type="cylinder" size="0.003 0.030" pos="-0.012 0.130 -0.010" material="s4_steel_light" mass="0.05" contype="0" conaffinity="0" />
+        <geom name="s4_rod_2_R" type="cylinder" size="0.003 0.030" pos="0.012 0.130 -0.010" material="s4_steel_light" mass="0.05" contype="0" conaffinity="0" />
+        <geom name="s4_head_2_body2" type="cylinder" size="0.010 0.025" pos="0 0.130 -0.005" material="s4_head_body" mass="0.0" />
+        <geom name="s4_head_2_tip" type="box" size="0.009 0.009 0.008" pos="0 0.130 -0.038" material="s4_head_tip" mass="0.1" />
+        <geom name="s4_keycap_2_visual" type="box" size="0.009 0.009 0.004" pos="0 0.130 -0.050" rgba="0.9 0.75 0.1 1" contype="0" conaffinity="0" />
+        <geom name="s4_hose_2" type="cylinder" size="0.003 0.020" pos="0.010 0.085 0.018" rgba="0.7 0.15 0.10 1" contype="0" conaffinity="0" />
+        <site name="s4_head_2_tip_site" pos="0 0.130 -0.058" size="0.004" rgba="0 1 0 0.9" />
+      </body>
+    </body>
+    <body name="s4_gantry_frame" pos="5 0 0">
+      <geom name="s4_post_FL" type="box" size="0.030 0.030 0.519" pos="-0.420 -0.110 0.519" material="s4_gantry_mat" mass="8.0" />
+      <geom name="s4_post_FR" type="box" size="0.030 0.030 0.519" pos="0.420 -0.110 0.519" material="s4_gantry_mat" mass="8.0" />
+      <geom name="s4_post_RL" type="box" size="0.030 0.030 0.519" pos="-0.420 0.450 0.519" material="s4_gantry_mat" mass="8.0" />
+      <geom name="s4_post_RR" type="box" size="0.030 0.030 0.519" pos="0.420 0.450 0.519" material="s4_gantry_mat" mass="8.0" />
+      <geom name="s4_beam_front" type="box" size="0.420 0.025 0.025" pos="0 -0.110 1.039" material="s4_gantry_beam" mass="3.0" />
+      <geom name="s4_beam_rear" type="box" size="0.420 0.025 0.025" pos="0 0.450 1.039" material="s4_gantry_beam" mass="3.0" />
+      <geom name="s4_beam_left" type="box" size="0.025 0.280 0.025" pos="-0.420 0.170 1.039" material="s4_gantry_beam" mass="2.0" />
+      <geom name="s4_beam_right" type="box" size="0.025 0.280 0.025" pos="0.420 0.170 1.039" material="s4_gantry_beam" mass="2.0" />
+      <geom name="s4_beam_center" type="box" size="0.060 0.025 0.025" pos="0 0.170 1.014" material="s4_gantry_beam" mass="1.5" />
+      <geom name="s4_drop_shaft" type="cylinder" size="0.015 0.035" pos="0 0.170 0.964" material="s4_gantry_mat" mass="0.5" contype="0" conaffinity="0" />
+    </body>
+    <body name="s4_table_base" pos="5 0.03 0">
+      <geom name="s4_leg_fl" type="box" size="0.020 0.020 0.375" pos="-0.230 -0.180 0.375" material="s4_steel_dark" mass="5.0" />
+      <geom name="s4_leg_fr" type="box" size="0.020 0.020 0.375" pos="0.230 -0.180 0.375" material="s4_steel_dark" mass="5.0" />
+      <geom name="s4_leg_rl" type="box" size="0.020 0.020 0.375" pos="-0.230 0.180 0.375" material="s4_steel_dark" mass="5.0" />
+      <geom name="s4_leg_rr" type="box" size="0.020 0.020 0.375" pos="0.230 0.180 0.375" material="s4_steel_dark" mass="5.0" />
+      <geom name="s4_base_plate_xy" type="box" size="0.250 0.200 0.010" pos="0 0 0.750" material="s4_steel_dark" mass="8.0" />
+      <geom name="s4_rail_y_left" type="box" size="0.008 0.180 0.008" pos="-0.185 0 0.768" material="s4_slide_rail" mass="0.8" />
+      <geom name="s4_rail_y_right" type="box" size="0.008 0.180 0.008" pos="0.185 0 0.768" material="s4_slide_rail" mass="0.8" />
+      <body name="s4_y_slide" pos="0 0 0.7675">
+        <joint name="s4_y_joint" type="slide" axis="0 1 0" range="-0.115 0.115" damping="10" stiffness="0" />
+        <geom name="s4_y_slide_plate" type="box" size="0.230 0.170 0.0075" pos="0 0 0" material="s4_steel_mid" mass="4.0" />
+        <geom name="s4_rail_x_front" type="box" size="0.210 0.006 0.008" pos="0 -0.145 0.016" material="s4_slide_rail" mass="0.4" />
+        <geom name="s4_rail_x_rear" type="box" size="0.210 0.006 0.008" pos="0 0.145 0.016" material="s4_slide_rail" mass="0.4" />
+        <body name="s4_x_slide" pos="0 0 0.020">
+          <joint name="s4_x_joint" type="slide" axis="1 0 0" range="-0.160 0.160" damping="10" stiffness="0" />
+          <geom name="s4_x_slide_plate" type="box" size="0.210 0.150 0.0075" pos="0 0 0" material="s4_steel_light" mass="3.0" />
+          <body name="s4_table_top_body" pos="0 0 0.0075">
+            <geom name="s4_table_top_surf" type="box" size="0.200 0.140 0.005" pos="0 0 0.005" material="s4_table_surface" mass="2.0" />
+          </body>
+        </body>
+      </body>
+    </body>
+    <body name="s3_sw_End2" pos="-0.5812 0.3 0.82455">
+      <freejoint name="s3_swj_End2" />
+      <geom name="s3_swg_End2" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_Right" pos="-0.5621 0.3 0.82455">
+      <freejoint name="s3_swj_Right" />
+      <geom name="s3_swg_Right" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_Down" pos="-0.5431 0.3 0.82455">
+      <freejoint name="s3_swj_Down" />
+      <geom name="s3_swg_Down" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_Left" pos="-0.524 0.3 0.82455">
+      <freejoint name="s3_swj_Left" />
+      <geom name="s3_swg_Left" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_Fn" pos="-0.505 0.3 0.82455">
+      <freejoint name="s3_swj_Fn" />
+      <geom name="s3_swg_Fn" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_RAlt" pos="-0.4859 0.3 0.82455">
+      <freejoint name="s3_swj_RAlt" />
+      <geom name="s3_swg_RAlt" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_Space" pos="-0.4668 0.3 0.82455">
+      <freejoint name="s3_swj_Space" />
+      <geom name="s3_swg_Space" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_LAlt" pos="-0.4478 0.3 0.82455">
+      <freejoint name="s3_swj_LAlt" />
+      <geom name="s3_swg_LAlt" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_LWin" pos="-0.4287 0.3 0.82455">
+      <freejoint name="s3_swj_LWin" />
+      <geom name="s3_swg_LWin" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_LCtrl" pos="-0.4097 0.3 0.82455">
+      <freejoint name="s3_swj_LCtrl" />
+      <geom name="s3_swg_LCtrl" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_End" pos="-0.3907 0.3 0.82455">
+      <freejoint name="s3_swj_End" />
+      <geom name="s3_swg_End" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_Up" pos="-0.3716 0.3 0.82455">
+      <freejoint name="s3_swj_Up" />
+      <geom name="s3_swg_Up" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_RShift" pos="-0.3526 0.3 0.82455">
+      <freejoint name="s3_swj_RShift" />
+      <geom name="s3_swg_RShift" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_Slash" pos="-0.3335 0.3 0.82455">
+      <freejoint name="s3_swj_Slash" />
+      <geom name="s3_swg_Slash" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_Period" pos="-0.3145 0.3 0.82455">
+      <freejoint name="s3_swj_Period" />
+      <geom name="s3_swg_Period" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_Comma" pos="-0.2954 0.3 0.82455">
+      <freejoint name="s3_swj_Comma" />
+      <geom name="s3_swg_Comma" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_M" pos="-0.2764 0.3 0.82455">
+      <freejoint name="s3_swj_M" />
+      <geom name="s3_swg_M" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_N" pos="-0.2573 0.3 0.82455">
+      <freejoint name="s3_swj_N" />
+      <geom name="s3_swg_N" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_B" pos="-0.2383 0.3 0.82455">
+      <freejoint name="s3_swj_B" />
+      <geom name="s3_swg_B" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_V" pos="-0.2192 0.3 0.82455">
+      <freejoint name="s3_swj_V" />
+      <geom name="s3_swg_V" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_C" pos="-0.2002 0.3 0.82455">
+      <freejoint name="s3_swj_C" />
+      <geom name="s3_swg_C" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_X" pos="-0.1811 0.3 0.82455">
+      <freejoint name="s3_swj_X" />
+      <geom name="s3_swg_X" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_Z" pos="-0.1621 0.3 0.82455">
+      <freejoint name="s3_swj_Z" />
+      <geom name="s3_swg_Z" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_LShift" pos="-0.143 0.3 0.82455">
+      <freejoint name="s3_swj_LShift" />
+      <geom name="s3_swg_LShift" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_Home" pos="-0.124 0.3 0.82455">
+      <freejoint name="s3_swj_Home" />
+      <geom name="s3_swg_Home" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_Enter" pos="-0.1049 0.3 0.82455">
+      <freejoint name="s3_swj_Enter" />
+      <geom name="s3_swg_Enter" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_Quote" pos="-0.0858 0.3 0.82455">
+      <freejoint name="s3_swj_Quote" />
+      <geom name="s3_swg_Quote" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_Semicol" pos="-0.0668 0.3 0.82455">
+      <freejoint name="s3_swj_Semicol" />
+      <geom name="s3_swg_Semicol" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_L" pos="-0.0477 0.3 0.82455">
+      <freejoint name="s3_swj_L" />
+      <geom name="s3_swg_L" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_K" pos="-0.0287 0.3 0.82455">
+      <freejoint name="s3_swj_K" />
+      <geom name="s3_swg_K" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_J" pos="-0.0097 0.3 0.82455">
+      <freejoint name="s3_swj_J" />
+      <geom name="s3_swg_J" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_H" pos="0.0094 0.3 0.82455">
+      <freejoint name="s3_swj_H" />
+      <geom name="s3_swg_H" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_G" pos="0.0284 0.3 0.82455">
+      <freejoint name="s3_swj_G" />
+      <geom name="s3_swg_G" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_F" pos="0.0475 0.3 0.82455">
+      <freejoint name="s3_swj_F" />
+      <geom name="s3_swg_F" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_D" pos="0.0665 0.3 0.82455">
+      <freejoint name="s3_swj_D" />
+      <geom name="s3_swg_D" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_S" pos="0.0856 0.3 0.82455">
+      <freejoint name="s3_swj_S" />
+      <geom name="s3_swg_S" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_A" pos="0.1046 0.3 0.82455">
+      <freejoint name="s3_swj_A" />
+      <geom name="s3_swg_A" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_Caps" pos="0.1237 0.3 0.82455">
+      <freejoint name="s3_swj_Caps" />
+      <geom name="s3_swg_Caps" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_PgDn" pos="0.1427 0.3 0.82455">
+      <freejoint name="s3_swj_PgDn" />
+      <geom name="s3_swg_PgDn" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_Bkslash" pos="0.1618 0.3 0.82455">
+      <freejoint name="s3_swj_Bkslash" />
+      <geom name="s3_swg_Bkslash" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_RBrace" pos="0.1808 0.3 0.82455">
+      <freejoint name="s3_swj_RBrace" />
+      <geom name="s3_swg_RBrace" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_LBrace" pos="0.1999 0.3 0.82455">
+      <freejoint name="s3_swj_LBrace" />
+      <geom name="s3_swg_LBrace" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_P" pos="0.2189 0.3 0.82455">
+      <freejoint name="s3_swj_P" />
+      <geom name="s3_swg_P" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_O" pos="0.238 0.3 0.82455">
+      <freejoint name="s3_swj_O" />
+      <geom name="s3_swg_O" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_I" pos="0.2571 0.3 0.82455">
+      <freejoint name="s3_swj_I" />
+      <geom name="s3_swg_I" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_U" pos="0.2761 0.3 0.82455">
+      <freejoint name="s3_swj_U" />
+      <geom name="s3_swg_U" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_Y" pos="0.2951 0.3 0.82455">
+      <freejoint name="s3_swj_Y" />
+      <geom name="s3_swg_Y" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_T" pos="0.3142 0.3 0.82455">
+      <freejoint name="s3_swj_T" />
+      <geom name="s3_swg_T" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_R" pos="0.3332 0.3 0.82455">
+      <freejoint name="s3_swj_R" />
+      <geom name="s3_swg_R" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_E" pos="0.3523 0.3 0.82455">
+      <freejoint name="s3_swj_E" />
+      <geom name="s3_swg_E" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_W" pos="0.3713 0.3 0.82455">
+      <freejoint name="s3_swj_W" />
+      <geom name="s3_swg_W" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_Q" pos="0.3904 0.3 0.82455">
+      <freejoint name="s3_swj_Q" />
+      <geom name="s3_swg_Q" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_Tab" pos="0.4094 0.3 0.82455">
+      <freejoint name="s3_swj_Tab" />
+      <geom name="s3_swg_Tab" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_PgUp" pos="0.4285 0.3 0.82455">
+      <freejoint name="s3_swj_PgUp" />
+      <geom name="s3_swg_PgUp" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_Bksp" pos="0.4476 0.3 0.82455">
+      <freejoint name="s3_swj_Bksp" />
+      <geom name="s3_swg_Bksp" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_Equal" pos="0.4666 0.3 0.82455">
+      <freejoint name="s3_swj_Equal" />
+      <geom name="s3_swg_Equal" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_Minus" pos="0.4857 0.3 0.82455">
+      <freejoint name="s3_swj_Minus" />
+      <geom name="s3_swg_Minus" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_0" pos="0.5047 0.3 0.82455">
+      <freejoint name="s3_swj_0" />
+      <geom name="s3_swg_0" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_9" pos="0.5237 0.3 0.82455">
+      <freejoint name="s3_swj_9" />
+      <geom name="s3_swg_9" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_8" pos="0.5428 0.3 0.82455">
+      <freejoint name="s3_swj_8" />
+      <geom name="s3_swg_8" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_7" pos="0.5618 0.3 0.82455">
+      <freejoint name="s3_swj_7" />
+      <geom name="s3_swg_7" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_6" pos="0.5809 0.3 0.82455">
+      <freejoint name="s3_swj_6" />
+      <geom name="s3_swg_6" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_5" pos="0.5999 0.3 0.82455">
+      <freejoint name="s3_swj_5" />
+      <geom name="s3_swg_5" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_4" pos="0.619 0.3 0.82455">
+      <freejoint name="s3_swj_4" />
+      <geom name="s3_swg_4" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_3" pos="0.6381 0.3 0.82455">
+      <freejoint name="s3_swj_3" />
+      <geom name="s3_swg_3" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_2" pos="0.6571 0.3 0.82455">
+      <freejoint name="s3_swj_2" />
+      <geom name="s3_swg_2" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_1" pos="0.6761 0.3 0.82455">
+      <freejoint name="s3_swj_1" />
+      <geom name="s3_swg_1" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_Grave" pos="0.6952 0.3 0.82455">
+      <freejoint name="s3_swj_Grave" />
+      <geom name="s3_swg_Grave" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_Del" pos="0.7142 0.3 0.82455">
+      <freejoint name="s3_swj_Del" />
+      <geom name="s3_swg_Del" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_Pause" pos="0.7333 0.3 0.82455">
+      <freejoint name="s3_swj_Pause" />
+      <geom name="s3_swg_Pause" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_PrtSc" pos="0.7523 0.3 0.82455">
+      <freejoint name="s3_swj_PrtSc" />
+      <geom name="s3_swg_PrtSc" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_F12" pos="0.7714 0.3 0.82455">
+      <freejoint name="s3_swj_F12" />
+      <geom name="s3_swg_F12" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_F11" pos="0.7904 0.3 0.82455">
+      <freejoint name="s3_swj_F11" />
+      <geom name="s3_swg_F11" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_F10" pos="0.8095 0.3 0.82455">
+      <freejoint name="s3_swj_F10" />
+      <geom name="s3_swg_F10" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_F9" pos="0.8285 0.3 0.82455">
+      <freejoint name="s3_swj_F9" />
+      <geom name="s3_swg_F9" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_F8" pos="0.8476 0.3 0.82455">
+      <freejoint name="s3_swj_F8" />
+      <geom name="s3_swg_F8" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_F7" pos="0.8667 0.3 0.82455">
+      <freejoint name="s3_swj_F7" />
+      <geom name="s3_swg_F7" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_F6" pos="0.8857 0.3 0.82455">
+      <freejoint name="s3_swj_F6" />
+      <geom name="s3_swg_F6" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_F5" pos="0.9047 0.3 0.82455">
+      <freejoint name="s3_swj_F5" />
+      <geom name="s3_swg_F5" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_F4" pos="0.9238 0.3 0.82455">
+      <freejoint name="s3_swj_F4" />
+      <geom name="s3_swg_F4" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_F3" pos="0.9428 0.3 0.82455">
+      <freejoint name="s3_swj_F3" />
+      <geom name="s3_swg_F3" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_F2" pos="0.9619 0.3 0.82455">
+      <freejoint name="s3_swj_F2" />
+      <geom name="s3_swg_F2" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_F1" pos="0.9809 0.3 0.82455">
+      <freejoint name="s3_swj_F1" />
+      <geom name="s3_swg_F1" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_sw_Esc" pos="1 0.3 0.82455">
+      <freejoint name="s3_swj_Esc" />
+      <geom name="s3_swg_Esc" type="mesh" mesh="s3_switch_mesh" pos="-0.01475 0 0.00945" material="s3_abs_dark" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_tray_feeder" pos="1 0.33 0">
+      <geom name="s3_feeder_leg_FL" type="box" size="0.015 0.015 0.4056" pos="-0.285 -0.030 0.4056" material="s3_steel_dark" mass="2.0" contype="0" conaffinity="0" />
+      <geom name="s3_feeder_leg_FR" type="box" size="0.015 0.015 0.4056" pos="0.010 -0.030 0.4056" material="s3_steel_dark" mass="2.0" contype="0" conaffinity="0" />
+      <geom name="s3_feeder_base" type="box" size="0.155 0.040 0.008" pos="-0.143 0 0.008" material="s3_steel_dark" mass="2.0" contype="0" conaffinity="0" />
+      <geom name="s3_tray_shelf" type="box" size="0.155 0.035 0.005" pos="-0.143 -0.025 0.8161" material="s3_steel_mid" mass="1.0" contype="0" conaffinity="0" />
+      <geom name="s3_tray_body" type="box" size="0.800 0.015 0.004" pos="-0.800 -0.030 0.8221" material="s3_tray_mat" mass="6.0" contype="0" conaffinity="0" />
+      <geom name="s3_tray_rail_F" type="box" size="0.800 0.002 0.006" pos="-0.800 -0.043 0.8291" material="s3_steel_mid" mass="0.8" contype="0" conaffinity="0" />
+      <geom name="s3_tray_rail_R" type="box" size="0.800 0.002 0.006" pos="-0.800 -0.017 0.8291" material="s3_steel_mid" mass="0.8" contype="0" conaffinity="0" />
+      <geom name="s3_tray_rail_back" type="box" size="0.002 0.015 0.008" pos="-1.614 -0.030 0.8281" material="s3_steel_mid" mass="0.1" contype="0" conaffinity="0" />
+      <site name="s3_pick_position" pos="0 -0.030 0.8261" size="0.006" rgba="0 1 0 0.9" />
+    </body>
+    <body name="s3_rotating_column" pos="1 0.17 0.914">
+      <joint name="s3_column_rotation" type="hinge" axis="0 0 1" range="-3.1416 3.1416" damping="2" stiffness="0" />
+      <geom name="s3_column_disc" type="cylinder" size="0.040 0.020" pos="0 0 0" material="s3_column_mat" mass="3.0" />
+      <geom name="s3_arm_1" type="box" size="0.012 0.045 0.010" pos="0 -0.085 -0.005" material="s3_arm_mat" mass="0.3" />
+      <geom name="s3_arm_2" type="box" size="0.012 0.045 0.010" pos="0 0.085 -0.005" material="s3_arm_mat" mass="0.3" />
+      <body name="s3_head_1_slide" pos="0 0 0">
+        <inertial pos="0 0 0" mass="0.01" diaginertia="1e-6 1e-6 1e-6" />
+        <joint name="s3_head_1_z" type="slide" axis="0 0 1" range="-0.150 0" damping="50" stiffness="0" />
+        <geom name="s3_head_1_body" type="cylinder" size="0.010 0.025" pos="0 -0.130 -0.005" material="s3_head_body" mass="0.5" />
+        <geom name="s3_rod_1_L" type="cylinder" size="0.003 0.030" pos="-0.012 -0.130 -0.010" material="s3_steel_light" mass="0.05" contype="0" conaffinity="0" />
+        <geom name="s3_rod_1_R" type="cylinder" size="0.003 0.030" pos="0.012 -0.130 -0.010" material="s3_steel_light" mass="0.05" contype="0" conaffinity="0" />
+        <geom name="s3_head_1_tip" type="box" size="0.007 0.007 0.012" pos="0 -0.130 -0.042" material="s3_head_tip" mass="0.1" />
+        <geom name="s3_switch_1" type="box" size="0.007 0.007 0.006" pos="0 -0.130 -0.060" rgba="0.15 0.15 0.15 1" contype="0" conaffinity="0" />
+        <geom name="s3_hose_1" type="cylinder" size="0.003 0.020" pos="0.010 -0.085 0.018" rgba="0.7 0.15 0.10 1" contype="0" conaffinity="0" />
+        <site name="s3_head_1_tip_site" pos="0 -0.130 -0.066" size="0.004" rgba="1 1 0 0.9" />
+      </body>
+      <body name="s3_head_2_slide" pos="0 0 0">
+        <inertial pos="0 0 0" mass="0.01" diaginertia="1e-6 1e-6 1e-6" />
+        <joint name="s3_head_2_z" type="slide" axis="0 0 1" range="-0.150 0" damping="50" stiffness="0" />
+        <geom name="s3_head_2_body" type="cylinder" size="0.010 0.025" pos="0 0.130 -0.005" material="s3_head_body" mass="0.5" />
+        <geom name="s3_rod_2_L" type="cylinder" size="0.003 0.030" pos="-0.012 0.130 -0.010" material="s3_steel_light" mass="0.05" contype="0" conaffinity="0" />
+        <geom name="s3_rod_2_R" type="cylinder" size="0.003 0.030" pos="0.012 0.130 -0.010" material="s3_steel_light" mass="0.05" contype="0" conaffinity="0" />
+        <geom name="s3_head_2_tip" type="box" size="0.007 0.007 0.012" pos="0 0.130 -0.042" material="s3_head_tip" mass="0.1" />
+        <geom name="s3_switch_2" type="box" size="0.007 0.007 0.006" pos="0 0.130 -0.060" rgba="0.9 0.75 0.1 1" contype="0" conaffinity="0" />
+        <geom name="s3_hose_2" type="cylinder" size="0.003 0.020" pos="0.010 0.085 0.018" rgba="0.7 0.15 0.10 1" contype="0" conaffinity="0" />
+        <site name="s3_head_2_tip_site" pos="0 0.130 -0.066" size="0.004" rgba="0 1 0 0.9" />
+      </body>
+    </body>
+    <body name="s3_gantry_frame" pos="1 0 0">
+      <geom name="s3_post_FL" type="box" size="0.030 0.030 0.519" pos="-0.420 -0.110 0.519" material="s3_gantry_mat" mass="8.0" />
+      <geom name="s3_post_FR" type="box" size="0.030 0.030 0.519" pos="0.420 -0.110 0.519" material="s3_gantry_mat" mass="8.0" />
+      <geom name="s3_post_RL" type="box" size="0.030 0.030 0.519" pos="-0.420 0.450 0.519" material="s3_gantry_mat" mass="8.0" />
+      <geom name="s3_post_RR" type="box" size="0.030 0.030 0.519" pos="0.420 0.450 0.519" material="s3_gantry_mat" mass="8.0" />
+      <geom name="s3_beam_front" type="box" size="0.420 0.025 0.025" pos="0 -0.110 1.039" material="s3_gantry_beam" mass="3.0" />
+      <geom name="s3_beam_rear" type="box" size="0.420 0.025 0.025" pos="0 0.450 1.039" material="s3_gantry_beam" mass="3.0" />
+      <geom name="s3_beam_left" type="box" size="0.025 0.280 0.025" pos="-0.420 0.170 1.039" material="s3_gantry_beam" mass="2.0" />
+      <geom name="s3_beam_right" type="box" size="0.025 0.280 0.025" pos="0.420 0.170 1.039" material="s3_gantry_beam" mass="2.0" />
+      <geom name="s3_beam_center" type="box" size="0.060 0.025 0.025" pos="0 0.170 1.014" material="s3_gantry_beam" mass="1.5" />
+      <geom name="s3_drop_shaft" type="cylinder" size="0.015 0.035" pos="0 0.170 0.964" material="s3_gantry_mat" mass="0.5" contype="0" conaffinity="0" />
+    </body>
+    <body name="s3_table_base" pos="1 0.03 0">
+      <geom name="s3_leg_fl" type="box" size="0.020 0.020 0.375" pos="-0.230 -0.180 0.375" material="s3_steel_dark" mass="5.0" />
+      <geom name="s3_leg_fr" type="box" size="0.020 0.020 0.375" pos="0.230 -0.180 0.375" material="s3_steel_dark" mass="5.0" />
+      <geom name="s3_leg_rl" type="box" size="0.020 0.020 0.375" pos="-0.230 0.180 0.375" material="s3_steel_dark" mass="5.0" />
+      <geom name="s3_leg_rr" type="box" size="0.020 0.020 0.375" pos="0.230 0.180 0.375" material="s3_steel_dark" mass="5.0" />
+      <geom name="s3_base_plate_xy" type="box" size="0.250 0.200 0.010" pos="0 0 0.750" material="s3_steel_dark" mass="8.0" contype="1" conaffinity="1" />
+      <geom name="s3_rail_y_left" type="box" size="0.008 0.180 0.008" pos="-0.185 0 0.768" material="s3_slide_rail" mass="0.8" />
+      <geom name="s3_rail_y_right" type="box" size="0.008 0.180 0.008" pos="0.185 0 0.768" material="s3_slide_rail" mass="0.8" />
+      <body name="s3_y_slide" pos="0 0 0.7675">
+        <joint name="s3_y_joint" type="slide" axis="0 1 0" range="-0.115 0.115" damping="10" stiffness="0" />
+        <geom name="s3_y_slide_plate" type="box" size="0.230 0.170 0.0075" pos="0 0 0" material="s3_steel_mid" mass="4.0" />
+        <geom name="s3_rail_x_front" type="box" size="0.210 0.006 0.008" pos="0 -0.145 0.016" material="s3_slide_rail" mass="0.4" />
+        <geom name="s3_rail_x_rear" type="box" size="0.210 0.006 0.008" pos="0 0.145 0.016" material="s3_slide_rail" mass="0.4" />
+        <body name="s3_x_slide" pos="0 0 0.020">
+          <joint name="s3_x_joint" type="slide" axis="1 0 0" range="-0.160 0.160" damping="10" stiffness="0" />
+          <geom name="s3_x_slide_plate" type="box" size="0.210 0.150 0.0075" pos="0 0 0" material="s3_steel_light" mass="3.0" />
+          <body name="s3_table_top_body" pos="0 0 0.0075">
+            <geom name="s3_table_top_surf" type="box" size="0.200 0.140 0.005" pos="0 0 0.005" material="s3_table_surface" mass="2.0" contype="1" conaffinity="1" />
+          </body>
+        </body>
+      </body>
+    </body>
+    <body name="s1_slider_mount" pos="-0.105 0.5 0.82">
+      <geom name="s1_slider_bracket" type="box" size="0.010 0.080 0.025" pos="0.015 0 0" material="s1_conveyor_rail" contype="1" conaffinity="1" mass="0.5" />
+      <body name="s1_slider_pusher" pos="0 0 0">
+        <joint name="s1_slider_joint" type="slide" axis="-1 0 0" range="0 0.300" damping="50" stiffness="0" />
+        <geom name="s1_slider_plate" type="box" size="0.008 0.150 0.020" pos="-0.008 0 0" material="s1_stopper_mat" contype="1" conaffinity="1" mass="0.3" />
+        <site name="s1_s_slider_tip" type="sphere" size="0.004" pos="-0.016 0 0" rgba="1 0.5 0 1" />
+      </body>
+    </body>
+    <body name="s1_screw_RR" pos="0.53 0.21 0.806">
+      <freejoint name="s1_jnt_screw_RR" />
+      <inertial pos="0 0 0.006" mass="0.0005" diaginertia="1e-9 1e-9 5e-10" />
+      <geom name="s1_sRR_s" type="cylinder" size="0.0014 0.005" pos="0 0 0.005" material="s1_mat_screw" contype="0" conaffinity="0" />
+      <geom name="s1_sRR_h" type="cylinder" size="0.002 0.001" pos="0 0 0.011" material="s1_mat_screw" contype="0" conaffinity="0" />
+      <site name="s1_sRR_tip" type="sphere" size="0.001" pos="0 0 0" rgba="1 0.2 0.2 0.9" />
+      <site name="s1_sRR_eng" type="sphere" size="0.001" pos="0 0 0.016" rgba="0 0.6 1.0 0.9" />
+    </body>
+    <body name="s1_screw_RL" pos="0.51 0.21 0.806">
+      <freejoint name="s1_jnt_screw_RL" />
+      <inertial pos="0 0 0.006" mass="0.0005" diaginertia="1e-9 1e-9 5e-10" />
+      <geom name="s1_sRL_s" type="cylinder" size="0.0014 0.005" pos="0 0 0.005" material="s1_mat_screw" contype="0" conaffinity="0" />
+      <geom name="s1_sRL_h" type="cylinder" size="0.0020 0.001" pos="0 0 0.011" material="s1_mat_screw" contype="0" conaffinity="0" />
+      <site name="s1_sRL_tip" type="sphere" size="0.001" pos="0 0 0" rgba="1 0.2 0.2 0.9" />
+      <site name="s1_sRL_eng" type="sphere" size="0.001" pos="0 0 0.016" rgba="0 0.6 1.0 0.9" />
+    </body>
+    <body name="s1_screw_FR" pos="0.53 0.19 0.806">
+      <freejoint name="s1_jnt_screw_FR" />
+      <inertial pos="0 0 0.006" mass="0.0005" diaginertia="1e-9 1e-9 5e-10" />
+      <geom name="s1_sFR_s" type="cylinder" size="0.0014 0.005" pos="0 0 0.005" material="s1_mat_screw" contype="0" conaffinity="0" />
+      <geom name="s1_sFR_h" type="cylinder" size="0.002 0.001" pos="0 0 0.011" material="s1_mat_screw" contype="0" conaffinity="0" />
+      <site name="s1_sFR_tip" type="sphere" size="0.001" pos="0 0 0" rgba="1 0.2 0.2 0.9" />
+      <site name="s1_sFR_eng" type="sphere" size="0.001" pos="0 0 0.016" rgba="0 0.6 1.0 0.9" />
+    </body>
+    <body name="s1_screw_FL" pos="0.51 0.19 0.806">
+      <freejoint name="s1_jnt_screw_FL" />
+      <inertial pos="0 0 0.006" mass="0.0005" diaginertia="1e-9 1e-9 5e-10" />
+      <geom name="s1_sFL_s" type="cylinder" size="0.0014 0.005" pos="0 0 0.005" material="s1_mat_screw" contype="0" conaffinity="0" />
+      <geom name="s1_sFL_h" type="cylinder" size="0.002 0.001" pos="0 0 0.011" material="s1_mat_screw" contype="0" conaffinity="0" />
+      <site name="s1_sFL_tip" type="sphere" size="0.001" pos="0 0 0" rgba="1 0.2 0.2 0.9" />
+      <site name="s1_sFL_eng" type="sphere" size="0.001" pos="0 0 0.016" rgba="0 0.6 1.0 0.9" />
+    </body>
+    <body name="s1_screw_box" pos="0.52 0.2 0.8">
+      <geom name="s1_sbox_pedestal_top" type="box" size="0.055 0.055 0.006" pos="0 0 -0.006" material="s1_mat_dock" contype="1" conaffinity="1" mass="1.0" />
+      <geom name="s1_sbox_pedestal_leg" type="box" size="0.012 0.012 0.390" pos="0 0 -0.402" material="s1_mat_dock" contype="1" conaffinity="1" mass="2.0" />
+      <geom name="s1_sbox_floor" type="box" size="0.033 0.033 0.003" pos="0 0 0.003" material="s1_mat_screw_box" contype="1" conaffinity="1" mass="0.2" />
+      <geom name="s1_sbox_wf" type="box" size="0.033 0.003 0.010" pos="0 -0.033 0.010" material="s1_mat_screw_box" contype="0" conaffinity="0" />
+      <geom name="s1_sbox_wr" type="box" size="0.033 0.003 0.010" pos="0  0.033 0.010" material="s1_mat_screw_box" contype="0" conaffinity="0" />
+      <geom name="s1_sbox_wl" type="box" size="0.003 0.033 0.010" pos="-0.033 0 0.010" material="s1_mat_screw_box" contype="0" conaffinity="0" />
+      <geom name="s1_sbox_wrr" type="box" size="0.003 0.033 0.010" pos=" 0.033 0 0.010" material="s1_mat_screw_box" contype="0" conaffinity="0" />
+      <site name="s1_screw_pick_site" type="sphere" size="0.004" pos="0 0 0.020" rgba="1 0.5 0 0.9" />
+      <site name="s1_screw_pick_FL" type="sphere" size="0.003" pos="-0.010 -0.010 0.022" rgba="1 0.5 0 0.9" />
+      <site name="s1_screw_pick_FR" type="sphere" size="0.003" pos=" 0.010 -0.010 0.022" rgba="1 0.5 0 0.9" />
+      <site name="s1_screw_pick_RL" type="sphere" size="0.003" pos="-0.010  0.010 0.022" rgba="1 0.5 0 0.9" />
+      <site name="s1_screw_pick_RR" type="sphere" size="0.003" pos=" 0.010  0.010 0.022" rgba="1 0.5 0 0.9" />
+    </body>
+    <body name="s1_tool_dock" pos="0.28 0.68 0.87">
+      <geom name="s1_dock_base" type="box" size="0.225 0.060 0.004" pos="0 0 -0.05" material="s1_mat_dock" contype="1" conaffinity="1" mass="2.0" />
+      <geom name="s1_dock_post_1" type="box" size="0.012 0.012 0.07" pos="-0.205 0 0.009" material="s1_mat_dock" contype="1" conaffinity="1" mass="0.5" />
+      <geom name="s1_dock_post_2" type="box" size="0.012 0.012 0.07" pos="0.205 0 0.009" material="s1_mat_dock" contype="1" conaffinity="1" mass="0.5" />
+      <geom name="s1_dock_arm" type="box" size="0.215 0.012 0.010" pos="0 0 0.074" material="s1_mat_dock" contype="1" conaffinity="1" mass="0.3" />
+      <geom name="s1_dock_leg_fl" type="box" size="0.008 0.008 0.408" pos="-0.215 -0.050 -0.46" material="s1_mat_dock" contype="1" conaffinity="1" />
+      <geom name="s1_dock_leg_fr" type="box" size="0.008 0.008 0.408" pos=" 0.215 -0.050 -0.46" material="s1_mat_dock" contype="1" conaffinity="1" />
+      <geom name="s1_dock_leg_rl" type="box" size="0.008 0.008 0.408" pos="-0.215  0.050 -0.46" material="s1_mat_dock" contype="1" conaffinity="1" />
+      <geom name="s1_dock_leg_rr" type="box" size="0.008 0.008 0.408" pos=" 0.215  0.050 -0.46" material="s1_mat_dock" contype="1" conaffinity="1" />
+      <geom name="s1_cup_vac" type="cylinder" size="0.022 0.008" pos="-0.120 0 0.082" material="s1_mat_cup" contype="0" conaffinity="0" />
+      <site name="s1_dock_vac_W2" type="sphere" size="0.003" pos="-0.120 0 0.090" rgba="0 1 0 0.9" />
+      <site name="s1_dock_vac_flat_axis" type="box" size="0.032 0.002 0.002" pos="-0.120 0 0.098" rgba="1 1 0 0.45" />
+      <geom name="s1_cup_pin" type="cylinder" size="0.022 0.008" pos="0 0 0.082" material="s1_mat_cup" contype="0" conaffinity="0" />
+      <site name="s1_dock_pin_W2" type="sphere" size="0.003" pos="0 0 0.090" rgba="0 1 0 0.9" />
+      <site name="s1_dock_pin_flat_axis" type="box" size="0.032 0.002 0.002" pos="0 0 0.098" rgba="1 1 0 0.45" />
+      <geom name="s1_cup_sd" type="cylinder" size="0.022 0.008" pos="0.120 0 0.082" material="s1_mat_cup" contype="0" conaffinity="0" />
+      <site name="s1_dock_sd_W2" type="sphere" size="0.003" pos="0.120 0 0.090" rgba="0 1 0 0.9" />
+      <site name="s1_dock_sd_flat_axis" type="box" size="0.032 0.002 0.002" pos="0.120 0 0.098" rgba="1 1 0 0.45" />
+      <body name="s1_dock_vac_vis" pos="-0.120 0 0.090" euler="3.1416 0 0">
+        <geom type="cylinder" size="0.032 0.005" pos="0 0 0.005" rgba="0.22 0.22 0.22 0" contype="0" conaffinity="0" />
+        <geom type="cylinder" size="0.028 0.010" pos="0 0 0.020" rgba="0.30 0.30 0.30 0" contype="0" conaffinity="0" />
+        <geom type="cylinder" size="0.032 0.002" pos="0 0 0.032" rgba="0.18 0.18 0.18 0" contype="0" conaffinity="0" />
+        <geom type="cylinder" size="0.010 0.008" pos="0 0 0.042" rgba="0.30 0.30 0.30 0" contype="0" conaffinity="0" />
+        <geom type="cylinder" size="0.020 0.006" pos="0 0 0.056" rgba="0.08 0.08 0.08 0" contype="0" conaffinity="0" />
+        <geom type="cylinder" size="0.018 0.004" pos="0 0 0.066" rgba="0.08 0.08 0.08 0" contype="0" conaffinity="0" />
+        <geom type="cylinder" size="0.022 0.002" pos="0 0 0.072" rgba="0.05 0.05 0.05 0" contype="0" conaffinity="0" />
+      </body>
+      <body name="s1_dock_pin_vis" pos="0 0.000 0.090" euler="3.1416 0 0">
+        <geom type="cylinder" size="0.032 0.005" pos="0 0 0.005" rgba="0.22 0.22 0.22 1" contype="0" conaffinity="0" />
+        <geom type="cylinder" size="0.028 0.010" pos="0 0 0.020" rgba="0.30 0.30 0.30 1" contype="0" conaffinity="0" />
+        <geom type="cylinder" size="0.032 0.002" pos="0 0 0.032" rgba="0.18 0.18 0.18 1" contype="0" conaffinity="0" />
+        <geom type="box" size="0.075 0.012 0.006" pos="0 0 0.042" rgba="0.05 0.38 0.95 1" contype="0" conaffinity="0" />
+        <geom type="box" size="0.001 0.0045 0.006" pos="-0.05715 0 0.054" rgba="0.95 0.75 0.10 1" contype="0" conaffinity="0" />
+        <geom type="box" size="0.0025 0.0045 0.001" pos="-0.06065 0 0.061" rgba="0.95 0.45 0.05 1" contype="0" conaffinity="0" />
+        <geom type="box" size="0.001 0.0045 0.006" pos=" 0.05715 0 0.054" rgba="0.95 0.75 0.10 1" contype="0" conaffinity="0" />
+        <geom type="box" size="0.0025 0.0045 0.001" pos=" 0.06065 0 0.061" rgba="0.95 0.45 0.05 1" contype="0" conaffinity="0" />
+      </body>
+      <body name="s1_dock_sd_vis" pos="0.120 0 0.090" euler="3.1416 0 0">
+        <geom type="cylinder" size="0.032 0.005" pos="0 0 0.005" rgba="0.22 0.22 0.22 1" contype="0" conaffinity="0" />
+        <geom type="cylinder" size="0.028 0.010" pos="0 0 0.020" rgba="0.30 0.30 0.30 1" contype="0" conaffinity="0" />
+        <geom type="cylinder" size="0.032 0.002" pos="0 0 0.032" rgba="0.18 0.18 0.18 1" contype="0" conaffinity="0" />
+        <geom type="cylinder" size="0.018 0.020" pos="0 0 0.054" rgba="1.00 0.45 0.00 1" contype="0" conaffinity="0" />
+        <geom type="cylinder" size="0.008 0.008" pos="0 0 0.082" rgba="0.70 0.70 0.70 1" contype="0" conaffinity="0" />
+        <geom type="cylinder" size="0.005 0.012" pos="0 0 0.102" rgba="0.85 0.85 0.87 1" contype="0" conaffinity="0" />
+        <geom type="cylinder" size="0.003 0.006" pos="0 0 0.120" rgba="0.50 0.50 0.50 1" contype="0" conaffinity="0" />
+      </body>
+    </body>
+    <body name="s1_s1_alu_plate" pos="-0.3 0.68745 0.81775" quat="0 0 0 1">
+      <freejoint name="s1_jnt_alu_plate" />
+      <inertial pos="0 0 0.00075" mass="0.138" diaginertia="1.4e-4 1.3e-3 1.4e-3" />
+      <geom name="s1_alu_vis" type="mesh" mesh="s1_aluminum_plate_mesh" pos="-0.002361 0.000056 0.000747" rgba="0.76 0.78 0.80 1" />
+      <site name="s1_s1_alu_gl" type="sphere" size="0.004" pos="-0.06 0 0.0015" rgba="0 0 0 0" />
+      <site name="s1_s1_alu_gr" type="sphere" size="0.004" pos=" 0.06 0 0.0015" rgba="0 0 0 0" />
+      <body name="s1_stab_space_L" pos="-0.07693 -0.05113 -0.00550">
+        <geom name="s1_stab_space_L_mesh" type="mesh" mesh="s1_stabilizer_mesh" pos="-0.047852 0.0017 0.00650" material="s1_stab_white" contype="0" conaffinity="0" />
+      </body>
+      <body name="s1_stab_space_R" pos="0.02307 -0.05113 -0.00550">
+        <geom name="s1_stab_space_R_mesh" type="mesh" mesh="s1_stabilizer_mesh" pos="-0.047852 0.0017 0.00650" material="s1_stab_white" contype="0" conaffinity="0" />
+      </body>
+      <body name="s1_stab_lshift_L" pos="-0.14841 -0.03208 -0.00550">
+        <geom name="s1_stab_lshift_L_mesh" type="mesh" mesh="s1_stabilizer_mesh" pos="-0.047852 0.0017 0.00650" material="s1_stab_white" contype="0" conaffinity="0" />
+      </body>
+      <body name="s1_stab_lshift_R" pos="-0.12453 -0.03208 -0.00550">
+        <geom name="s1_stab_lshift_R_mesh" type="mesh" mesh="s1_stabilizer_mesh" pos="-0.047852 0.0017 0.00650" material="s1_stab_white" contype="0" conaffinity="0" />
+      </body>
+      <body name="s1_stab_enter_L" pos="0.09448 -0.01302 -0.00550">
+        <geom name="s1_stab_enter_L_mesh" type="mesh" mesh="s1_stabilizer_mesh" pos="-0.047852 0.0017 0.00650" material="s1_stab_white" contype="0" conaffinity="0" />
+      </body>
+      <body name="s1_stab_enter_R" pos="0.11836 -0.01302 -0.00550">
+        <geom name="s1_stab_enter_R_mesh" type="mesh" mesh="s1_stabilizer_mesh" pos="-0.047852 0.0017 0.00650" material="s1_stab_white" contype="0" conaffinity="0" />
+      </body>
+      <body name="s1_stab_bksp_L" pos="0.09686 0.02508 -0.00550">
+        <geom name="s1_stab_bksp_L_mesh" type="mesh" mesh="s1_stabilizer_mesh" pos="-0.047852 0.0017 0.00650" material="s1_stab_white" contype="0" conaffinity="0" />
+      </body>
+      <body name="s1_stab_bksp_R" pos="0.12074 0.02508 -0.00550">
+        <geom name="s1_stab_bksp_R_mesh" type="mesh" mesh="s1_stabilizer_mesh" pos="-0.047852 0.0017 0.00650" material="s1_stab_white" contype="0" conaffinity="0" />
+      </body>
+    </body>
+    <body name="s1_s1_pcb" pos="-0.3 0.5483 0.812">
+      <freejoint name="s1_jnt_pcb" />
+      <inertial pos="0 0 0" mass="0.100" diaginertia="9.3e-5 8.1e-4 8.9e-4" />
+      <geom name="s1_pcb_board" type="box" size="0.1510 0.0560 0.002" pos="0 0 0.002" material="s1_mat_fr4" density="1850" friction="0.6 0.005 0.0001" condim="4" />
+      <geom name="s1_pcb_usbc" type="box" size="0.0015 0.0045 0.002" pos="-0.1525  0.028  0.001" material="s1_mat_conn_dark" contype="0" conaffinity="0" />
+      <geom name="s1_pcb_pwr" type="box" size="0.0015 0.007  0.003" pos="-0.1525  0.0105 0.002" material="s1_mat_conn_dark" contype="0" conaffinity="0" />
+      <geom name="s1_pcb_os" type="box" size="0.0015 0.007  0.003" pos="-0.1525 -0.0095 0.002" material="s1_mat_conn_dark" contype="0" conaffinity="0" />
+      <site name="s1_s1_pcb_gl" type="sphere" size="0.004" pos="0.05 0 0.0008" rgba="0.2 1.0 0.4 0.9" />
+      <site name="s1_s1_pcb_gr" type="sphere" size="0.004" pos="0.12 0 0.0008" rgba="0.2 1.0 0.4 0.9" />
+    </body>
+    <body name="s1_s1_battery" pos="-0.3 0.4363 0.813">
+      <freejoint name="s1_jnt_battery" />
+      <inertial pos="0 0 0" mass="0.080" diaginertia="3.6e-5 1.6e-4 1.8e-4" />
+      <geom name="s1_batt_body" type="box" size="0.045 0.030 0.004" pos="0 0 0.004" material="s1_mat_lipo" density="2400" friction="0.6 0.005 0.0001" condim="4" />
+      <geom name="s1_batt_jst" type="box" size="0.001 0.004 0.002" pos="-0.046 0 -0.001" material="s1_mat_connector" contype="0" conaffinity="0" />
+      <site name="s1_s1_battery_grasp" type="sphere" size="0.004" pos="0 0 0.003" rgba="1.0 0.9 0.2 0.9" />
+      <site name="s1_s1_jst_face" type="sphere" size="0.002" pos="-0.045 0 0" rgba="1 0.4 0 0.8" />
+    </body>
+    <body name="s1_s1_epdm" pos="-0.3 0.31915 0.81375">
+      <freejoint name="s1_jnt_epdm" />
+      <inertial pos="0 0 0" mass="0.008" diaginertia="1.2e-5 3.8e-5 5.0e-5" />
+      <geom name="s1_epdm_front" type="box" size="0.1454 0.01408 0.00075" pos="0 -0.04408 0.002" material="s1_mat_epdm" density="200" friction="0.8 0.005 0.0001" condim="4" />
+      <geom name="s1_epdm_rear" type="box" size="0.1454 0.01408 0.00075" pos="0  0.04408 0.002" material="s1_mat_epdm" density="200" friction="0.8 0.005 0.0001" condim="4" />
+      <geom name="s1_epdm_left" type="box" size="0.06670 0.030 0.00075" pos="-0.08670 0 0.002" material="s1_mat_epdm" density="200" friction="0.8 0.005 0.0001" condim="4" />
+      <geom name="s1_epdm_right" type="box" size="0.04170 0.030 0.00075" pos=" 0.11170 0 0.002" material="s1_mat_epdm" density="200" friction="0.8 0.005 0.0001" condim="4" />
+      <site name="s1_s1_epdm_grasp" type="sphere" size="0.004" pos="-0.087 0 0.00075" rgba="0.4 0.7 1.0 0.9" />
+    </body>
+    <body name="s1_ps_plate" pos="-0.3 1.25745 0.81375" quat="0 0 0 1">
+      <freejoint name="s1_jnt_ps_plate" />
+      <inertial pos="0 0 0.00075" mass="0.138" diaginertia="1.4e-4 1.3e-3 1.4e-3" />
+      <geom name="s1_ps_alu_vis" type="mesh" mesh="s1_aluminum_plate_mesh" pos="-0.002361 0.000056 0.000747" rgba="0.76 0.78 0.80 1" density="2700" friction="0.4 0.005 0.0001" condim="4" />
+      <body name="s1_ps_stab_space_L" pos="-0.07693 -0.05113 -0.00550">
+        <geom name="s1_ps_stab_space_L_mesh" type="mesh" mesh="s1_stabilizer_mesh" pos="-0.047852 0.0017 0.00650" material="s1_stab_white" contype="0" conaffinity="0" />
+      </body>
+      <body name="s1_ps_stab_space_R" pos="0.02307 -0.05113 -0.00550">
+        <geom name="s1_ps_stab_space_R_mesh" type="mesh" mesh="s1_stabilizer_mesh" pos="-0.047852 0.0017 0.00650" material="s1_stab_white" contype="0" conaffinity="0" />
+      </body>
+      <body name="s1_ps_stab_lshift_L" pos="-0.14841 -0.03208 -0.00550">
+        <geom name="s1_ps_stab_lshift_L_mesh" type="mesh" mesh="s1_stabilizer_mesh" pos="-0.047852 0.0017 0.00650" material="s1_stab_white" contype="0" conaffinity="0" />
+      </body>
+      <body name="s1_ps_stab_lshift_R" pos="-0.12453 -0.03208 -0.00550">
+        <geom name="s1_ps_stab_lshift_R_mesh" type="mesh" mesh="s1_stabilizer_mesh" pos="-0.047852 0.0017 0.00650" material="s1_stab_white" contype="0" conaffinity="0" />
+      </body>
+      <body name="s1_ps_stab_enter_L" pos="0.09448 -0.01302 -0.00550">
+        <geom name="s1_ps_stab_enter_L_mesh" type="mesh" mesh="s1_stabilizer_mesh" pos="-0.047852 0.0017 0.00650" material="s1_stab_white" contype="0" conaffinity="0" />
+      </body>
+      <body name="s1_ps_stab_enter_R" pos="0.11836 -0.01302 -0.00550">
+        <geom name="s1_ps_stab_enter_R_mesh" type="mesh" mesh="s1_stabilizer_mesh" pos="-0.047852 0.0017 0.00650" material="s1_stab_white" contype="0" conaffinity="0" />
+      </body>
+      <body name="s1_ps_stab_bksp_L" pos="0.09686 0.02508 -0.00550">
+        <geom name="s1_ps_stab_bksp_L_mesh" type="mesh" mesh="s1_stabilizer_mesh" pos="-0.047852 0.0017 0.00650" material="s1_stab_white" contype="0" conaffinity="0" />
+      </body>
+      <body name="s1_ps_stab_bksp_R" pos="0.12074 0.02508 -0.00550">
+        <geom name="s1_ps_stab_bksp_R_mesh" type="mesh" mesh="s1_stabilizer_mesh" pos="-0.047852 0.0017 0.00650" material="s1_stab_white" contype="0" conaffinity="0" />
+      </body>
+    </body>
+         Tray world: (−0.200, 0.400, 0.815), pocket floor z=0.810
+         EPDM local Y=−0.181 → world (−0.200, 0.21915, 0.81075)
+         ══════════════════════════════════════════════════════════════════ --&gt;
+
+    
+    <body name="s1_ps_pcb" pos="-0.3 1.1183 0.812">
+      <freejoint name="s1_jnt_ps_pcb" />
+      <inertial pos="0 0 0" mass="0.100" diaginertia="9.3e-5 8.1e-4 8.9e-4" />
+      <geom name="s1_ps_pcb_board" type="box" size="0.1510 0.0560 0.002" pos="0 0 0.002" material="s1_mat_fr4" density="1850" friction="0.6 0.005 0.0001" condim="4" />
+    </body>
+    <body name="s1_ps_battery" pos="-0.3 1.0063 0.813">
+      <freejoint name="s1_jnt_ps_battery" />
+      <inertial pos="0 0 0" mass="0.080" diaginertia="3.6e-5 1.6e-4 1.8e-4" />
+      <geom name="s1_ps_batt_body" type="box" size="0.045 0.030 0.004" pos="0 0 0.004" material="s1_mat_lipo" density="2400" friction="0.6 0.005 0.0001" condim="4" />
+    </body>
+    <body name="s1_ps_epdm" pos="-0.3 0.88915 0.81075">
+      <freejoint name="s1_jnt_ps_epdm" />
+      <inertial pos="0 0 0" mass="0.008" diaginertia="1.2e-5 3.8e-5 5.0e-5" />
+      <geom name="s1_ps_epdm_f" type="box" size="0.1454 0.01408 0.00075" pos="0 -0.04408 0.002" material="s1_mat_epdm" density="200" friction="0.8 0.005 0.0001" condim="4" />
+      <geom name="s1_ps_epdm_r" type="box" size="0.1454 0.01408 0.00075" pos="0  0.04408 0.002" material="s1_mat_epdm" density="200" friction="0.8 0.005 0.0001" condim="4" />
+      <geom name="s1_ps_epdm_l" type="box" size="0.06670 0.030 0.00075" pos="-0.08670 0 0.002" material="s1_mat_epdm" density="200" friction="0.8 0.005 0.0001" condim="4" />
+      <geom name="s1_ps_epdm_g" type="box" size="0.04170 0.030 0.00075" pos=" 0.11170 0 0.002" material="s1_mat_epdm" density="200" friction="0.8 0.005 0.0001" condim="4" />
+    </body>
+    <body name="s1_kit_tray_prestage" pos="-0.3 1.07 0.815">
+      <freejoint name="s1_jnt_tray_ps" />
+      <inertial pos="0 0 -0.0075" mass="3.5" diaginertia="5.0e-2 1.2e-1 1.5e-1" />
+      <geom name="s1_ps_slab" type="box" size="0.175 0.260 0.0075" pos="0 0 -0.0075" material="s1_tray_alu" contype="1" conaffinity="1" />
+      <geom name="s1_ps_wl" type="box" size="0.0075 0.260 0.004" pos="-0.1675 0 0.004" material="s1_tray_alu" contype="0" conaffinity="0" />
+      <geom name="s1_ps_wr" type="box" size="0.0075 0.260 0.004" pos=" 0.1675 0 0.004" material="s1_tray_alu" contype="0" conaffinity="0" />
+      <geom name="s1_ps_wb" type="box" size="0.1600 0.0075 0.004" pos="0 -0.2525 0.004" material="s1_tray_alu" contype="0" conaffinity="0" />
+      <geom name="s1_ps_wt" type="box" size="0.1600 0.0075 0.004" pos="0  0.2525 0.004" material="s1_tray_alu" contype="0" conaffinity="0" />
+      <geom name="s1_ps_div1" type="box" size="0.1600 0.010 0.004" pos="0 -0.10700 0.004" material="s1_tray_alu" contype="0" conaffinity="0" />
+      <geom name="s1_ps_div2" type="box" size="0.1600 0.010 0.004" pos="0 -0.02100 0.004" material="s1_tray_alu" contype="0" conaffinity="0" />
+      <geom name="s1_ps_div3" type="box" size="0.1600 0.010 0.004" pos="0  0.11700 0.004" material="s1_tray_alu" contype="0" conaffinity="0" />
+      <geom name="s1_ps_bsl" type="box" size="0.0075 0.0330 0.004" pos="-0.0555 -0.06370 0.004" material="s1_tray_alu" contype="0" conaffinity="0" />
+      <geom name="s1_ps_bsr" type="box" size="0.0075 0.0330 0.004" pos=" 0.0555 -0.06370 0.004" material="s1_tray_alu" contype="0" conaffinity="0" />
+      <geom name="s1_ps_fl_epdm" type="box" size="0.1564 0.06415 0.0015" pos="0 -0.18085 -0.0065" material="s1_tray_foam_epdm" contype="0" conaffinity="0" />
+      <geom name="s1_ps_fl_batt" type="box" size="0.0480 0.0330  0.0015" pos="0 -0.06370 -0.0065" material="s1_tray_foam_batt" contype="0" conaffinity="0" />
+      <geom name="s1_ps_fl_pcb" type="box" size="0.1540 0.0590  0.0015" pos="0  0.04830 -0.0065" material="s1_tray_foam_pcb" contype="0" conaffinity="0" />
+      <geom name="s1_ps_fl_plt" type="box" size="0.1554 0.06015 0.0015" pos="0  0.18745 -0.0065" material="s1_tray_foam_plate" contype="0" conaffinity="0" />
+      <geom name="s1_ps_id" type="box" size="0.040 0.0015 0.002" pos="0  0.2600  0.006" material="s1_tray_id" contype="0" conaffinity="0" />
+    </body>
+    <body name="s1_kit_tray_pickzone" pos="-0.3 0.5 0.815">
+      <freejoint name="s1_jnt_tray_pz" />
+      <inertial pos="0 0 -0.0075" mass="3.5" diaginertia="5.0e-2 1.2e-1 1.5e-1" />
+      <geom name="s1_pz_slab" type="box" size="0.175 0.260 0.0075" pos="0 0 -0.0075" material="s1_tray_alu" contype="1" conaffinity="1" />
+      <geom name="s1_pz_wl" type="box" size="0.0075 0.260 0.004" pos="-0.1675 0 0.004" material="s1_tray_alu" contype="0" conaffinity="0" />
+      <geom name="s1_pz_wr" type="box" size="0.0075 0.260 0.004" pos=" 0.1675 0 0.004" material="s1_tray_alu" contype="0" conaffinity="0" />
+      <geom name="s1_pz_wb" type="box" size="0.1600 0.0075 0.004" pos="0 -0.2525 0.004" material="s1_tray_alu" contype="0" conaffinity="0" />
+      <geom name="s1_pz_wt" type="box" size="0.1600 0.0075 0.004" pos="0  0.2525 0.004" material="s1_tray_alu" contype="0" conaffinity="0" />
+      <geom name="s1_pz_div1" type="box" size="0.1600 0.010 0.004" pos="0 -0.10700 0.004" material="s1_tray_alu" contype="0" conaffinity="0" />
+      <geom name="s1_pz_div2" type="box" size="0.1600 0.010 0.004" pos="0 -0.02100 0.004" material="s1_tray_alu" contype="0" conaffinity="0" />
+      <geom name="s1_pz_div3" type="box" size="0.1600 0.010 0.004" pos="0  0.11700 0.004" material="s1_tray_alu" contype="0" conaffinity="0" />
+      <geom name="s1_pz_bsl" type="box" size="0.0075 0.0330 0.004" pos="-0.0555 -0.06370 0.004" material="s1_tray_alu" contype="0" conaffinity="0" />
+      <geom name="s1_pz_bsr" type="box" size="0.0075 0.0330 0.004" pos=" 0.0555 -0.06370 0.004" material="s1_tray_alu" contype="0" conaffinity="0" />
+      <geom name="s1_pz_fl_epdm" type="box" size="0.1564 0.06415 0.0015" pos="0 -0.18085 -0.0065" material="s1_tray_foam_epdm" contype="1" conaffinity="1" />
+      <geom name="s1_pz_fl_batt" type="box" size="0.0480 0.0330  0.0015" pos="0 -0.06370 -0.0065" material="s1_tray_foam_batt" contype="1" conaffinity="1" />
+      <geom name="s1_pz_fl_pcb" type="box" size="0.1540 0.0590  0.0015" pos="0  0.04830 -0.0065" material="s1_tray_foam_pcb" contype="1" conaffinity="1" />
+      <geom name="s1_pz_fl_plt" type="box" size="0.1554 0.06015 0.0015" pos="0  0.18745 -0.0065" material="s1_tray_foam_plate" contype="1" conaffinity="1" />
+      <geom name="s1_pz_id" type="box" size="0.040 0.0015 0.002" pos="0 0.2600 0.006" material="s1_tray_id" contype="0" conaffinity="0" />
+      <site name="s1_pz_pick_epdm" type="sphere" size="0.004" pos="0 -0.18085 -0.00425" rgba="0.5 0.6 1.0 0.9" />
+      <site name="s1_pz_pick_batt" type="sphere" size="0.004" pos="0 -0.06370 -0.002" rgba="0.9 0.9 0.3 0.9" />
+      <site name="s1_pz_pick_pcb" type="sphere" size="0.004" pos="0  0.04830 -0.0042" rgba="0.3 0.9 0.4 0.9" />
+      <site name="s1_pz_pick_plate" type="sphere" size="0.004" pos="0  0.18745 -0.00425" rgba="0.9 0.9 0.9 0.9" />
+    </body>
+    <body name="s1_tray_stack" pos="-1.348 0.5 0.8">
+      <geom name="s1_ts_base" type="box" size="0.140 0.270 0.008" pos="0 0 0" material="s1_stack_mat" contype="1" conaffinity="1" mass="5.0" />
+      <geom name="s1_ts_wall_l" type="box" size="0.006 0.270 0.120" pos="-0.146 0 0.120" material="s1_stack_mat" contype="0" conaffinity="0" />
+      <geom name="s1_ts_wall_f" type="box" size="0.146 0.006 0.120" pos="0 -0.276 0.120" material="s1_stack_mat" contype="0" conaffinity="0" />
+      <geom name="s1_ts_wall_b" type="box" size="0.146 0.006 0.120" pos="0  0.276 0.120" material="s1_stack_mat" contype="0" conaffinity="0" />
+    </body>
+    <body name="s1_feeder_horiz" pos="-0.8475 0.5 0">
+      <geom name="s1_fh_belt" type="box" size="0.360 0.280 0.005" pos="0 0 0.795" material="s1_conveyor_belt" contype="1" conaffinity="1" />
+      <geom name="s1_fh_rail_r" type="box" size="0.350 0.0075 0.030" pos="0  0.2775 0.820" material="s1_conveyor_rail" contype="1" conaffinity="1" />
+      <geom name="s1_fh_rail_f" type="box" size="0.370 0.0075 0.030" pos="0 -0.275 0.820" material="s1_conveyor_rail" contype="1" conaffinity="1" />
+      <geom name="s1_fhl1f" type="box" size="0.015 0.015 0.392" pos="-0.200 -0.250 0.392" material="s1_conveyor_rail" />
+      <geom name="s1_fhl1r" type="box" size="0.015 0.015 0.392" pos="-0.200  0.250 0.392" material="s1_conveyor_rail" />
+      <geom name="s1_fhl2f" type="box" size="0.015 0.015 0.392" pos=" 0.200 -0.250 0.392" material="s1_conveyor_rail" />
+      <geom name="s1_fhl2r" type="box" size="0.015 0.015 0.392" pos=" 0.200  0.250 0.392" material="s1_conveyor_rail" />
+    </body>
+    <body name="s1_feeder_vert" pos="-0.3 0.8737 0">
+      <geom name="s1_fv_belt" type="box" size="0.190 0.6562 0.005" pos="0 0 0.795" material="s1_conveyor_belt" contype="1" conaffinity="1" />
+      <geom name="s1_fv_rail_l" type="box" size="0.0075 0.3750 0.030" pos="-0.1975 0.2713 0.820" material="s1_conveyor_rail" contype="1" conaffinity="1" />
+      <geom name="s1_fv_rail_r" type="box" size="0.0075 0.6562 0.030" pos=" 0.1975 0 0.820" material="s1_conveyor_rail" contype="1" conaffinity="1" />
+      <geom name="s1_fv_cap_top" type="box" size="0.1975 0.0075 0.030" pos="0  0.6637 0.820" material="s1_conveyor_rail" contype="0" conaffinity="0" />
+      <geom name="s1_fvl1r" type="box" size="0.015 0.015 0.392" pos=" 0.180 -0.506 0.392" material="s1_conveyor_rail" />
+      <geom name="s1_fvl2l" type="box" size="0.015 0.015 0.392" pos="-0.180  0.000 0.392" material="s1_conveyor_rail" />
+      <geom name="s1_fvl2r" type="box" size="0.015 0.015 0.392" pos=" 0.180  0.000 0.392" material="s1_conveyor_rail" />
+      <geom name="s1_fvl3l" type="box" size="0.015 0.015 0.392" pos="-0.180  0.506 0.392" material="s1_conveyor_rail" />
+      <geom name="s1_fvl3r" type="box" size="0.015 0.015 0.392" pos=" 0.180  0.506 0.392" material="s1_conveyor_rail" />
+      <geom name="s1_fv_stop_pick" type="box" size="0.190 0.008 0.020" pos="0 -0.6515 0.820" material="s1_stopper_mat" contype="1" conaffinity="1" />
+      <site name="s1_s_stop_pick" type="sphere" size="0.005" pos="0 -0.6517 0.840" rgba="1 0.85 0 1" />
+      <geom name="s1_fv_stop_pre" type="box" size="0.190 0.008 0.030" pos="0 -0.0817 0.820" material="s1_stopper_mat" contype="1" conaffinity="1" />
+      <site name="s1_s_stop_pre" type="sphere" size="0.005" pos="0 -0.0817 0.840" rgba="1 0.85 0 1" />
+    </body>
+    <body name="s1_ur5e_mount" pos="0.2 0.4 0.6" euler="0 0 3.1416">
+      <body name="s1_base" childclass="s1_ur5e">
+        <inertial mass="4.0" pos="0 0 0" diaginertia="0.00443333156 0.00443333156 0.0072" />
+        <geom mesh="s1_base_0" material="s1_black" class="s1_visual" />
+        <geom mesh="s1_base_1" material="s1_jointgray" class="s1_visual" />
+        <body name="s1_shoulder_link" pos="0 0 0.163">
+          <inertial mass="3.7" pos="0 0 0" diaginertia="0.0102675 0.0102675 0.00666" />
+          <joint name="s1_shoulder_pan_joint" class="s1_size3" axis="0 0 1" />
+          <geom mesh="s1_shoulder_0" material="s1_urblue" class="s1_visual" />
+          <geom mesh="s1_shoulder_1" material="s1_black" class="s1_visual" />
+          <geom mesh="s1_shoulder_2" material="s1_jointgray" class="s1_visual" />
+          <geom class="s1_collision" size="0.06 0.06" pos="0 0 -0.04" />
+          <body name="s1_upper_arm_link" pos="0 0.138 0" quat="1 0 1 0">
+            <inertial mass="8.393" pos="0 0 0.2125" diaginertia="0.133886 0.133886 0.0151074" />
+            <joint name="s1_shoulder_lift_joint" class="s1_size3" />
+            <geom mesh="s1_upperarm_0" material="s1_linkgray" class="s1_visual" />
+            <geom mesh="s1_upperarm_1" material="s1_black" class="s1_visual" />
+            <geom mesh="s1_upperarm_2" material="s1_jointgray" class="s1_visual" />
+            <geom mesh="s1_upperarm_3" material="s1_urblue" class="s1_visual" />
+            <geom class="s1_collision" pos="0 -0.04 0" quat="1 1 0 0" size="0.06 0.06" />
+            <geom class="s1_collision" size="0.05 0.2" pos="0 0 0.2" />
+            <body name="s1_forearm_link" pos="0 -0.131 0.425">
+              <inertial mass="2.275" pos="0 0 0.196" diaginertia="0.0311796 0.0311796 0.004095" />
+              <joint name="s1_elbow_joint" class="s1_size3_limited" />
+              <geom mesh="s1_forearm_0" material="s1_urblue" class="s1_visual" />
+              <geom mesh="s1_forearm_1" material="s1_linkgray" class="s1_visual" />
+              <geom mesh="s1_forearm_2" material="s1_black" class="s1_visual" />
+              <geom mesh="s1_forearm_3" material="s1_jointgray" class="s1_visual" />
+              <geom class="s1_collision" pos="0 0.08 0" quat="1 1 0 0" size="0.055 0.06" />
+              <geom class="s1_collision" size="0.038 0.19" pos="0 0 0.2" />
+              <body name="s1_wrist_1_link" pos="0 0 0.392" quat="1 0 1 0">
+                <inertial mass="1.219" pos="0 0.127 0" diaginertia="0.0025599 0.0025599 0.0021942" />
+                <joint name="s1_wrist_1_joint" class="s1_size1" />
+                <geom mesh="s1_wrist1_0" material="s1_black" class="s1_visual" />
+                <geom mesh="s1_wrist1_1" material="s1_urblue" class="s1_visual" />
+                <geom mesh="s1_wrist1_2" material="s1_jointgray" class="s1_visual" />
+                <geom class="s1_collision" pos="0 0.05 0" quat="1 1 0 0" size="0.04 0.07" />
+                <body name="s1_wrist_2_link" pos="0 0.127 0">
+                  <inertial mass="1.219" pos="0 0 0.1" diaginertia="0.0025599 0.0025599 0.0021942" />
+                  <joint name="s1_wrist_2_joint" axis="0 0 1" class="s1_size1" />
+                  <geom mesh="s1_wrist2_0" material="s1_black" class="s1_visual" />
+                  <geom mesh="s1_wrist2_1" material="s1_urblue" class="s1_visual" />
+                  <geom mesh="s1_wrist2_2" material="s1_jointgray" class="s1_visual" />
+                  <geom class="s1_collision" size="0.04 0.06" pos="0 0 0.04" />
+                  <geom class="s1_collision" pos="0 0.02 0.1" quat="1 1 0 0" size="0.04 0.04" />
+                  <body name="s1_wrist_3_link" pos="0 0 0.1">
+                    <inertial mass="0.1889" pos="0 0.0771683 0" quat="1 0 0 1" diaginertia="0.000132134 9.90863e-05 9.90863e-05" />
+                    <joint name="s1_wrist_3_joint" class="s1_size1" />
+                    <geom material="s1_linkgray" mesh="s1_wrist3" class="s1_visual" />
+                    <geom class="s1_eef_collision" pos="0 0.08 0" quat="1 1 0 0" size="0.04 0.02" />
+                    <site name="s1_attachment_site" pos="0 0.1 0" quat="-1 1 0 0" />
+                    <body name="s1_gripper" pos="0 0.1 0">
+                      <geom name="s1_g_mount_flange" type="cylinder" size="0.032 0.005" pos="0 0.005 0" euler="1.5708 0 0" rgba="0.22 0.22 0.22 1" contype="0" conaffinity="0" mass="0.05" />
+                      <geom name="s1_g_base_body" type="cylinder" size="0.028 0.010" pos="0 0.020 0" euler="1.5708 0 0" rgba="0.30 0.30 0.30 1" contype="0" conaffinity="0" mass="0.10" />
+                      <geom name="s1_g_base_ring" type="cylinder" size="0.032 0.002" pos="0 0.032 0" euler="1.5708 0 0" rgba="0.18 0.18 0.18 1" contype="0" conaffinity="0" mass="0.02" />
+                      <geom name="s1_g_neck" type="cylinder" size="0.010 0.008" pos="0 0.042 0" euler="1.5708 0 0" rgba="0.30 0.30 0.30 1" contype="0" conaffinity="0" mass="0.02" />
+                      <geom name="s1_g_bellows" type="cylinder" size="0.020 0.006" pos="0 0.056 0" euler="1.5708 0 0" rgba="0.08 0.08 0.08 1" contype="0" conaffinity="0" mass="0.03" />
+                      <geom name="s1_g_bellows2" type="cylinder" size="0.018 0.004" pos="0 0.066 0" euler="1.5708 0 0" rgba="0.08 0.08 0.08 1" contype="0" conaffinity="0" mass="0.02" />
+                      <geom name="s1_g_cup_rim" type="cylinder" size="0.022 0.002" pos="0 0.072 0" euler="1.5708 0 0" rgba="0.05 0.05 0.05 1" contype="0" conaffinity="0" mass="0.01" />
+                      <site name="s1_gripper_tip" pos="0 0.074 0" size="0.003" rgba="1 1 0 0.8" />
+                      <body name="s1_pin_gripper" pos="0 0 0">
+                        <geom name="s1_pin_mount_flange" type="cylinder" size="0.032 0.005" pos="0 0.005 0" euler="1.5708 0 0" rgba="0.22 0.22 0.22 0" contype="0" conaffinity="0" mass="0.05" />
+                        <geom name="s1_pin_base_body" type="cylinder" size="0.028 0.010" pos="0 0.020 0" euler="1.5708 0 0" rgba="0.30 0.30 0.30 0" contype="0" conaffinity="0" mass="0.10" />
+                        <geom name="s1_pin_base_ring" type="cylinder" size="0.032 0.002" pos="0 0.032 0" euler="1.5708 0 0" rgba="0.18 0.18 0.18 0" contype="0" conaffinity="0" mass="0.02" />
+                        <geom name="s1_ilock_base_block" type="box" size="0.075 0.006 0.012" pos="0 0.042 0" rgba="0.05 0.38 0.95 0" contype="0" conaffinity="0" mass="0.20" />
+                        <geom name="s1_ilock_L_stem" type="box" size="0.001 0.006 0.0045" pos="-0.05715 0.054 0" rgba="0.95 0.75 0.10 0" contype="0" conaffinity="0" mass="0.006" />
+                        <geom name="s1_ilock_L_hook" type="box" size="0.0025 0.001 0.0045" pos="-0.06065 0.061 0" rgba="0.95 0.45 0.05 0" contype="0" conaffinity="0" mass="0.004" />
+                        <geom name="s1_ilock_R_stem" type="box" size="0.001 0.006 0.0045" pos=" 0.05715 0.054 0" rgba="0.95 0.75 0.10 0" contype="0" conaffinity="0" mass="0.006" />
+                        <geom name="s1_ilock_R_hook" type="box" size="0.0025 0.001 0.0045" pos=" 0.06065 0.061 0" rgba="0.95 0.45 0.05 0" contype="0" conaffinity="0" mass="0.004" />
+                        <site name="s1_pin_tip" pos="0 0.061 0" size="0.003" rgba="1 0.8 0 0" />
+                        <site name="s1_plate_lock_tcp" pos="0 0.068 0" size="0.004" rgba="0 1 1 0.8" />
+                        <site name="s1_pin_L_tip" pos="-0.05715 0.061 0" size="0.0025" rgba="1 1 0 0.8" />
+                        <site name="s1_pin_R_tip" pos=" 0.05715 0.061 0" size="0.0025" rgba="1 1 0 0.8" />
+                        <site name="s1_pin_L_hook_contact" pos="-0.06065 0.061 0" size="0.0025" rgba="1 0.2 0 0.8" />
+                        <site name="s1_pin_R_hook_contact" pos=" 0.06065 0.061 0" size="0.0025" rgba="1 0.2 0 0.8" />
+                        <site name="s1_plate_attach_marker" pos="0 0.068 0" size="0.004" rgba="0 1 1 0.8" />
+                      </body>
+                      <body name="s1_screwdriver" pos="0 0 0">
+                        <geom name="s1_sd_flange" type="cylinder" size="0.030 0.005" pos="0 0.005 0" euler="1.5708 0 0" rgba="0.278 0.278 0.278 0" contype="0" conaffinity="0" />
+                        <geom name="s1_sd_spring" type="cylinder" size="0.008 0.008" pos="0 0.018 0" euler="1.5708 0 0" rgba="0.7 0.7 0.7 0" contype="0" conaffinity="0" />
+                        <geom name="s1_sd_body" type="cylinder" size="0.018 0.020" pos="0 0.046 0" euler="1.5708 0 0" rgba="1.0 0.45 0.0 0" contype="0" conaffinity="0" />
+                        <geom name="s1_sd_shaft" type="cylinder" size="0.005 0.012" pos="0 0.078 0" euler="1.5708 0 0" rgba="0.8 0.8 0.82 0" contype="0" conaffinity="0" />
+                        <geom name="s1_sd_bit" type="cylinder" size="0.003 0.006" pos="0 0.096 0" euler="1.5708 0 0" rgba="0.5 0.5 0.5 0" contype="0" conaffinity="0" />
+                        <site name="s1_screwdriver_tip" pos="0 0.102 0" size="0.003" rgba="0 0 0 0" />
+                      </body>
+                    </body>
+                  </body>
+                </body>
+              </body>
+            </body>
+          </body>
+        </body>
+      </body>
+    </body>
+    <body name="s1_robot_raiser" pos="0.2 0.4 0">
+      <geom name="s1_raiser" type="box" size="0.200 0.200 0.300" pos="0 0 0.300" rgba="0.35 0.35 0.38 1" contype="1" conaffinity="1" mass="50.0" />
+    </body>
+    <body name="s5_laser_placeholder" pos="11.148 0.430 0">
+      <geom name="s5_gantry_l" type="box" size="0.025 0.025 0.400" pos="-0.300 -0.430 1.100" material="laser_mat" />
+      <geom name="s5_gantry_r" type="box" size="0.025 0.025 0.400" pos="0.300 -0.430 1.100" material="laser_mat" />
+      <geom name="s5_gantry_x" type="box" size="0.340 0.025 0.025" pos="0 -0.430 1.500" material="laser_mat" />
+      <geom name="s5_laser_head" type="cylinder" size="0.030 0.080" pos="0 -0.430 1.390" euler="1.5708 0 0" material="laser_mat" />
+      <site name="s5_station_origin" type="sphere" size="0.008" pos="0 -0.430 0.840" rgba="0.2 0.45 1 1" />
+    </body>
+    <body name="s6_packaging_placeholder" pos="12.648 0.430 0">
+      <geom name="s6_tabletop" type="box" size="0.450 0.250 0.030" pos="0 -0.430 0.780" material="package_mat" />
+      <geom name="s6_leg_lf" type="box" size="0.025 0.025 0.375" pos="-0.380 -0.620 0.375" material="conveyor_rail" />
+      <geom name="s6_leg_rf" type="box" size="0.025 0.025 0.375" pos="0.380 -0.620 0.375" material="conveyor_rail" />
+      <geom name="s6_leg_lr" type="box" size="0.025 0.025 0.375" pos="-0.380 -0.240 0.375" material="conveyor_rail" />
+      <geom name="s6_leg_rr" type="box" size="0.025 0.025 0.375" pos="0.380 -0.240 0.375" material="conveyor_rail" />
+      <site name="s6_station_origin" type="sphere" size="0.008" pos="0 -0.430 0.840" rgba="0.6 0.25 1 1" />
+    </body>
+    <body name="pallet" pos="0.185 0 0.810">
+      <freejoint name="pallet_joint" />
+      <geom name="pallet_plate" type="box" size="0.175 0.075 0.004" pos="0 0 -0.004" material="aluminum_pallet" mass="1.5" contype="1" conaffinity="1" />
+      <geom name="stop_FL_x" type="box" size="0.0125 0.0025 0.003" pos="-0.1439 -0.0637 0.003" material="fixture_stop" mass="0.02" />
+      <geom name="stop_FL_y" type="box" size="0.0025 0.0125 0.003" pos="-0.1589 -0.04865 0.003" material="fixture_stop" mass="0.02" />
+      <geom name="stop_FR_x" type="box" size="0.0125 0.0025 0.003" pos="0.1439 -0.0637 0.003" material="fixture_stop" mass="0.02" />
+      <geom name="stop_FR_y" type="box" size="0.0025 0.0125 0.003" pos="0.1589 -0.04865 0.003" material="fixture_stop" mass="0.02" />
+      <geom name="stop_RL_x" type="box" size="0.0125 0.0025 0.003" pos="-0.1439 0.0637 0.003" material="fixture_stop" mass="0.02" />
+      <geom name="stop_RL_y" type="box" size="0.0025 0.0125 0.003" pos="-0.1589 0.04865 0.003" material="fixture_stop" mass="0.02" />
+      <geom name="stop_RR_x" type="box" size="0.0125 0.0025 0.003" pos="0.1439 0.0637 0.003" material="fixture_stop" mass="0.02" />
+      <geom name="stop_RR_y" type="box" size="0.0025 0.0125 0.003" pos="0.1589 0.04865 0.003" material="fixture_stop" mass="0.02" />
+      <body name="cell_bottom_case" pos="0 0 0.011" euler="0 0 0">
+        <geom name="cell_case_floor" type="box" size="0.1564 0.06115 0.0015" pos="0 0 -0.0095" material="abs_plastic" density="1050" contype="0" conaffinity="0" />
+        <geom name="cell_case_wl_A" type="box" size="0.0015 0.01433 0.0095" pos="-0.1549  0.04682  0.0015" material="abs_plastic" density="1050" contype="0" conaffinity="0" />
+        <geom name="cell_case_wl_ub" type="box" size="0.0015 0.0045  0.0045" pos="-0.1549  0.028   -0.0035" material="abs_plastic" density="1050" contype="0" conaffinity="0" />
+        <geom name="cell_case_wl_ua" type="box" size="0.0015 0.0045  0.003" pos="-0.1549  0.028    0.008" material="abs_plastic" density="1050" contype="0" conaffinity="0" />
+        <geom name="cell_case_wl_B" type="box" size="0.0015 0.003   0.0095" pos="-0.1549  0.0205   0.0015" material="abs_plastic" density="1050" contype="0" conaffinity="0" />
+        <geom name="cell_case_wl_pb" type="box" size="0.0015 0.007   0.004" pos="-0.1549  0.0105  -0.004" material="abs_plastic" density="1050" contype="0" conaffinity="0" />
+        <geom name="cell_case_wl_pa" type="box" size="0.0015 0.007   0.0025" pos="-0.1549  0.0105   0.0085" material="abs_plastic" density="1050" contype="0" conaffinity="0" />
+        <geom name="cell_case_wl_C" type="box" size="0.0015 0.005   0.0095" pos="-0.1549 -0.0005   0.0015" material="abs_plastic" density="1050" contype="0" conaffinity="0" />
+        <geom name="cell_case_wl_ob" type="box" size="0.0015 0.007   0.004" pos="-0.1549 -0.0095  -0.004" material="abs_plastic" density="1050" contype="0" conaffinity="0" />
+        <geom name="cell_case_wl_oa" type="box" size="0.0015 0.007   0.0025" pos="-0.1549 -0.0095   0.0085" material="abs_plastic" density="1050" contype="0" conaffinity="0" />
+        <geom name="cell_case_wl_D" type="box" size="0.0015 0.02233 0.0095" pos="-0.1549 -0.03883  0.0015" material="abs_plastic" density="1050" contype="0" conaffinity="0" />
+        <site name="cell_case_usbc" type="box" size="0.001 0.0045 0.002" pos="-0.1565  0.028   0.003" rgba="0 0.5 1 0.9" />
+        <site name="cell_case_pwr" type="box" size="0.001 0.007  0.002" pos="-0.1565  0.0105  0.003" rgba="1 0.5 0 0.9" />
+        <site name="cell_case_os" type="box" size="0.001 0.007  0.002" pos="-0.1565 -0.0095  0.003" rgba="1 0.5 0 0.9" />
+        <geom name="cell_case_wr" type="box" size="0.0015 0.06115 0.0095" pos=" 0.1549  0       0.0015" material="abs_plastic" density="1050" contype="0" conaffinity="0" />
+        <geom name="cell_case_wrear" type="box" size="0.1564 0.0015  0.0095" pos="0  0.05965 0.0015" material="abs_plastic" density="1050" contype="0" conaffinity="0" />
+        <geom name="cell_case_wfrt" type="box" size="0.1564 0.0015  0.0095" pos="0 -0.05965 0.0015" material="abs_plastic" density="1050" contype="0" conaffinity="0" />
+        <geom name="cell_case_brl" type="box" size="0.045  0.00075 0.002" pos=" 0.025  -0.03075 -0.006" material="abs_plastic" density="1050" contype="0" conaffinity="0" />
+        <geom name="cell_case_brr" type="box" size="0.045  0.00075 0.002" pos=" 0.025   0.03075 -0.006" material="abs_plastic" density="1050" contype="0" conaffinity="0" />
+        <geom name="cell_case_brfl" type="box" size="0.00075 0.0125 0.002" pos="-0.02025 -0.0175  -0.006" material="abs_plastic" density="1050" contype="0" conaffinity="0" />
+        <geom name="cell_case_brfr" type="box" size="0.00075 0.0125 0.002" pos="-0.02025  0.0175  -0.006" material="abs_plastic" density="1050" contype="0" conaffinity="0" />
+        <geom name="cell_case_brrr" type="box" size="0.00075 0.030  0.002" pos=" 0.07025  0       -0.006" material="abs_plastic" density="1050" contype="0" conaffinity="0" />
+        <geom name="cell_case_boss_FL" type="cylinder" size="0.003 0.004" pos="-0.1515 -0.0495 -0.004" material="abs_plastic" density="1050" contype="0" conaffinity="0" />
+        <geom name="cell_case_boss_FR" type="cylinder" size="0.003 0.004" pos=" 0.1545 -0.0495 -0.004" material="abs_plastic" density="1050" contype="0" conaffinity="0" />
+        <geom name="cell_case_boss_RL" type="cylinder" size="0.003 0.004" pos="-0.1515  0.0495 -0.004" material="abs_plastic" density="1050" contype="0" conaffinity="0" />
+        <geom name="cell_case_boss_RR" type="cylinder" size="0.003 0.004" pos=" 0.1545  0.0495 -0.004" material="abs_plastic" density="1050" contype="0" conaffinity="0" />
+        <site name="cell_case_boss_FL_s" type="cylinder" size="0.003 0.001" pos="-0.1515 -0.0495 -0.0085" rgba="0.8 0.2 0.2 1" />
+        <site name="cell_case_boss_FR_s" type="cylinder" size="0.003 0.001" pos=" 0.1545 -0.0495 -0.0085" rgba="0.8 0.2 0.2 1" />
+        <site name="cell_case_boss_RL_s" type="cylinder" size="0.003 0.001" pos="-0.1515  0.0495 -0.0085" rgba="0.8 0.2 0.2 1" />
+        <site name="cell_case_boss_RR_s" type="cylinder" size="0.003 0.001" pos=" 0.1545  0.0495 -0.0085" rgba="0.8 0.2 0.2 1" />
+        <site name="cell_case_case_top" type="sphere" size="0.002" pos="0 0 0.011" rgba="0 0.6 0.8 0.4" />
+      </body>
+      <site name="pallet_ctr" type="sphere" size="0.004" pos="0 0 0" rgba="1 0.8 0 0.8" />
+    </body>
+    <camera name="cell_overview" pos="6.4 -5.2 4.0" xyaxes="1 0 0 0 0.62 0.78" />
+    <camera name="cell_top" pos="6.4 0 8.0" xyaxes="1 0 0 0 1 0" />
+    <camera name="s1_view" pos="0.2 -2.0 1.7" xyaxes="1 0 0 0 0.65 0.76" />
+    <camera name="s3_view" pos="0.984 -2.0 1.7" xyaxes="1 0 0 0 0.65 0.76" />
+    <camera name="s4_view" pos="5.01 -2.0 1.7" xyaxes="1 0 0 0 0.65 0.76" />
+  </worldbody>
+  <actuator>
+    <general class="s1_size3" name="s1_shoulder_pan" joint="s1_shoulder_pan_joint" />
+    <general class="s1_size3" name="s1_shoulder_lift" joint="s1_shoulder_lift_joint" />
+    <general class="s1_size3_limited" name="s1_elbow" joint="s1_elbow_joint" />
+    <general class="s1_size1" name="s1_wrist_1" joint="s1_wrist_1_joint" />
+    <general class="s1_size1" name="s1_wrist_2" joint="s1_wrist_2_joint" />
+    <general class="s1_size1" name="s1_wrist_3" joint="s1_wrist_3_joint" />
+    <position name="s1_slider_act" joint="s1_slider_joint" kp="500" ctrlrange="0 0.300" gear="1" />
+    <position name="s3_x_drive" joint="s3_x_joint" kp="50000" kv="2000" ctrllimited="true" ctrlrange="-0.160 0.160" />
+    <position name="s3_y_drive" joint="s3_y_joint" kp="50000" kv="2000" ctrllimited="true" ctrlrange="-0.115 0.115" />
+    <position name="s3_col_rotate" joint="s3_column_rotation" kp="500" kv="50" ctrllimited="true" ctrlrange="-3.1416 3.1416" />
+    <position name="s3_head_1_drive" joint="s3_head_1_z" kp="5000" kv="200" ctrllimited="true" ctrlrange="-0.150 0" />
+    <position name="s3_head_2_drive" joint="s3_head_2_z" kp="5000" kv="200" ctrllimited="true" ctrlrange="-0.150 0" />
+    <motor name="s4_x_drive" joint="s4_x_joint" gear="1" ctrllimited="true" ctrlrange="-160 160" />
+    <motor name="s4_y_drive" joint="s4_y_joint" gear="1" ctrllimited="true" ctrlrange="-115 115" />
+    <position name="s4_col_rotate" joint="s4_column_rotation" kp="500" ctrllimited="true" ctrlrange="-3.1416 3.1416" />
+    <position name="s4_head_1_drive" joint="s4_head_1_z" kp="5000" ctrllimited="true" ctrlrange="-0.150 0" />
+    <position name="s4_head_2_drive" joint="s4_head_2_z" kp="5000" ctrllimited="true" ctrlrange="-0.150 0" />
+  </actuator>
+  <equality>
+    <weld name="s1_weld_epdm" body1="s1_gripper" body2="s1_s1_epdm" active="false" solref="0.01 1" solimp="0.99 0.999 0.001" />
+    <weld name="s1_weld_battery" body1="s1_gripper" body2="s1_s1_battery" active="false" solref="0.01 1" solimp="0.99 0.999 0.001" />
+    <weld name="s1_weld_pcb" body1="s1_gripper" body2="s1_s1_pcb" active="false" solref="0.01 1" solimp="0.99 0.999 0.001" />
+    <weld name="s1_weld_alu_plate" body1="s1_gripper" body2="s1_s1_alu_plate" active="false" solref="0.01 1" solimp="0.99 0.999 0.001" />
+    <weld name="s1_weld_plate_world" body1="world" body2="s1_s1_alu_plate" active="false" relpose="-0.006061 -0.002 0.82900 0 0 0 1" solref="0.002 1" solimp="0.999 0.9999 0.0001" />
+    <weld name="s1_weld_box_screw_FL" body1="s1_screw_box" body2="s1_screw_FL" active="true" relpose="-0.010 -0.010 0.006 1 0 0 0" solref="0.002 1" solimp="0.999 0.9999 0.0001" />
+    <weld name="s1_weld_box_screw_FR" body1="s1_screw_box" body2="s1_screw_FR" active="true" relpose=" 0.010 -0.010 0.006 1 0 0 0" solref="0.002 1" solimp="0.999 0.9999 0.0001" />
+    <weld name="s1_weld_box_screw_RL" body1="s1_screw_box" body2="s1_screw_RL" active="true" relpose="-0.010  0.010 0.006 1 0 0 0" solref="0.002 1" solimp="0.999 0.9999 0.0001" />
+    <weld name="s1_weld_box_screw_RR" body1="s1_screw_box" body2="s1_screw_RR" active="true" relpose=" 0.010  0.010 0.006 1 0 0 0" solref="0.002 1" solimp="0.999 0.9999 0.0001" />
+    <weld name="s1_weld_plate_pz" body1="s1_kit_tray_pickzone" body2="s1_s1_alu_plate" active="true" relpose="0 0.18745 0.00275 0 0 0 1" solref="0.01 1" solimp="0.99 0.999 0.001" />
+    <weld name="s1_weld_battery_ps" body1="s1_kit_tray_prestage" body2="s1_ps_battery" active="true" relpose="0 -0.06370 -0.00200 1 0 0 0" solref="0.01 1" solimp="0.99 0.999 0.001" />
+    <weld name="s1_weld_pcb_ps" body1="s1_kit_tray_prestage" body2="s1_ps_pcb" active="true" relpose="0 0.04830 -0.00300 1 0 0 0" solref="0.01 1" solimp="0.99 0.999 0.001" />
+    <weld name="s1_weld_plate_ps" body1="s1_kit_tray_prestage" body2="s1_ps_plate" active="true" relpose="0 0.18745 -0.00125 0 0 0 1" solref="0.01 1" solimp="0.99 0.999 0.001" />
+  </equality>
+</mujoco>

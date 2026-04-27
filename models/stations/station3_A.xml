@@ -1,7 +1,7 @@
 <mujoco model="station3">
   <!--
     AME 547 - Keyboard Assembly Cell Simulation
-    Scene: Station 3 (S3)  Switch Insertion Station
+    Scene: Station 3 (S3) — Switch Insertion Station
 
     Architecture:
       Central rotating column (hinge joint, Z axis) with 2 heads:
@@ -46,9 +46,14 @@
              rgb1="0.3 0.3 0.3" rgb2="0.4 0.4 0.4" width="512" height="512"/>
     <material name="floor_mat"      texture="grid" texrepeat="5 5" reflectance="0.2"/>
     <!--<material name="aluminum_plate" rgba="0.75 0.75 0.78 1"/>-->
-    <material name="aluminum_plate" rgba="0.30 0.32 0.35 1"
+    <material name="aluminum_plate" rgba="0.75 0.75 0.78 1"
           specular="0.7" shininess="0.6" reflectance="0.20"/>
     <material name="fixture_stop"   rgba="1.0 0.85 0.0 1"/>
+    <material name="mat_fr4"        rgba="0.06 0.30 0.08 1" specular="0.15" shininess="0.25"/>
+    <material name="mat_epdm"       rgba="0.35 0.35 0.35 1" specular="0.02" shininess="0.02"/>
+    <material name="mat_screw"      rgba="0.005 0.005 0.006 1" specular="0.35" shininess="0.35"/>
+    <material name="stab_white"     rgba="0.86 0.86 0.86 1" specular="0.25" shininess="0.20"/>
+    <material name="stab_wire"      rgba="0.70 0.70 0.72 1" specular="0.7" shininess="0.7"/>
     <material name="abs_plastic"    rgba="0.15 0.15 0.15 1"/>
     <material name="table_surface"  rgba="0.55 0.45 0.35 1"/>
     <material name="steel_dark"     rgba="0.25 0.25 0.28 1"/>
@@ -75,6 +80,14 @@
           file="../meshes/Switch_Decimated.stl"
           scale="0.001 0.001 0.001"
           refpos="-7.350 0.053 -7.350"
+          refquat="0.7071 -0.7071 0 0"/>
+    <mesh name="aluminum_plate_mesh"
+          file="../meshes/aluminum_plate.stl"
+          scale="0.001 0.001 0.001"/>
+    <mesh name="stabilizer_mesh"
+          file="../meshes/Stabilizer_Decimated.stl"
+          scale="0.001 0.001 0.001"
+          refpos="-23.958 0.000 -1.712"
           refquat="0.7071 -0.7071 0 0"/>
   </asset>
 
@@ -152,88 +165,99 @@
                   contype="1" conaffinity="1"/>
 
             <!-- PALLET: top surface at z=0.810 -->
+            <!-- PALLET + S1 OUTPUT WORKPIECE VISUAL STACK
+                 Updated to match Station 1 final output while preserving the
+                 Station 3 controller contract: body names, sw_* sites, table
+                 joints, actuators, and weld targets remain unchanged.
+                 NOTE: This embedded standalone S3 pallet keeps the original
+                 Z convention so switch insertion heights do not change. -->
             <body name="pallet_base" pos="0 0 0.010">
-              <geom name="base_plate" type="box" size="0.170 0.065 0.004"
-                    pos="0 0 0.004" material="aluminum_plate" mass="1.5"/>
-              <!-- Corner L-stops -->
-              <geom name="stop_FL_x" type="box" size="0.0125 0.0025 0.003"
-                    pos="-0.1500 -0.0600 0.010" material="fixture_stop" mass="0.02"/>
-              <geom name="stop_FL_y" type="box" size="0.0025 0.0125 0.003"
-                    pos="-0.1650 -0.0475 0.010" material="fixture_stop" mass="0.02"/>
-              <geom name="stop_FR_x" type="box" size="0.0125 0.0025 0.003"
-                    pos="0.1500 -0.0600 0.010"  material="fixture_stop" mass="0.02"/>
-              <geom name="stop_FR_y" type="box" size="0.0025 0.0125 0.003"
-                    pos="0.1650 -0.0475 0.010"  material="fixture_stop" mass="0.02"/>
-              <geom name="stop_RL_x" type="box" size="0.0125 0.0025 0.003"
-                    pos="-0.1500 0.0600 0.010"  material="fixture_stop" mass="0.02"/>
-              <geom name="stop_RL_y" type="box" size="0.0025 0.0125 0.003"
-                    pos="-0.1650 0.0475 0.010"  material="fixture_stop" mass="0.02"/>
-              <geom name="stop_RR_x" type="box" size="0.0125 0.0025 0.003"
-                    pos="0.1500 0.0600 0.010"   material="fixture_stop" mass="0.02"/>
-              <geom name="stop_RR_y" type="box" size="0.0025 0.0125 0.003"
-                    pos="0.1650 0.0475 0.010"   material="fixture_stop" mass="0.02"/>
+              <!-- New 350mm x 150mm x 8mm pallet base.
+                   S3 keeps body origin at pallet bottom face; top is z=+0.008. -->
+              <geom name="base_plate" type="box" size="0.175 0.075 0.004"
+                    pos="0 0 0.004" material="aluminum_plate" mass="1.5"
+                    friction="0.8 0.005 0.0001" condim="4" priority="1"/>
 
-              <!-- BOTTOM CASE + S1 OUTPUT STACK -->
+              <!-- Updated corner fixture stops for 312.8mm x 122.3mm bottom case. -->
+              <geom name="stop_FL_x" type="box" size="0.0125 0.0025 0.003" pos="-0.1439 -0.0637 0.011" material="fixture_stop" mass="0.02"/>
+              <geom name="stop_FL_y" type="box" size="0.0025 0.0125 0.003" pos="-0.1589 -0.04865 0.011" material="fixture_stop" mass="0.02"/>
+              <geom name="stop_FR_x" type="box" size="0.0125 0.0025 0.003" pos="0.1439 -0.0637 0.011" material="fixture_stop" mass="0.02"/>
+              <geom name="stop_FR_y" type="box" size="0.0025 0.0125 0.003" pos="0.1589 -0.04865 0.011" material="fixture_stop" mass="0.02"/>
+              <geom name="stop_RL_x" type="box" size="0.0125 0.0025 0.003" pos="-0.1439 0.0637 0.011" material="fixture_stop" mass="0.02"/>
+              <geom name="stop_RL_y" type="box" size="0.0025 0.0125 0.003" pos="-0.1589 0.04865 0.011" material="fixture_stop" mass="0.02"/>
+              <geom name="stop_RR_x" type="box" size="0.0125 0.0025 0.003" pos="0.1439 0.0637 0.011" material="fixture_stop" mass="0.02"/>
+              <geom name="stop_RR_y" type="box" size="0.0025 0.0125 0.003" pos="0.1589 0.04865 0.011" material="fixture_stop" mass="0.02"/>
+
+              <!-- BOTTOM CASE + S1 OUTPUT STACK. Body name and pos preserved. -->
               <body name="bottom_case" pos="0 0 0.020">
-                <geom name="case_bottom" type="box" size="0.1625 0.0575 0.001"
-                      pos="0 0 -0.011" material="abs_plastic" mass="0.15"/>
-                <geom name="case_wall_left"  type="box" size="0.001 0.0575 0.011"
-                      pos="-0.1615 0 0" material="abs_plastic" mass="0.05"/>
-                <geom name="case_wall_right" type="box" size="0.001 0.0575 0.011"
-                      pos="0.1615 0 0"  material="abs_plastic" mass="0.05"/>
-                <geom name="case_wall_front" type="box" size="0.1625 0.001 0.011"
-                      pos="0 -0.0565 0" material="abs_plastic" mass="0.05"/>
-                <geom name="case_wall_rear"  type="box" size="0.1625 0.001 0.011"
-                      pos="0 0.0565 0"  material="abs_plastic" mass="0.05"/>
+                <inertial pos="0 0 0" mass="0.085" diaginertia="3.2e-5 2.4e-4 2.5e-4"/>
 
-                <!--
-                  S1 OUTPUT STACK
-                  Case interior floor = bottom_case z=0 + case_bottom top = -0.010
-                  Case rim            = bottom_case z=0 + wall top        = +0.011
-                  Stack placed near case rim (2mm gap):
-                    EPDM frame  rel_ctr=+0.00620
-                    PCB         rel_ctr=+0.00695
-                    Sound foam  rel_ctr=+0.00775
-                  Alu plate body pos  = +0.00750  (bottom face of plate)
-                  Plate top face      = +0.00750 + 0.00150 = +0.00900
-                  PLATE_Z world       = 0.825 + 0.00900 = 0.834
-                  TRAY_WORLD_Z        = 0.834
-                -->
-                <geom name="s3_epdm_front" type="box" size="0.1515 0.01225 0.00075"
-                      pos="0 -0.04075 0.00620" mass="0" rgba="0.08 0.08 0.08 1"
-                      contype="0" conaffinity="0"/>
-                <geom name="s3_epdm_rear"  type="box" size="0.1515 0.01225 0.00075"
-                      pos="0  0.04075 0.00620" mass="0" rgba="0.08 0.08 0.08 1"
-                      contype="0" conaffinity="0"/>
-                <geom name="s3_epdm_left"  type="box" size="0.00975 0.030 0.00075"
-                      pos="-0.15275 0 0.00620" mass="0" rgba="0.08 0.08 0.08 1"
-                      contype="0" conaffinity="0"/>
-                <geom name="s3_epdm_right" type="box" size="0.00975 0.030 0.00075"
-                      pos=" 0.15275 0 0.00620" mass="0" rgba="0.08 0.08 0.08 1"
-                      contype="0" conaffinity="0"/>
-                <geom name="s3_battery" type="box" size="0.045 0.030 0.003"
-                      pos="-0.060 0 -0.00700" mass="0" rgba="0.15 0.25 0.15 1"
-                      contype="0" conaffinity="0"/>
-                <geom name="s3_pcb" type="box" size="0.1565 0.0535 0.0008"
-                      pos="0 0 0.00695" mass="0" rgba="0.10 0.30 0.10 1"
-                      contype="0" conaffinity="0"/>
-                <geom name="s3_sound_foam" type="box" size="0.1480 0.0535 0.0005"
-                      pos="0 0 0.00775" mass="0" rgba="0.18 0.18 0.18 1"
-                      contype="0" conaffinity="0"/>
+                <!-- New bottom case visual: 312.8mm x 122.3mm x 22mm shell. -->
+                <geom name="case_floor" type="box" size="0.1564 0.06115 0.0015" pos="0 0 -0.0095" material="abs_plastic" density="1050" friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+                <geom name="case_wall_left_A" type="box" size="0.0015 0.01433 0.0095" pos="-0.1549 0.04682 0.0015" material="abs_plastic" density="1050" friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+                <geom name="case_wall_left_usbc_below" type="box" size="0.0015 0.0045 0.0045" pos="-0.1549 0.028 -0.0035" material="abs_plastic" density="1050" friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+                <geom name="case_wall_left_usbc_above" type="box" size="0.0015 0.0045 0.003" pos="-0.1549 0.028 0.008" material="abs_plastic" density="1050" friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+                <geom name="case_wall_left_B" type="box" size="0.0015 0.003 0.0095" pos="-0.1549 0.0205 0.0015" material="abs_plastic" density="1050" friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+                <geom name="case_wall_left_pwr_below" type="box" size="0.0015 0.007 0.004" pos="-0.1549 0.0105 -0.004" material="abs_plastic" density="1050" friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+                <geom name="case_wall_left_pwr_above" type="box" size="0.0015 0.007 0.0025" pos="-0.1549 0.0105 0.0085" material="abs_plastic" density="1050" friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+                <geom name="case_wall_left_C" type="box" size="0.0015 0.005 0.0095" pos="-0.1549 -0.0005 0.0015" material="abs_plastic" density="1050" friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+                <geom name="case_wall_left_os_below" type="box" size="0.0015 0.007 0.004" pos="-0.1549 -0.0095 -0.004" material="abs_plastic" density="1050" friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+                <geom name="case_wall_left_os_above" type="box" size="0.0015 0.007 0.0025" pos="-0.1549 -0.0095 0.0085" material="abs_plastic" density="1050" friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+                <geom name="case_wall_left_D" type="box" size="0.0015 0.02233 0.0095" pos="-0.1549 -0.03883 0.0015" material="abs_plastic" density="1050" friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+                <site name="case_usbc_cutout" type="box" size="0.001 0.0045 0.002" pos="-0.1565 0.028 0.003" rgba="0 0.5 1 0.9"/>
+                <site name="case_power_switch" type="box" size="0.001 0.007 0.002" pos="-0.1565 0.0105 0.003" rgba="1 0.5 0 0.9"/>
+                <site name="case_os_switch" type="box" size="0.001 0.007 0.002" pos="-0.1565 -0.0095 0.003" rgba="1 0.5 0 0.9"/>
+                <geom name="case_wall_right" type="box" size="0.0015 0.06115 0.0095" pos="0.1549 0 0.0015" material="abs_plastic" density="1050" friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+                <geom name="case_wall_rear" type="box" size="0.1564 0.0015 0.0095" pos="0 0.05965 0.0015" material="abs_plastic" density="1050" friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+                <geom name="case_wall_front" type="box" size="0.1564 0.0015 0.0095" pos="0 -0.05965 0.0015" material="abs_plastic" density="1050" friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+                <geom name="case_battery_rib_left" type="box" size="0.045 0.00075 0.002" pos="0.025 -0.03075 -0.006" material="abs_plastic" density="1050" friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+                <geom name="case_battery_rib_right" type="box" size="0.045 0.00075 0.002" pos="0.025 0.03075 -0.006" material="abs_plastic" density="1050" friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+                <geom name="case_battery_rib_front_left" type="box" size="0.00075 0.0125 0.002" pos="-0.02025 -0.0175 -0.006" material="abs_plastic" density="1050" friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+                <geom name="case_battery_rib_front_right" type="box" size="0.00075 0.0125 0.002" pos="-0.02025 0.0175 -0.006" material="abs_plastic" density="1050" friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+                <geom name="case_battery_rib_rear" type="box" size="0.00075 0.030 0.002" pos="0.07025 0 -0.006" material="abs_plastic" density="1050" friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+                <!-- Screw bosses copied from Station 1 final bottom case; visual-only for S3. -->
+                <geom name="case_boss_FL" type="cylinder" size="0.003 0.004" pos="-0.1515 -0.0495 -0.004" material="abs_plastic" mass="0" contype="0" conaffinity="0"/>
+                <geom name="case_boss_FR" type="cylinder" size="0.003 0.004" pos=" 0.1545 -0.0495 -0.004" material="abs_plastic" mass="0" contype="0" conaffinity="0"/>
+                <geom name="case_boss_RL" type="cylinder" size="0.003 0.004" pos="-0.1515  0.0495 -0.004" material="abs_plastic" mass="0" contype="0" conaffinity="0"/>
+                <geom name="case_boss_RR" type="cylinder" size="0.003 0.004" pos=" 0.1545  0.0495 -0.004" material="abs_plastic" mass="0" contype="0" conaffinity="0"/>
 
-                <!--
-                  ALUMINUM PLATE BODY — origin at bottom face
-                  pos z=+0.00750 → plate top = +0.00750+0.0015 = +0.00900
-                  Site world Z = 0.825 + 0.009 = 0.834 = PLATE_Z
-                  All 84 switch socket sites as children — MuJoCo FK
-                  propagates their world position automatically with table motion.
-                -->
+                <!-- Installed screws for Station 3 visual continuity.
+                  Positions are manually tuned to align with the shifted Station 3 aluminum plate
+                  and represent the completed Station 1 screw installation.
+                  Visual-only; does not affect S3 insertion physics/controller. -->
+                <geom name="s3_screw_FL_shaft" type="cylinder" size="0.0014 0.005" pos=" 0.133561  0.047060 0.005" material="mat_screw" mass="0" contype="0" conaffinity="0"/>
+                <geom name="s3_screw_FL_head"  type="cylinder" size="0.0020 0.001" pos=" 0.133561  0.047060 0.011" material="mat_screw" mass="0" contype="0" conaffinity="0"/>
+                <geom name="s3_screw_FR_shaft" type="cylinder" size="0.0014 0.005" pos="-0.1329  0.0476 0.005" material="mat_screw" mass="0" contype="0" conaffinity="0"/>
+                <geom name="s3_screw_FR_head"  type="cylinder" size="0.0020 0.001" pos="-0.1329  0.0476 0.011" material="mat_screw" mass="0" contype="0" conaffinity="0"/>
+                <geom name="s3_screw_RL_shaft" type="cylinder" size="0.0014 0.005" pos=" 0.1334 -0.0468 0.005" material="mat_screw" mass="0" contype="0" conaffinity="0"/>
+                <geom name="s3_screw_RL_head"  type="cylinder" size="0.0020 0.001" pos=" 0.1334 -0.0468 0.011" material="mat_screw" mass="0" contype="0" conaffinity="0"/>
+                <geom name="s3_screw_RR_shaft" type="cylinder" size="0.0014 0.005" pos="-0.1288 -0.0472 0.005" material="mat_screw" mass="0" contype="0" conaffinity="0"/>
+                <geom name="s3_screw_RR_head"  type="cylinder" size="0.0020 0.001" pos="-0.1288 -0.0472 0.011" material="mat_screw" mass="0" contype="0" conaffinity="0"/>
+                <!-- S1 output stack visual, Z-packed between bottom-case floor and aluminum plate.
+                     Reference: case floor bottom ≈ -0.011, plate/switch datum ≈ +0.009.
+                     These are visual-only so S3 insertion physics/controller stay unchanged. -->
+                <geom name="s3_epdm_front" type="box" size="0.1454 0.01408 0.00075" pos="0 -0.04408 -0.00625" material="mat_epdm" mass="0" contype="0" conaffinity="0"/>
+                <geom name="s3_epdm_rear"  type="box" size="0.1454 0.01408 0.00075" pos="0  0.04408 -0.00625" material="mat_epdm" mass="0" contype="0" conaffinity="0"/>
+                <geom name="s3_epdm_left"  type="box" size="0.06670 0.03000 0.00075" pos="-0.08670 0 -0.00625" material="mat_epdm" mass="0" contype="0" conaffinity="0"/>
+                <geom name="s3_epdm_right" type="box" size="0.04170 0.03000 0.00075" pos=" 0.11170 0 -0.00625" material="mat_epdm" mass="0" contype="0" conaffinity="0"/>
+                <geom name="s3_battery" type="box" size="0.043 0.028 0.003" pos="-0.060 0 -0.00250" mass="0" rgba="0.15 0.25 0.15 1" contype="0" conaffinity="0"/>
+                <geom name="s3_pcb" type="box" size="0.1510 0.0560 0.0020" pos="0 0 0.00350" mass="0" material="mat_fr4" contype="0" conaffinity="0"/>
+                <geom name="s3_pcb_usbc" type="box" size="0.0015 0.0045 0.0020" pos="-0.1525 0.0280 0.00450" mass="0" rgba="0.025 0.025 0.025 1" contype="0" conaffinity="0"/>
+                <geom name="s3_pcb_pwr"  type="box" size="0.0015 0.0070 0.0030" pos="-0.1525 0.0105 0.00500" mass="0" rgba="0.025 0.025 0.025 1" contype="0" conaffinity="0"/>
+                <geom name="s3_pcb_os"   type="box" size="0.0015 0.0070 0.0030" pos="-0.1525 -0.0095 0.00500" mass="0" rgba="0.025 0.025 0.025 1" contype="0" conaffinity="0"/>
+
+                <!-- ALUMINUM PLATE BODY — name, position, and sw_* sites preserved. -->
                 <body name="alu_plate" pos="0 0 0.00750">
-                  <geom name="s3_alu_plate" type="box"
-                        size="0.1585 0.0535 0.00075"
-                        pos="0 0 0.00075" mass="0"
-                        material="aluminum_plate"
-                        contype="0" conaffinity="0"/>
+                  <geom name="s3_alu_plate" type="mesh" mesh="aluminum_plate_mesh" pos="0.003361 0.00256 0.000747" mass="0" material="aluminum_plate" contype="0" conaffinity="0"/>
+                  <!-- Stabilizers: visual-only, aligned to the shifted aluminum plate mesh. -->
+                  <body name="s3_stab_space_L" pos="-0.071208 -0.048626 -0.00550"><geom name="s3_stab_space_L_mesh" type="mesh" mesh="stabilizer_mesh" pos="-0.047852 0.0017 0.00650" material="stab_white" contype="0" conaffinity="0"/></body>
+                  <body name="s3_stab_space_R" pos="0.028792 -0.048626 -0.00550"><geom name="s3_stab_space_R_mesh" type="mesh" mesh="stabilizer_mesh" pos="-0.047852 0.0017 0.00650" material="stab_white" contype="0" conaffinity="0"/></body>
+                  <body name="s3_stab_lshift_L" pos="-0.142688 -0.029576 -0.00550"><geom name="s3_stab_lshift_L_mesh" type="mesh" mesh="stabilizer_mesh" pos="-0.047852 0.0017 0.00650" material="stab_white" contype="0" conaffinity="0"/></body>
+                  <body name="s3_stab_lshift_R" pos="-0.118808 -0.029576 -0.00550"><geom name="s3_stab_lshift_R_mesh" type="mesh" mesh="stabilizer_mesh" pos="-0.047852 0.0017 0.00650" material="stab_white" contype="0" conaffinity="0"/></body>
+                  <body name="s3_stab_enter_L" pos="0.100202 -0.010516 -0.00550"><geom name="s3_stab_enter_L_mesh" type="mesh" mesh="stabilizer_mesh" pos="-0.047852 0.0017 0.00650" material="stab_white" contype="0" conaffinity="0"/></body>
+                  <body name="s3_stab_enter_R" pos="0.124082 -0.010516 -0.00550"><geom name="s3_stab_enter_R_mesh" type="mesh" mesh="stabilizer_mesh" pos="-0.047852 0.0017 0.00650" material="stab_white" contype="0" conaffinity="0"/></body>
+                  <body name="s3_stab_bksp_L" pos="0.102582 0.027584 -0.00550"><geom name="s3_stab_bksp_L_mesh" type="mesh" mesh="stabilizer_mesh" pos="-0.047852 0.0017 0.00650" material="stab_white" contype="0" conaffinity="0"/></body>
+                  <body name="s3_stab_bksp_R" pos="0.126462 0.027584 -0.00550"><geom name="s3_stab_bksp_R_mesh" type="mesh" mesh="stabilizer_mesh" pos="-0.047852 0.0017 0.00650" material="stab_white" contype="0" conaffinity="0"/></body>
                   <!-- ROW 0 — Function row -->
                   <site name="sw_Esc"     type="cylinder" size="0.003 0.001" pos="-0.1429  0.0480 0.0015" rgba="0.2 0.6 1 0.6"/>
                   <site name="sw_F1"      type="cylinder" size="0.003 0.001" pos="-0.1238  0.0480 0.0015" rgba="0.2 0.6 1 0.6"/>
@@ -324,8 +348,8 @@
                   <site name="sw_Down"   type="cylinder" size="0.003 0.001" pos=" 0.1048 -0.0473 0.0015" rgba="0.2 0.6 1 0.6"/>
                   <site name="sw_Right"  type="cylinder" size="0.003 0.001" pos=" 0.1238 -0.0473 0.0015" rgba="0.2 0.6 1 0.6"/>
                   <site name="sw_End2"   type="cylinder" size="0.003 0.001" pos=" 0.1429 -0.0473 0.0015" rgba="0.2 0.6 1 0.6"/>
-                </body>
 
+                </body>
               </body>
             </body>
           </body>
