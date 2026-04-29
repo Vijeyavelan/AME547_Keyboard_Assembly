@@ -177,6 +177,11 @@
     <material name="human_zone_mat" rgba="0.15 0.8 0.25 0.22" />
     <material name="laser_warning_mat" rgba="1 0.1 0.05 1" />
     <material name="traffic_stopper_red" rgba="1.0 0.18 0.02 1" />
+
+    <!-- PASS 3A OVERVIEW MATERIALS START -->
+    <material name="p3a_pallet_mat" rgba="0.72 0.74 0.76 1" specular="0.35" shininess="0.25" />
+    <material name="p3a_fixture_mat" rgba="0.18 0.18 0.20 1" />
+    <!-- PASS 3A OVERVIEW MATERIALS END -->
   </asset>
   <worldbody>
     <light name="key_light" pos="3 -5 6" dir="-0.4 0.6 -1" directional="true" diffuse="0.8 0.8 0.8" />
@@ -263,6 +268,13 @@
     <site name="cell_pallet_s4_buffer_site" type="sphere" size="0.005" pos="4.850 0.000 0.810" rgba="1 0.55 0.1 0.55" />
     <site name="cell_pallet_s4_station_site" type="sphere" size="0.005" pos="5.250 0.000 0.810" rgba="1 0.55 0.1 0.85" />
     <site name="cell_pallet_s4_exit_site" type="sphere" size="0.005" pos="5.650 0.000 0.810" rgba="1 0.55 0.1 0.55" />
+
+    <!-- PASS 3A OVERVIEW PATH SITES START -->
+    <site name="cell_pallet_s0_load_site" type="sphere" size="0.005" pos="-2.000 0.000 0.810" rgba="0.0 0.9 0.9 0.55" />
+    <site name="cell_pallet_s5_station_site" type="sphere" size="0.005" pos="8.250 0.000 0.810" rgba="0.2 0.45 1 0.55" />
+    <site name="cell_pallet_s6_station_site" type="sphere" size="0.005" pos="10.750 0.000 0.810" rgba="0.6 0.25 1 0.55" />
+    <site name="cell_pallet_s7_exit_site" type="sphere" size="0.005" pos="13.250 0.000 0.810" rgba="0.95 0.20 0.75 0.55" />
+    <!-- PASS 3A OVERVIEW PATH SITES END -->
     <site name="end_vtu_entry" type="sphere" size="0.006" pos="15.2500 -0.1400 0.8300" rgba="0.05 0.95 0.95 0.8" />
     <body name="s4_kc_End2" pos="6.8312 -0.3000 0.8261" quat="0 0 0 1">
       <freejoint />
@@ -1249,90 +1261,6 @@
           <body name="s3_table_top_body" pos="0 0 0.0075">
             <geom name="s3_table_top_surf" type="box" size="0.200 0.140 0.005" pos="0 0 0.005" material="s3_table_surface" mass="2.0" contype="0" conaffinity="0" />
             <site name="s3_pallet_clamp_site" type="sphere" size="0.006" pos="0 0.000 0.010" rgba="1 0 1 0.9" />
-            <site name="s3_site_sw_Esc" type="sphere" size="0.0025" pos="-0.1429 0.0480 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_F1" type="sphere" size="0.0025" pos="-0.1238 0.0480 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_F2" type="sphere" size="0.0025" pos="-0.1048 0.0480 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_F3" type="sphere" size="0.0025" pos="-0.0857 0.0480 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_F4" type="sphere" size="0.0025" pos="-0.0667 0.0480 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_F5" type="sphere" size="0.0025" pos="-0.0476 0.0480 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_F6" type="sphere" size="0.0025" pos="-0.0286 0.0480 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_F7" type="sphere" size="0.0025" pos="-0.0095 0.0480 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_F8" type="sphere" size="0.0025" pos="0.0095 0.0480 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_F9" type="sphere" size="0.0025" pos="0.0286 0.0480 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_F10" type="sphere" size="0.0025" pos="0.0476 0.0480 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_F11" type="sphere" size="0.0025" pos="0.0667 0.0480 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_F12" type="sphere" size="0.0025" pos="0.0857 0.0480 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_PrtSc" type="sphere" size="0.0025" pos="0.1048 0.0480 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_Pause" type="sphere" size="0.0025" pos="0.1238 0.0480 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_Del" type="sphere" size="0.0025" pos="0.1429 0.0480 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_Grave" type="sphere" size="0.0025" pos="-0.1429 0.0290 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_1" type="sphere" size="0.0025" pos="-0.1238 0.0290 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_2" type="sphere" size="0.0025" pos="-0.1048 0.0290 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_3" type="sphere" size="0.0025" pos="-0.0857 0.0290 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_4" type="sphere" size="0.0025" pos="-0.0667 0.0290 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_5" type="sphere" size="0.0025" pos="-0.0476 0.0290 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_6" type="sphere" size="0.0025" pos="-0.0286 0.0290 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_7" type="sphere" size="0.0025" pos="-0.0095 0.0290 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_8" type="sphere" size="0.0025" pos="0.0095 0.0290 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_9" type="sphere" size="0.0025" pos="0.0286 0.0290 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_0" type="sphere" size="0.0025" pos="0.0476 0.0290 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_Minus" type="sphere" size="0.0025" pos="0.0667 0.0290 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_Equal" type="sphere" size="0.0025" pos="0.0857 0.0290 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_Bksp" type="sphere" size="0.0025" pos="0.1143 0.0290 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_PgUp" type="sphere" size="0.0025" pos="0.1429 0.0290 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_Tab" type="sphere" size="0.0025" pos="-0.1381 0.0099 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_Q" type="sphere" size="0.0025" pos="-0.1143 0.0099 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_W" type="sphere" size="0.0025" pos="-0.0953 0.0099 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_E" type="sphere" size="0.0025" pos="-0.0762 0.0099 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_R" type="sphere" size="0.0025" pos="-0.0572 0.0099 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_T" type="sphere" size="0.0025" pos="-0.0381 0.0099 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_Y" type="sphere" size="0.0025" pos="-0.0191 0.0099 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_U" type="sphere" size="0.0025" pos="0.0000 0.0099 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_I" type="sphere" size="0.0025" pos="0.0191 0.0099 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_O" type="sphere" size="0.0025" pos="0.0381 0.0099 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_P" type="sphere" size="0.0025" pos="0.0572 0.0099 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_LBrace" type="sphere" size="0.0025" pos="0.0762 0.0099 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_RBrace" type="sphere" size="0.0025" pos="0.0953 0.0099 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_Bkslash" type="sphere" size="0.0025" pos="0.1191 0.0099 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_PgDn" type="sphere" size="0.0025" pos="0.1429 0.0099 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_Caps" type="sphere" size="0.0025" pos="-0.1357 -0.0092 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_A" type="sphere" size="0.0025" pos="-0.1095 -0.0092 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_S" type="sphere" size="0.0025" pos="-0.0905 -0.0092 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_D" type="sphere" size="0.0025" pos="-0.0714 -0.0092 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_F" type="sphere" size="0.0025" pos="-0.0524 -0.0092 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_G" type="sphere" size="0.0025" pos="-0.0333 -0.0092 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_H" type="sphere" size="0.0025" pos="-0.0143 -0.0092 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_J" type="sphere" size="0.0025" pos="0.0048 -0.0092 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_K" type="sphere" size="0.0025" pos="0.0238 -0.0092 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_L" type="sphere" size="0.0025" pos="0.0429 -0.0092 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_Semicol" type="sphere" size="0.0025" pos="0.0619 -0.0092 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_Quote" type="sphere" size="0.0025" pos="0.0810 -0.0092 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_Enter" type="sphere" size="0.0025" pos="0.1119 -0.0092 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_Home" type="sphere" size="0.0025" pos="0.1429 -0.0092 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_LShift" type="sphere" size="0.0025" pos="-0.1310 -0.0282 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_Z" type="sphere" size="0.0025" pos="-0.1000 -0.0282 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_X" type="sphere" size="0.0025" pos="-0.0810 -0.0282 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_C" type="sphere" size="0.0025" pos="-0.0619 -0.0282 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_V" type="sphere" size="0.0025" pos="-0.0429 -0.0282 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_B" type="sphere" size="0.0025" pos="-0.0238 -0.0282 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_N" type="sphere" size="0.0025" pos="-0.0048 -0.0282 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_M" type="sphere" size="0.0025" pos="0.0143 -0.0282 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_Comma" type="sphere" size="0.0025" pos="0.0333 -0.0282 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_Period" type="sphere" size="0.0025" pos="0.0524 -0.0282 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_Slash" type="sphere" size="0.0025" pos="0.0714 -0.0282 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_RShift" type="sphere" size="0.0025" pos="0.0976 -0.0282 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_Up" type="sphere" size="0.0025" pos="0.1238 -0.0282 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_End" type="sphere" size="0.0025" pos="0.1429 -0.0282 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_LCtrl" type="sphere" size="0.0025" pos="-0.1405 -0.0473 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_LWin" type="sphere" size="0.0025" pos="-0.1167 -0.0473 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_LAlt" type="sphere" size="0.0025" pos="-0.0929 -0.0473 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_Space" type="sphere" size="0.0025" pos="-0.0214 -0.0473 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_RAlt" type="sphere" size="0.0025" pos="0.0476 -0.0473 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_Fn" type="sphere" size="0.0025" pos="0.0667 -0.0473 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_Left" type="sphere" size="0.0025" pos="0.0857 -0.0473 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_Down" type="sphere" size="0.0025" pos="0.1048 -0.0473 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_Right" type="sphere" size="0.0025" pos="0.1238 -0.0473 0.0300" rgba="0 1 1 0.35" />
-            <site name="s3_site_sw_End2" type="sphere" size="0.0025" pos="0.1429 -0.0473 0.0300" rgba="0 1 1 0.35" />
           </body>
         </body>
       </body>
@@ -1758,7 +1686,7 @@
       </body>
       <site name="end_vtu_lower_site" type="sphere" size="0.008" pos="0 0 0.530" rgba="0.0 0.6 1.0 0.9" />
     </body>
-    <body name="pallet" pos="0.185 0 0.810">
+    <body name="pallet" pos="0.185 0 -2.000">
       <freejoint name="pallet_joint" />
       <geom name="pallet_plate" type="box" size="0.175 0.075 0.004" pos="0 0 -0.004" material="aluminum_pallet" mass="1.5" contype="0" conaffinity="0" />
       <geom name="stop_FL_x" type="box" size="0.0125 0.0025 0.003" pos="-0.1439 -0.0637 0.003" material="fixture_stop" mass="0.02" contype="0" conaffinity="0" />
@@ -2037,6 +1965,586 @@
       <geom name="end_vtu_guide_0.36_-0.17" type="box" size="0.010 0.010 0.470" pos="0.360 -0.170 0.690" material="warning_yellow" contype="0" conaffinity="0" />
       <geom name="end_vtu_guide_0.36_0.17" type="box" size="0.010 0.010 0.470" pos="0.360 0.170 0.690" material="warning_yellow" contype="0" conaffinity="0" />
     </body>
+
+    <!-- PASS 3A OVERVIEW MOVING PALLET + REAL STAGED OUTPUTS START -->
+    <body name="p3a_overview_pallet" mocap="true" pos="-2.000 0.000 0.810" quat="1 0 0 0">
+      <geom name="p3a_overview_pallet_plate" type="box" size="0.175 0.075 0.004" pos="0 0 -0.004" material="aluminum_pallet" contype="0" conaffinity="0" mass="0"/>
+      <geom name="p3a_overview_stop_FL_x" type="box" size="0.0125 0.0025 0.003" pos="-0.1439 -0.0637 0.003" material="fixture_stop" contype="0" conaffinity="0" mass="0"/>
+      <geom name="p3a_overview_stop_FL_y" type="box" size="0.0025 0.0125 0.003" pos="-0.1589 -0.04865 0.003" material="fixture_stop" contype="0" conaffinity="0" mass="0"/>
+      <geom name="p3a_overview_stop_FR_x" type="box" size="0.0125 0.0025 0.003" pos="0.1439 -0.0637 0.003" material="fixture_stop" contype="0" conaffinity="0" mass="0"/>
+      <geom name="p3a_overview_stop_FR_y" type="box" size="0.0025 0.0125 0.003" pos="0.1589 -0.04865 0.003" material="fixture_stop" contype="0" conaffinity="0" mass="0"/>
+      <geom name="p3a_overview_stop_RL_x" type="box" size="0.0125 0.0025 0.003" pos="-0.1439 0.0637 0.003" material="fixture_stop" contype="0" conaffinity="0" mass="0"/>
+      <geom name="p3a_overview_stop_RL_y" type="box" size="0.0025 0.0125 0.003" pos="-0.1589 0.04865 0.003" material="fixture_stop" contype="0" conaffinity="0" mass="0"/>
+      <geom name="p3a_overview_stop_RR_x" type="box" size="0.0125 0.0025 0.003" pos="0.1439 0.0637 0.003" material="fixture_stop" contype="0" conaffinity="0" mass="0"/>
+      <geom name="p3a_overview_stop_RR_y" type="box" size="0.0025 0.0125 0.003" pos="0.1589 0.04865 0.003" material="fixture_stop" contype="0" conaffinity="0" mass="0"/>
+
+      <body name="stage_s0_bottom_case" pos="0 0 0.012000">
+        <geom name="p3a_stage_s0_case_floor" type="box" size="0.1564 0.06115 0.0015" pos="0 0 -0.0095" material="abs_plastic" contype="0" conaffinity="0" mass="0"/>
+        <geom name="p3a_stage_s0_case_wall_left_A" type="box" size="0.0015 0.01433 0.0095" pos="-0.1549 0.04682 0.0015" material="abs_plastic" contype="0" conaffinity="0" mass="0"/>
+        <geom name="p3a_stage_s0_case_wall_left_usbc_below" type="box" size="0.0015 0.0045 0.0045" pos="-0.1549 0.028 -0.0035" material="abs_plastic" contype="0" conaffinity="0" mass="0"/>
+        <geom name="p3a_stage_s0_case_wall_left_usbc_above" type="box" size="0.0015 0.0045 0.003" pos="-0.1549 0.028 0.008" material="abs_plastic" contype="0" conaffinity="0" mass="0"/>
+        <geom name="p3a_stage_s0_case_wall_left_B" type="box" size="0.0015 0.003 0.0095" pos="-0.1549 0.0205 0.0015" material="abs_plastic" contype="0" conaffinity="0" mass="0"/>
+        <geom name="p3a_stage_s0_case_wall_left_pwr_below" type="box" size="0.0015 0.007 0.004" pos="-0.1549 0.0105 -0.004" material="abs_plastic" contype="0" conaffinity="0" mass="0"/>
+        <geom name="p3a_stage_s0_case_wall_left_pwr_above" type="box" size="0.0015 0.007 0.0025" pos="-0.1549 0.0105 0.0085" material="abs_plastic" contype="0" conaffinity="0" mass="0"/>
+        <geom name="p3a_stage_s0_case_wall_left_C" type="box" size="0.0015 0.005 0.0095" pos="-0.1549 -0.0005 0.0015" material="abs_plastic" contype="0" conaffinity="0" mass="0"/>
+        <geom name="p3a_stage_s0_case_wall_left_os_below" type="box" size="0.0015 0.007 0.004" pos="-0.1549 -0.0095 -0.004" material="abs_plastic" contype="0" conaffinity="0" mass="0"/>
+        <geom name="p3a_stage_s0_case_wall_left_os_above" type="box" size="0.0015 0.007 0.0025" pos="-0.1549 -0.0095 0.0085" material="abs_plastic" contype="0" conaffinity="0" mass="0"/>
+        <geom name="p3a_stage_s0_case_wall_left_D" type="box" size="0.0015 0.02233 0.0095" pos="-0.1549 -0.03883 0.0015" material="abs_plastic" contype="0" conaffinity="0" mass="0"/>
+        <geom name="p3a_stage_s0_case_wall_right" type="box" size="0.0015 0.06115 0.0095" pos="0.1549 0 0.0015" material="abs_plastic" contype="0" conaffinity="0" mass="0"/>
+        <geom name="p3a_stage_s0_case_wall_rear" type="box" size="0.1564 0.0015 0.0095" pos="0 0.05965 0.0015" material="abs_plastic" contype="0" conaffinity="0" mass="0"/>
+        <geom name="p3a_stage_s0_case_wall_front" type="box" size="0.1564 0.0015 0.0095" pos="0 -0.05965 0.0015" material="abs_plastic" contype="0" conaffinity="0" mass="0"/>
+        <geom name="p3a_stage_s0_case_battery_rib_left" type="box" size="0.045 0.00075 0.002" pos="0.025 -0.03075 -0.006" material="abs_plastic" contype="0" conaffinity="0" mass="0"/>
+        <geom name="p3a_stage_s0_case_battery_rib_right" type="box" size="0.045 0.00075 0.002" pos="0.025 0.03075 -0.006" material="abs_plastic" contype="0" conaffinity="0" mass="0"/>
+        <geom name="p3a_stage_s0_case_battery_rib_front_left" type="box" size="0.00075 0.0125 0.002" pos="-0.02025 -0.0175 -0.006" material="abs_plastic" contype="0" conaffinity="0" mass="0"/>
+        <geom name="p3a_stage_s0_case_battery_rib_front_right" type="box" size="0.00075 0.0125 0.002" pos="-0.02025 0.0175 -0.006" material="abs_plastic" contype="0" conaffinity="0" mass="0"/>
+        <geom name="p3a_stage_s0_case_battery_rib_rear" type="box" size="0.00075 0.030 0.002" pos="0.07025 0 -0.006" material="abs_plastic" contype="0" conaffinity="0" mass="0"/>
+        <geom name="p3a_stage_s0_case_boss_FL" type="cylinder" size="0.003 0.004" pos="-0.1515 -0.0495 -0.004" material="abs_plastic" contype="0" conaffinity="0" mass="0"/>
+        <geom name="p3a_stage_s0_case_boss_FR" type="cylinder" size="0.003 0.004" pos=" 0.1545 -0.0495 -0.004" material="abs_plastic" contype="0" conaffinity="0" mass="0"/>
+        <geom name="p3a_stage_s0_case_boss_RL" type="cylinder" size="0.003 0.004" pos="-0.1515  0.0495 -0.004" material="abs_plastic" contype="0" conaffinity="0" mass="0"/>
+        <geom name="p3a_stage_s0_case_boss_RR" type="cylinder" size="0.003 0.004" pos=" 0.1545  0.0495 -0.004" material="abs_plastic" contype="0" conaffinity="0" mass="0"/>
+      </body>
+
+      <body name="stage_s1_parts">
+        <geom name="p3a_stage_s1_s3_screw_FL_shaft" type="cylinder" size="0.0014 0.005" pos="0.133561 0.047060 0.017000" material="s3_mat_screw" contype="0" conaffinity="0" mass="0"/>
+        <geom name="p3a_stage_s1_s3_screw_FL_head"  type="cylinder" size="0.0020 0.001" pos="0.133561 0.047060 0.023000" material="s3_mat_screw" contype="0" conaffinity="0" mass="0"/>
+        <geom name="p3a_stage_s1_s3_screw_FR_shaft" type="cylinder" size="0.0014 0.005" pos="-0.132900 0.047600 0.017000" material="s3_mat_screw" contype="0" conaffinity="0" mass="0"/>
+        <geom name="p3a_stage_s1_s3_screw_FR_head"  type="cylinder" size="0.0020 0.001" pos="-0.132900 0.047600 0.023000" material="s3_mat_screw" contype="0" conaffinity="0" mass="0"/>
+        <geom name="p3a_stage_s1_s3_screw_RL_shaft" type="cylinder" size="0.0014 0.005" pos="0.133400 -0.046800 0.017000" material="s3_mat_screw" contype="0" conaffinity="0" mass="0"/>
+        <geom name="p3a_stage_s1_s3_screw_RL_head"  type="cylinder" size="0.0020 0.001" pos="0.133400 -0.046800 0.023000" material="s3_mat_screw" contype="0" conaffinity="0" mass="0"/>
+        <geom name="p3a_stage_s1_s3_screw_RR_shaft" type="cylinder" size="0.0014 0.005" pos="-0.128800 -0.047200 0.017000" material="s3_mat_screw" contype="0" conaffinity="0" mass="0"/>
+        <geom name="p3a_stage_s1_s3_screw_RR_head"  type="cylinder" size="0.0020 0.001" pos="-0.128800 -0.047200 0.023000" material="s3_mat_screw" contype="0" conaffinity="0" mass="0"/>
+        <geom name="p3a_stage_s1_s3_epdm_front" type="box" size="0.1454 0.01408 0.00075" pos="0.000000 -0.044080 0.005750" material="s3_mat_epdm" contype="0" conaffinity="0" mass="0"/>
+        <geom name="p3a_stage_s1_s3_epdm_rear"  type="box" size="0.1454 0.01408 0.00075" pos="0.000000 0.044080 0.005750" material="s3_mat_epdm" contype="0" conaffinity="0" mass="0"/>
+        <geom name="p3a_stage_s1_s3_epdm_left"  type="box" size="0.06670 0.03000 0.00075" pos="-0.086700 0.000000 0.005750" material="s3_mat_epdm" contype="0" conaffinity="0" mass="0"/>
+        <geom name="p3a_stage_s1_s3_epdm_right" type="box" size="0.04170 0.03000 0.00075" pos="0.111700 0.000000 0.005750" material="s3_mat_epdm" contype="0" conaffinity="0" mass="0"/>
+        <geom name="p3a_stage_s1_s3_battery" type="box" size="0.043 0.028 0.003" pos="-0.060000 0.000000 0.009500" rgba="0.15 0.25 0.15 1" contype="0" conaffinity="0" mass="0"/>
+        <geom name="p3a_stage_s1_s3_pcb" type="box" size="0.1510 0.0560 0.0020" pos="0.000000 0.000000 0.015500" material="s3_mat_fr4" contype="0" conaffinity="0" mass="0"/>
+        <geom name="p3a_stage_s1_s3_pcb_usbc" type="box" size="0.0015 0.0045 0.0020" pos="-0.152500 0.028000 0.016500" rgba="0.025 0.025 0.025 1" contype="0" conaffinity="0" mass="0"/>
+        <geom name="p3a_stage_s1_s3_pcb_pwr"  type="box" size="0.0015 0.0070 0.0030" pos="-0.152500 0.010500 0.017000" rgba="0.025 0.025 0.025 1" contype="0" conaffinity="0" mass="0"/>
+        <geom name="p3a_stage_s1_s3_pcb_os"   type="box" size="0.0015 0.0070 0.0030" pos="-0.152500 -0.009500 0.017000" rgba="0.025 0.025 0.025 1" contype="0" conaffinity="0" mass="0"/>
+        <geom name="p3a_stage_s1_s3_alu_plate" type="mesh" mesh="s3_aluminum_plate_mesh" pos="0.003361 0.002560 0.020247" material="s3_aluminum_plate" contype="0" conaffinity="0" mass="0"/>
+        <geom name="p3a_stage_s1_s3_stab_space_L_mesh" pos="-0.119060 -0.046926 0.020500" type="mesh" mesh="s3_stabilizer_mesh"  material="s3_stab_white" contype="0" conaffinity="0" mass="0"/>
+        <geom name="p3a_stage_s1_s3_stab_space_R_mesh" pos="-0.019060 -0.046926 0.020500" type="mesh" mesh="s3_stabilizer_mesh"  material="s3_stab_white" contype="0" conaffinity="0" mass="0"/>
+        <geom name="p3a_stage_s1_s3_stab_lshift_L_mesh" pos="-0.190540 -0.027876 0.020500" type="mesh" mesh="s3_stabilizer_mesh"  material="s3_stab_white" contype="0" conaffinity="0" mass="0"/>
+        <geom name="p3a_stage_s1_s3_stab_lshift_R_mesh" pos="-0.166660 -0.027876 0.020500" type="mesh" mesh="s3_stabilizer_mesh"  material="s3_stab_white" contype="0" conaffinity="0" mass="0"/>
+        <geom name="p3a_stage_s1_s3_stab_enter_L_mesh" pos="0.052350 -0.008816 0.020500" type="mesh" mesh="s3_stabilizer_mesh"  material="s3_stab_white" contype="0" conaffinity="0" mass="0"/>
+        <geom name="p3a_stage_s1_s3_stab_enter_R_mesh" pos="0.076230 -0.008816 0.020500" type="mesh" mesh="s3_stabilizer_mesh"  material="s3_stab_white" contype="0" conaffinity="0" mass="0"/>
+        <geom name="p3a_stage_s1_s3_stab_bksp_L_mesh" pos="0.054730 0.029284 0.020500" type="mesh" mesh="s3_stabilizer_mesh"  material="s3_stab_white" contype="0" conaffinity="0" mass="0"/>
+        <geom name="p3a_stage_s1_s3_stab_bksp_R_mesh" pos="0.078610 0.029284 0.020500" type="mesh" mesh="s3_stabilizer_mesh"  material="s3_stab_white" contype="0" conaffinity="0" mass="0"/>
+      </body>
+        <body name="stage_s3_switches">
+          <!-- Station 3 completed switch field: copied from station4_A.xml installed-switch output inside bottom_case, raised +6 mm in Z so switches sit visibly on the aluminum plate. -->
+          <body name="p3a_stage_s3_switch_Esc_body" pos="-0.157650 0.048000 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_Esc_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_F1_body" pos="-0.138550 0.048000 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_F1_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_F2_body" pos="-0.119550 0.048000 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_F2_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_F3_body" pos="-0.100450 0.048000 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_F3_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_F4_body" pos="-0.081450 0.048000 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_F4_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_F5_body" pos="-0.062350 0.048000 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_F5_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_F6_body" pos="-0.043350 0.048000 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_F6_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_F7_body" pos="-0.024250 0.048000 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_F7_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_F8_body" pos="-0.005250 0.048000 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_F8_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_F9_body" pos="0.013850 0.048000 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_F9_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_F10_body" pos="0.032850 0.048000 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_F10_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_F11_body" pos="0.051950 0.048000 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_F11_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_F12_body" pos="0.070950 0.048000 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_F12_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_PrtSc_body" pos="0.090050 0.048000 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_PrtSc_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_Pause_body" pos="0.109050 0.048000 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_Pause_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_Del_body" pos="0.128150 0.048000 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_Del_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_Grave_body" pos="-0.157650 0.029000 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_Grave_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_1_body" pos="-0.138550 0.029000 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_1_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_2_body" pos="-0.119550 0.029000 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_2_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_3_body" pos="-0.100450 0.029000 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_3_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_4_body" pos="-0.081450 0.029000 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_4_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_5_body" pos="-0.062350 0.029000 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_5_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_6_body" pos="-0.043350 0.029000 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_6_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_7_body" pos="-0.024250 0.029000 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_7_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_8_body" pos="-0.005250 0.029000 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_8_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_9_body" pos="0.013850 0.029000 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_9_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_0_body" pos="0.032850 0.029000 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_0_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_Minus_body" pos="0.051950 0.029000 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_Minus_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_Equal_body" pos="0.070950 0.029000 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_Equal_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_Bksp_body" pos="0.099550 0.029000 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_Bksp_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_PgUp_body" pos="0.128150 0.029000 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_PgUp_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_Tab_body" pos="-0.152850 0.009900 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_Tab_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_Q_body" pos="-0.129050 0.009900 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_Q_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_W_body" pos="-0.110050 0.009900 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_W_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_E_body" pos="-0.090950 0.009900 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_E_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_R_body" pos="-0.071950 0.009900 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_R_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_T_body" pos="-0.052850 0.009900 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_T_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_Y_body" pos="-0.033850 0.009900 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_Y_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_U_body" pos="-0.014750 0.009900 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_U_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_I_body" pos="0.004350 0.009900 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_I_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_O_body" pos="0.023350 0.009900 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_O_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_P_body" pos="0.042450 0.009900 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_P_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_LBrace_body" pos="0.061450 0.009900 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_LBrace_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_RBrace_body" pos="0.080550 0.009900 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_RBrace_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_Bkslash_body" pos="0.104350 0.009900 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_Bkslash_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_PgDn_body" pos="0.128150 0.009900 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_PgDn_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_Caps_body" pos="-0.150450 -0.009200 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_Caps_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_A_body" pos="-0.124250 -0.009200 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_A_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_S_body" pos="-0.105250 -0.009200 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_S_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_D_body" pos="-0.086150 -0.009200 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_D_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_F_body" pos="-0.067150 -0.009200 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_F_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_G_body" pos="-0.048050 -0.009200 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_G_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_H_body" pos="-0.029050 -0.009200 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_H_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_J_body" pos="-0.009950 -0.009200 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_J_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_K_body" pos="0.009050 -0.009200 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_K_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_L_body" pos="0.028150 -0.009200 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_L_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_Semicol_body" pos="0.047150 -0.009200 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_Semicol_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_Quote_body" pos="0.066250 -0.009200 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_Quote_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_Enter_body" pos="0.097150 -0.009200 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_Enter_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_Home_body" pos="0.128150 -0.009200 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_Home_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_LShift_body" pos="-0.145750 -0.028200 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_LShift_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_Z_body" pos="-0.114750 -0.028200 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_Z_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_X_body" pos="-0.095750 -0.028200 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_X_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_C_body" pos="-0.076650 -0.028200 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_C_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_V_body" pos="-0.057650 -0.028200 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_V_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_B_body" pos="-0.038550 -0.028200 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_B_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_N_body" pos="-0.019550 -0.028200 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_N_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_M_body" pos="-0.000450 -0.028200 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_M_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_Comma_body" pos="0.018550 -0.028200 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_Comma_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_Period_body" pos="0.037650 -0.028200 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_Period_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_Slash_body" pos="0.056650 -0.028200 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_Slash_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_RShift_body" pos="0.082850 -0.028200 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_RShift_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_Up_body" pos="0.109050 -0.028200 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_Up_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_End_body" pos="0.128150 -0.028200 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_End_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_LCtrl_body" pos="-0.155250 -0.047300 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_LCtrl_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_LWin_body" pos="-0.131450 -0.047300 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_LWin_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_LAlt_body" pos="-0.107650 -0.047300 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_LAlt_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_Space_body" pos="-0.036150 -0.047300 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_Space_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_RAlt_body" pos="0.032850 -0.047300 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_RAlt_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_Fn_body" pos="0.051950 -0.047300 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_Fn_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_Left_body" pos="0.070950 -0.047300 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_Left_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_Down_body" pos="0.090050 -0.047300 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_Down_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_Right_body" pos="0.109050 -0.047300 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_Right_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+          <body name="p3a_stage_s3_switch_End2_body" pos="0.128150 -0.047300 0.017550" quat="1 0 0 0">
+            <geom name="p3a_stage_s3_switch_End2_geom" type="mesh" mesh="s3_switch_mesh" material="s3_abs_dark" contype="0" conaffinity="0" mass="0"/>
+          </body>
+        </body>
+
+      <body name="stage_s4_keycaps">
+        <body name="p3a_stage_s4_keycap_Esc_body" pos="-0.142900 0.048000 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_Esc_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_F1_body" pos="-0.123800 0.048000 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_F1_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_F2_body" pos="-0.104800 0.048000 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_F2_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_F3_body" pos="-0.085700 0.048000 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_F3_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_F4_body" pos="-0.066700 0.048000 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_F4_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_F5_body" pos="-0.047600 0.048000 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_F5_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_F6_body" pos="-0.028600 0.048000 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_F6_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_F7_body" pos="-0.009500 0.048000 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_F7_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_F8_body" pos="0.009500 0.048000 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_F8_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_F9_body" pos="0.028600 0.048000 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_F9_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_F10_body" pos="0.047600 0.048000 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_F10_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_F11_body" pos="0.066700 0.048000 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_F11_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_F12_body" pos="0.085700 0.048000 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_F12_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_PrtSc_body" pos="0.104800 0.048000 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_PrtSc_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_Pause_body" pos="0.123800 0.048000 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_Pause_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_Del_body" pos="0.142900 0.048000 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_Del_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_Grave_body" pos="-0.142900 0.029000 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_Grave_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_1_body" pos="-0.123800 0.029000 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_1_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_2_body" pos="-0.104800 0.029000 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_2_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_3_body" pos="-0.085700 0.029000 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_3_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_4_body" pos="-0.066700 0.029000 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_4_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_5_body" pos="-0.047600 0.029000 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_5_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_6_body" pos="-0.028600 0.029000 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_6_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_7_body" pos="-0.009500 0.029000 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_7_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_8_body" pos="0.009500 0.029000 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_8_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_9_body" pos="0.028600 0.029000 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_9_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_0_body" pos="0.047600 0.029000 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_0_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_Minus_body" pos="0.066700 0.029000 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_Minus_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_Equal_body" pos="0.085700 0.029000 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_Equal_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_Bksp_body" pos="0.114300 0.029000 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_Bksp_geom" type="mesh" mesh="s4_keycap_2u" material="s4_pbt_gray" pos="0 0.00100 0" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_PgUp_body" pos="0.142900 0.029000 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_PgUp_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_Tab_body" pos="-0.138100 0.009900 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_Tab_geom" type="mesh" mesh="s4_keycap_1_5u" material="s4_pbt_gray" pos="0 0.00100 0" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_Q_body" pos="-0.114300 0.009900 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_Q_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_W_body" pos="-0.095300 0.009900 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_W_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_E_body" pos="-0.076200 0.009900 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_E_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_R_body" pos="-0.057200 0.009900 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_R_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_T_body" pos="-0.038100 0.009900 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_T_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_Y_body" pos="-0.019100 0.009900 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_Y_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_U_body" pos="0.000000 0.009900 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_U_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_I_body" pos="0.019100 0.009900 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_I_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_O_body" pos="0.038100 0.009900 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_O_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_P_body" pos="0.057200 0.009900 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_P_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_LBrace_body" pos="0.076200 0.009900 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_LBrace_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_RBrace_body" pos="0.095300 0.009900 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_RBrace_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_Bkslash_body" pos="0.119100 0.009900 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_Bkslash_geom" type="mesh" mesh="s4_keycap_1_5u" material="s4_pbt_gray" pos="0 0.00100 0" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_PgDn_body" pos="0.142900 0.009900 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_PgDn_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_Caps_body" pos="-0.135700 -0.009200 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_Caps_geom" type="mesh" mesh="s4_keycap_1_75u" material="s4_pbt_gray" pos="0 0.00100 0" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_A_body" pos="-0.109500 -0.009200 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_A_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_S_body" pos="-0.090500 -0.009200 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_S_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_D_body" pos="-0.071400 -0.009200 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_D_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_F_body" pos="-0.052400 -0.009200 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_F_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_G_body" pos="-0.033300 -0.009200 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_G_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_H_body" pos="-0.014300 -0.009200 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_H_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_J_body" pos="0.004800 -0.009200 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_J_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_K_body" pos="0.023800 -0.009200 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_K_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_L_body" pos="0.042900 -0.009200 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_L_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_Semicol_body" pos="0.061900 -0.009200 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_Semicol_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_Quote_body" pos="0.081000 -0.009200 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_Quote_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_Enter_body" pos="0.111900 -0.009200 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_Enter_geom" type="mesh" mesh="s4_keycap_2_25u" material="s4_pbt_gray" pos="0 0.00100 0" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_Home_body" pos="0.142900 -0.009200 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_Home_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_LShift_body" pos="-0.131000 -0.028200 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_LShift_geom" type="mesh" mesh="s4_keycap_2_25u" material="s4_pbt_gray" pos="0 0.00100 0" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_Z_body" pos="-0.100000 -0.028200 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_Z_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_X_body" pos="-0.081000 -0.028200 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_X_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_C_body" pos="-0.061900 -0.028200 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_C_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_V_body" pos="-0.042900 -0.028200 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_V_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_B_body" pos="-0.023800 -0.028200 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_B_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_N_body" pos="-0.004800 -0.028200 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_N_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_M_body" pos="0.014300 -0.028200 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_M_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_Comma_body" pos="0.033300 -0.028200 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_Comma_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_Period_body" pos="0.052400 -0.028200 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_Period_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_Slash_body" pos="0.071400 -0.028200 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_Slash_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_RShift_body" pos="0.097600 -0.028200 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_RShift_geom" type="mesh" mesh="s4_keycap_1_75u" material="s4_pbt_gray" pos="0 0.00100 0" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_Up_body" pos="0.123800 -0.028200 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_Up_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_End_body" pos="0.142900 -0.028200 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_End_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_LCtrl_body" pos="-0.140500 -0.047300 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_LCtrl_geom" type="mesh" mesh="s4_keycap_1_25u" material="s4_pbt_gray" pos="0 -0.00015 0" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_LWin_body" pos="-0.116700 -0.047300 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_LWin_geom" type="mesh" mesh="s4_keycap_1_25u" material="s4_pbt_gray" pos="0 -0.00015 0" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_LAlt_body" pos="-0.092900 -0.047300 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_LAlt_geom" type="mesh" mesh="s4_keycap_1_25u" material="s4_pbt_gray" pos="0 -0.00015 0" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_Space_body" pos="-0.021400 -0.047300 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_Space_geom" type="mesh" mesh="s4_keycap_6_25u" material="s4_pbt_gray" pos="0 -0.00047 0" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_RAlt_body" pos="0.047600 -0.047300 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_RAlt_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_Fn_body" pos="0.066700 -0.047300 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_Fn_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_Left_body" pos="0.085700 -0.047300 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_Left_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_Down_body" pos="0.104800 -0.047300 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_Down_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_Right_body" pos="0.123800 -0.047300 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_Right_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" mass="0"/>
+        </body>
+        <body name="p3a_stage_s4_keycap_End2_body" pos="0.142900 -0.047300 0.024500" quat="1 0 0 0">
+          <geom name="p3a_stage_s4_keycap_End2_geom" type="mesh" mesh="s4_keycap_1u" material="s4_pbt_gray" contype="0" conaffinity="0" mass="0"/>
+        </body>
+      </body>
+    </body>
+    <!-- PASS 3A OVERVIEW MOVING PALLET + REAL STAGED OUTPUTS END -->
+
   </worldbody>
   <actuator>
     <general class="s1_size3" name="s1_shoulder_pan" joint="s1_shoulder_pan_joint" />

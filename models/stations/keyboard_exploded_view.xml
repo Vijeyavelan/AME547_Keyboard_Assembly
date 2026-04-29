@@ -1,0 +1,520 @@
+<mujoco model="keyboard_exploded_view">
+  <!-- Static exploded-view model generated from station4_A.xml; pallet removed for report view.
+       Use this only for report screenshots; station4_A.xml is unchanged.
+
+       Exploded spacing is equalized in Z. Edit the layer body pos values below,
+       or use tune_exploded_spacing.py to change all layer heights from one STEP value. -->
+  <compiler angle="radian" autolimits="true"/>
+  <option integrator="implicitfast" gravity="0 0 0"/>
+  <visual>
+    <headlight diffuse="0.65 0.65 0.65" ambient="0.38 0.38 0.38" specular="0.18 0.18 0.18"/>
+    <rgba haze="0.15 0.18 0.22 1"/>
+    <global azimuth="135" elevation="-25"/>
+  </visual>
+<asset>
+    <texture type="skybox" builtin="gradient" rgb1="0.3 0.5 0.7" rgb2="0 0 0"
+             width="512" height="3072"/>
+    <texture name="grid" type="2d" builtin="checker"
+             rgb1="0.3 0.3 0.3" rgb2="0.4 0.4 0.4" width="512" height="512"/>
+    <material name="floor_mat"      texture="grid" texrepeat="5 5" reflectance="0.2"/>
+    <material name="aluminum_plate" rgba="0.68 0.70 0.72 1"
+              specular="0.45" shininess="0.35" reflectance="0.08"/>
+    <material name="fixture_stop"   rgba="1.0 0.85 0.0 1"/>
+    <material name="mat_fr4"        rgba="0.06 0.30 0.08 1" specular="0.15" shininess="0.25"/>
+    <material name="mat_epdm"       rgba="0.35 0.35 0.35 1" specular="0.02" shininess="0.02"/>
+    <material name="mat_screw"      rgba="0.12 0.12 0.13 1" specular="0.55" shininess="0.55"/>
+    <material name="stab_white"     rgba="0.01 0.01 0.012 1" specular="0.20" shininess="0.18"/>
+    <material name="stab_wire"      rgba="0.54 0.55 0.56 1" specular="0.55" shininess="0.55"/>
+    <material name="abs_plastic"    rgba="0.15 0.15 0.15 1"/>
+    <material name="table_surface"  rgba="0.55 0.45 0.35 1"/>
+    <material name="steel_dark"     rgba="0.25 0.25 0.28 1"/>
+    <material name="steel_mid"      rgba="0.40 0.40 0.43 1"/>
+    <material name="steel_light"    rgba="0.60 0.60 0.63 1"/>
+    <material name="gantry_mat"     rgba="0.30 0.30 0.32 1"/>
+    <material name="gantry_beam"    rgba="0.25 0.25 0.27 1"/>
+    <material name="column_mat"     rgba="0.35 0.35 0.38 1"/>
+    <material name="arm_mat"        rgba="0.50 0.50 0.53 1"/>
+    <material name="head_body"      rgba="0.55 0.55 0.58 1"/>
+    <material name="head_tip"       rgba="0.15 0.15 0.15 1"/>
+    <material name="tray_mat"       rgba="0.70 0.72 0.75 1"/>
+    <material name="slide_rail"     rgba="0.50 0.50 0.53 1"/>
+    <material name="switch_housing"
+              rgba="0.50 0.18 0.12 1"
+              specular="0.18" shininess="0.22" reflectance="0.02"/>
+    <material name="pbt_keycap"
+              rgba="0.45 0.47 0.48 1"
+              specular="0.08" shininess="0.15" reflectance="0.015"/>
+    <material name="mat_battery"
+              rgba="0.01 0.01 0.012 1"
+              specular="0.12" shininess="0.18" reflectance="0.01"/>
+    <!-- Switch mesh (cosmetic installed switches) -->
+    <mesh name="switch_mesh"
+          file="../meshes/Switch_Decimated.stl"
+          scale="0.001 0.001 0.001"
+          refpos="-7.350 0.053 -7.350"
+          refquat="0.7071 -0.7071 0 0"/>
+    <mesh name="aluminum_plate_mesh"
+          file="../meshes/aluminum_plate.stl"
+          scale="0.001 0.001 0.001"/>
+    <mesh name="stabilizer_mesh"
+          file="../meshes/Stabilizer_Decimated.stl"
+          scale="0.001 0.001 0.001"
+          refpos="-23.958 0.000 -1.712"
+          refquat="0.7071 -0.7071 0 0"/>
+    <!-- Keycap meshes -->
+    <mesh name="keycap_1u"    file="../meshes/keycap_1u.stl"/>
+    <mesh name="keycap_1_25u" file="../meshes/keycap_1_25u.stl"/>
+    <mesh name="keycap_1_5u"  file="../meshes/keycap_1_5u.stl"/>
+    <mesh name="keycap_1_75u" file="../meshes/keycap_1_75u.stl"/>
+    <mesh name="keycap_2u"    file="../meshes/keycap_2u.stl"/>
+    <mesh name="keycap_2_25u" file="../meshes/keycap_2_25u.stl"/>
+    <mesh name="keycap_6_25u" file="../meshes/keycap_6_25u.stl"/>
+  </asset>
+  <worldbody>
+    <!-- Studio-style balanced lighting for report screenshots. -->
+    <light name="key_light" pos="0.45 -0.65 1.20" dir="-0.35 0.45 -1" directional="true" diffuse="0.85 0.85 0.85" specular="0.25 0.25 0.25"/>
+    <light name="fill_light" pos="-0.70 0.55 1.00" dir="0.55 -0.35 -1" directional="true" diffuse="0.45 0.45 0.45" specular="0.10 0.10 0.10"/>
+    <light name="rim_light" pos="0.25 0.70 0.85" dir="-0.20 -0.65 -0.80" directional="true" diffuse="0.35 0.35 0.35" specular="0.30 0.30 0.30"/>
+    <light name="top_softbox" pos="0 0 1.35" dir="0 0 -1" directional="true" diffuse="0.55 0.55 0.55" specular="0.15 0.15 0.15"/>
+    <geom name="floor" type="plane" size="1.2 1.0 0.05" material="floor_mat" contype="0" conaffinity="0"/>
+    <camera name="cam_report_iso" pos="0.520 -0.680 0.610" xyaxes="0.794 0.608 0 -0.287 0.375 0.881" fovy="32"/>
+    <camera name="cam_front_low" pos="0.000 -0.790 0.290" xyaxes="1 0 0 0 0.105 0.994" fovy="28"/>
+    <camera name="cam_rear_iso" pos="-0.540 0.660 0.600" xyaxes="-0.774 -0.633 0 0.249 -0.305 0.919" fovy="34"/>
+    <camera name="cam_left_side" pos="-0.820 0.020 0.390" xyaxes="-0.024 -1.000 0 0.092 -0.002 0.996" fovy="30"/>
+    <camera name="cam_top_down" pos="0.000 -0.020 1.100" xyaxes="1 0 0 0 1 0.025" fovy="24"/>
+    <camera name="cam_close_stack" pos="0.340 -0.430 0.450" xyaxes="0.785 0.620 0 -0.161 0.204 0.966" fovy="25"/>
+
+
+    <!-- Z LAYER TABLE (equal spacing = 0.055 m)
+         01 bottom_case    0.050
+         02 epdm_foam      0.105
+         03 battery        0.160
+         04 pcb            0.215
+         05 aluminum_plate 0.270
+         06 stabilizers    0.325
+         07 screws         0.380
+         08 switches       0.435
+         09 keycaps        0.490
+    -->
+
+    <body name="layer_01_bottom_case" pos="0 0 0.050">
+                      <geom conaffinity="0" contype="0" name="case_floor" type="box" size="0.1564 0.06115 0.0015" pos="0 0 -0.0095" material="abs_plastic"/>
+                      <geom conaffinity="0" contype="0" name="case_wall_left_A" type="box" size="0.0015 0.01433 0.0095" pos="-0.1549 0.04682 0.0015" material="abs_plastic"/>
+                      <geom conaffinity="0" contype="0" name="case_wall_left_usbc_below" type="box" size="0.0015 0.0045 0.0045" pos="-0.1549 0.028 -0.0035" material="abs_plastic"/>
+                      <geom conaffinity="0" contype="0" name="case_wall_left_usbc_above" type="box" size="0.0015 0.0045 0.003" pos="-0.1549 0.028 0.008" material="abs_plastic"/>
+                      <geom conaffinity="0" contype="0" name="case_wall_left_B" type="box" size="0.0015 0.003 0.0095" pos="-0.1549 0.0205 0.0015" material="abs_plastic"/>
+                      <geom conaffinity="0" contype="0" name="case_wall_left_pwr_below" type="box" size="0.0015 0.007 0.004" pos="-0.1549 0.0105 -0.004" material="abs_plastic"/>
+                      <geom conaffinity="0" contype="0" name="case_wall_left_pwr_above" type="box" size="0.0015 0.007 0.0025" pos="-0.1549 0.0105 0.0085" material="abs_plastic"/>
+                      <geom conaffinity="0" contype="0" name="case_wall_left_C" type="box" size="0.0015 0.005 0.0095" pos="-0.1549 -0.0005 0.0015" material="abs_plastic"/>
+                      <geom conaffinity="0" contype="0" name="case_wall_left_os_below" type="box" size="0.0015 0.007 0.004" pos="-0.1549 -0.0095 -0.004" material="abs_plastic"/>
+                      <geom conaffinity="0" contype="0" name="case_wall_left_os_above" type="box" size="0.0015 0.007 0.0025" pos="-0.1549 -0.0095 0.0085" material="abs_plastic"/>
+                      <geom conaffinity="0" contype="0" name="case_wall_left_D" type="box" size="0.0015 0.02233 0.0095" pos="-0.1549 -0.03883 0.0015" material="abs_plastic"/>
+                      <geom conaffinity="0" contype="0" name="case_wall_right" type="box" size="0.0015 0.06115 0.0095" pos="0.1549 0 0.0015" material="abs_plastic"/>
+                      <geom conaffinity="0" contype="0" name="case_wall_rear" type="box" size="0.1564 0.0015 0.0095" pos="0 0.05965 0.0015" material="abs_plastic"/>
+                      <geom conaffinity="0" contype="0" name="case_wall_front" type="box" size="0.1564 0.0015 0.0095" pos="0 -0.05965 0.0015" material="abs_plastic"/>
+                      <geom conaffinity="0" contype="0" name="case_battery_rib_left" type="box" size="0.045 0.00075 0.002" pos="0.025 -0.03075 -0.006" material="abs_plastic"/>
+                      <geom conaffinity="0" contype="0" name="case_battery_rib_right" type="box" size="0.045 0.00075 0.002" pos="0.025 0.03075 -0.006" material="abs_plastic"/>
+                      <geom conaffinity="0" contype="0" name="case_battery_rib_front_left" type="box" size="0.00075 0.0125 0.002" pos="-0.02025 -0.0175 -0.006" material="abs_plastic"/>
+                      <geom conaffinity="0" contype="0" name="case_battery_rib_front_right" type="box" size="0.00075 0.0125 0.002" pos="-0.02025 0.0175 -0.006" material="abs_plastic"/>
+                      <geom conaffinity="0" contype="0" name="case_battery_rib_rear" type="box" size="0.00075 0.030 0.002" pos="0.07025 0 -0.006" material="abs_plastic"/>
+                      <geom name="case_boss_FL" type="cylinder" size="0.003 0.004" pos="-0.1515 -0.0495 -0.004" material="abs_plastic" mass="0" contype="0" conaffinity="0"/>
+                      <geom name="case_boss_FR" type="cylinder" size="0.003 0.004" pos=" 0.1545 -0.0495 -0.004" material="abs_plastic" mass="0" contype="0" conaffinity="0"/>
+                      <geom name="case_boss_RL" type="cylinder" size="0.003 0.004" pos="-0.1515  0.0495 -0.004" material="abs_plastic" mass="0" contype="0" conaffinity="0"/>
+                      <geom name="case_boss_RR" type="cylinder" size="0.003 0.004" pos=" 0.1545  0.0495 -0.004" material="abs_plastic" mass="0" contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="layer_02_epdm_foam" pos="0 0 0.085">
+                      <geom name="s4_epdm_front" type="box" size="0.1454 0.01408 0.00075" pos="0 -0.04408 -0.00625" material="mat_epdm" mass="0" contype="0" conaffinity="0"/>
+                      <geom name="s4_epdm_rear"  type="box" size="0.1454 0.01408 0.00075" pos="0  0.04408 -0.00625" material="mat_epdm" mass="0" contype="0" conaffinity="0"/>
+                      <geom name="s4_epdm_left"  type="box" size="0.06670 0.03000 0.00075" pos="-0.08670 0 -0.00625" material="mat_epdm" mass="0" contype="0" conaffinity="0"/>
+                      <geom name="s4_epdm_right" type="box" size="0.04170 0.03000 0.00075" pos=" 0.11170 0 -0.00625" material="mat_epdm" mass="0" contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="layer_03_battery" pos="0 0 0.120">
+                      <geom name="s4_battery" type="box" size="0.043 0.028 0.003" pos="0.025 0 -0.00250" mass="0" material="mat_battery" contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="layer_04_pcb" pos="0 0 0.155">
+                      <geom name="s4_pcb" type="box" size="0.1510 0.0560 0.0020" pos="0 0 0.00350" mass="0" material="mat_fr4" contype="0" conaffinity="0"/>
+                      <geom name="s4_pcb_usbc" type="box" size="0.0015 0.0045 0.0020" pos="-0.1525 0.0280 0.00450" mass="0" rgba="0.025 0.025 0.025 1" contype="0" conaffinity="0"/>
+                      <geom name="s4_pcb_pwr"  type="box" size="0.0015 0.0070 0.0030" pos="-0.1525 0.0105 0.00500" mass="0" rgba="0.025 0.025 0.025 1" contype="0" conaffinity="0"/>
+                      <geom name="s4_pcb_os"   type="box" size="0.0015 0.0070 0.0030" pos="-0.1525 -0.0095 0.00500" mass="0" rgba="0.025 0.025 0.025 1" contype="0" conaffinity="0"/>
+    </body>
+
+    <!-- Equal-Z exploded stack. Layer positions use 0.055 m spacing. -->
+    <body name="layer_05_aluminum_plate" pos="0 0 0.190">
+      <body name="exp_alu_plate" pos="0 0 0.00750">
+        <geom name="s4_alu_plate" type="mesh" mesh="aluminum_plate_mesh" pos="0.003361 0.00256 0.000747" mass="0" material="aluminum_plate" contype="0" conaffinity="0"/>
+      </body>
+    </body>
+
+    <body name="layer_06_stabilizers" pos="0 0 0.225">
+      <body name="s4_stab_space_L" pos="-0.071208 -0.048626 -0.00550"><geom name="s4_stab_space_L_mesh" type="mesh" mesh="stabilizer_mesh" pos="-0.047852 0.0017 0.00650" material="stab_white" contype="0" conaffinity="0"/></body>
+      <body name="s4_stab_space_R" pos="0.028792 -0.048626 -0.00550"><geom name="s4_stab_space_R_mesh" type="mesh" mesh="stabilizer_mesh" pos="-0.047852 0.0017 0.00650" material="stab_white" contype="0" conaffinity="0"/></body>
+      <body name="s4_stab_lshift_L" pos="-0.142688 -0.029576 -0.00550"><geom name="s4_stab_lshift_L_mesh" type="mesh" mesh="stabilizer_mesh" pos="-0.047852 0.0017 0.00650" material="stab_white" contype="0" conaffinity="0"/></body>
+      <body name="s4_stab_lshift_R" pos="-0.118808 -0.029576 -0.00550"><geom name="s4_stab_lshift_R_mesh" type="mesh" mesh="stabilizer_mesh" pos="-0.047852 0.0017 0.00650" material="stab_white" contype="0" conaffinity="0"/></body>
+      <body name="s4_stab_enter_L" pos="0.100202 -0.010516 -0.00550"><geom name="s4_stab_enter_L_mesh" type="mesh" mesh="stabilizer_mesh" pos="-0.047852 0.0017 0.00650" material="stab_white" contype="0" conaffinity="0"/></body>
+      <body name="s4_stab_enter_R" pos="0.124082 -0.010516 -0.00550"><geom name="s4_stab_enter_R_mesh" type="mesh" mesh="stabilizer_mesh" pos="-0.047852 0.0017 0.00650" material="stab_white" contype="0" conaffinity="0"/></body>
+      <body name="s4_stab_bksp_L" pos="0.102582 0.027584 -0.00550"><geom name="s4_stab_bksp_L_mesh" type="mesh" mesh="stabilizer_mesh" pos="-0.047852 0.0017 0.00650" material="stab_white" contype="0" conaffinity="0"/></body>
+      <body name="s4_stab_bksp_R" pos="0.126462 0.027584 -0.00550"><geom name="s4_stab_bksp_R_mesh" type="mesh" mesh="stabilizer_mesh" pos="-0.047852 0.0017 0.00650" material="stab_white" contype="0" conaffinity="0"/></body>
+    </body>
+
+    <body name="layer_07_screws" pos="0 0 0.260">
+      <geom name="s4_screw_FL_shaft" type="cylinder" size="0.0014 0.005" pos=" 0.133561  0.047060 0.005" material="mat_screw" mass="0" contype="0" conaffinity="0"/>
+      <geom name="s4_screw_FL_head"  type="cylinder" size="0.0020 0.001" pos=" 0.133561  0.047060 0.011" material="mat_screw" mass="0" contype="0" conaffinity="0"/>
+      <geom name="s4_screw_FR_shaft" type="cylinder" size="0.0014 0.005" pos="-0.1329  0.0476 0.005" material="mat_screw" mass="0" contype="0" conaffinity="0"/>
+      <geom name="s4_screw_FR_head"  type="cylinder" size="0.0020 0.001" pos="-0.1329  0.0476 0.011" material="mat_screw" mass="0" contype="0" conaffinity="0"/>
+      <geom name="s4_screw_RL_shaft" type="cylinder" size="0.0014 0.005" pos=" 0.1334 -0.0468 0.005" material="mat_screw" mass="0" contype="0" conaffinity="0"/>
+      <geom name="s4_screw_RL_head"  type="cylinder" size="0.0020 0.001" pos=" 0.1334 -0.0468 0.011" material="mat_screw" mass="0" contype="0" conaffinity="0"/>
+      <geom name="s4_screw_RR_shaft" type="cylinder" size="0.0014 0.005" pos="-0.1288 -0.0472 0.005" material="mat_screw" mass="0" contype="0" conaffinity="0"/>
+      <geom name="s4_screw_RR_head"  type="cylinder" size="0.0020 0.001" pos="-0.1288 -0.0472 0.011" material="mat_screw" mass="0" contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="layer_08_switches" pos="0 0 0.295">
+      <body name="exp_switches_ref" pos="0 0 0.00750">
+                          <geom name="ins_sw_Esc" type="mesh" mesh="switch_mesh" pos="-0.15765  0.0480 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_F1" type="mesh" mesh="switch_mesh" pos="-0.13855  0.0480 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_F2" type="mesh" mesh="switch_mesh" pos="-0.11955  0.0480 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_F3" type="mesh" mesh="switch_mesh" pos="-0.10045  0.0480 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_F4" type="mesh" mesh="switch_mesh" pos="-0.08145  0.0480 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_F5" type="mesh" mesh="switch_mesh" pos="-0.06235  0.0480 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_F6" type="mesh" mesh="switch_mesh" pos="-0.04335  0.0480 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_F7" type="mesh" mesh="switch_mesh" pos="-0.02425  0.0480 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_F8" type="mesh" mesh="switch_mesh" pos="-0.00525  0.0480 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_F9" type="mesh" mesh="switch_mesh" pos=" 0.01385  0.0480 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_F10" type="mesh" mesh="switch_mesh" pos=" 0.03285  0.0480 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_F11" type="mesh" mesh="switch_mesh" pos=" 0.05195  0.0480 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_F12" type="mesh" mesh="switch_mesh" pos=" 0.07095  0.0480 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_PrtSc" type="mesh" mesh="switch_mesh" pos=" 0.09005  0.0480 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_Pause" type="mesh" mesh="switch_mesh" pos=" 0.10905  0.0480 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_Del" type="mesh" mesh="switch_mesh" pos=" 0.12815  0.0480 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_Grave" type="mesh" mesh="switch_mesh" pos="-0.15765  0.0290 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_1" type="mesh" mesh="switch_mesh" pos="-0.13855  0.0290 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_2" type="mesh" mesh="switch_mesh" pos="-0.11955  0.0290 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_3" type="mesh" mesh="switch_mesh" pos="-0.10045  0.0290 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_4" type="mesh" mesh="switch_mesh" pos="-0.08145  0.0290 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_5" type="mesh" mesh="switch_mesh" pos="-0.06235  0.0290 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_6" type="mesh" mesh="switch_mesh" pos="-0.04335  0.0290 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_7" type="mesh" mesh="switch_mesh" pos="-0.02425  0.0290 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_8" type="mesh" mesh="switch_mesh" pos="-0.00525  0.0290 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_9" type="mesh" mesh="switch_mesh" pos=" 0.01385  0.0290 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_0" type="mesh" mesh="switch_mesh" pos=" 0.03285  0.0290 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_Minus" type="mesh" mesh="switch_mesh" pos=" 0.05195  0.0290 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_Equal" type="mesh" mesh="switch_mesh" pos=" 0.07095  0.0290 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_Bksp" type="mesh" mesh="switch_mesh" pos=" 0.09955  0.0290 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_PgUp" type="mesh" mesh="switch_mesh" pos=" 0.12815  0.0290 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_Tab" type="mesh" mesh="switch_mesh" pos="-0.15285  0.0099 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_Q" type="mesh" mesh="switch_mesh" pos="-0.12905  0.0099 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_W" type="mesh" mesh="switch_mesh" pos="-0.11005  0.0099 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_E" type="mesh" mesh="switch_mesh" pos="-0.09095  0.0099 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_R" type="mesh" mesh="switch_mesh" pos="-0.07195  0.0099 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_T" type="mesh" mesh="switch_mesh" pos="-0.05285  0.0099 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_Y" type="mesh" mesh="switch_mesh" pos="-0.03385  0.0099 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_U" type="mesh" mesh="switch_mesh" pos="-0.01475  0.0099 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_I" type="mesh" mesh="switch_mesh" pos=" 0.00435  0.0099 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_O" type="mesh" mesh="switch_mesh" pos=" 0.02335  0.0099 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_P" type="mesh" mesh="switch_mesh" pos=" 0.04245  0.0099 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_LBrace" type="mesh" mesh="switch_mesh" pos=" 0.06145  0.0099 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_RBrace" type="mesh" mesh="switch_mesh" pos=" 0.08055  0.0099 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_Bkslash" type="mesh" mesh="switch_mesh" pos=" 0.10435  0.0099 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_PgDn" type="mesh" mesh="switch_mesh" pos=" 0.12815  0.0099 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_Caps" type="mesh" mesh="switch_mesh" pos="-0.15045 -0.0092 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_A" type="mesh" mesh="switch_mesh" pos="-0.12425 -0.0092 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_S" type="mesh" mesh="switch_mesh" pos="-0.10525 -0.0092 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_D" type="mesh" mesh="switch_mesh" pos="-0.08615 -0.0092 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_F" type="mesh" mesh="switch_mesh" pos="-0.06715 -0.0092 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_G" type="mesh" mesh="switch_mesh" pos="-0.04805 -0.0092 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_H" type="mesh" mesh="switch_mesh" pos="-0.02905 -0.0092 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_J" type="mesh" mesh="switch_mesh" pos="-0.00995 -0.0092 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_K" type="mesh" mesh="switch_mesh" pos=" 0.00905 -0.0092 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_L" type="mesh" mesh="switch_mesh" pos=" 0.02815 -0.0092 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_Semicol" type="mesh" mesh="switch_mesh" pos=" 0.04715 -0.0092 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_Quote" type="mesh" mesh="switch_mesh" pos=" 0.06625 -0.0092 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_Enter" type="mesh" mesh="switch_mesh" pos=" 0.09715 -0.0092 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_Home" type="mesh" mesh="switch_mesh" pos=" 0.12815 -0.0092 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_LShift" type="mesh" mesh="switch_mesh" pos="-0.14575 -0.0282 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_Z" type="mesh" mesh="switch_mesh" pos="-0.11475 -0.0282 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_X" type="mesh" mesh="switch_mesh" pos="-0.09575 -0.0282 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_C" type="mesh" mesh="switch_mesh" pos="-0.07665 -0.0282 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_V" type="mesh" mesh="switch_mesh" pos="-0.05765 -0.0282 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_B" type="mesh" mesh="switch_mesh" pos="-0.03855 -0.0282 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_N" type="mesh" mesh="switch_mesh" pos="-0.01955 -0.0282 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_M" type="mesh" mesh="switch_mesh" pos="-0.00045 -0.0282 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_Comma" type="mesh" mesh="switch_mesh" pos=" 0.01855 -0.0282 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_Period" type="mesh" mesh="switch_mesh" pos=" 0.03765 -0.0282 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_Slash" type="mesh" mesh="switch_mesh" pos=" 0.05665 -0.0282 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_RShift" type="mesh" mesh="switch_mesh" pos=" 0.08285 -0.0282 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_Up" type="mesh" mesh="switch_mesh" pos=" 0.10905 -0.0282 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_End" type="mesh" mesh="switch_mesh" pos=" 0.12815 -0.0282 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_LCtrl" type="mesh" mesh="switch_mesh" pos="-0.15525 -0.0473 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_LWin" type="mesh" mesh="switch_mesh" pos="-0.13145 -0.0473 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_LAlt" type="mesh" mesh="switch_mesh" pos="-0.10765 -0.0473 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_Space" type="mesh" mesh="switch_mesh" pos="-0.03615 -0.0473 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_RAlt" type="mesh" mesh="switch_mesh" pos=" 0.03285 -0.0473 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_Fn" type="mesh" mesh="switch_mesh" pos=" 0.05195 -0.0473 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_Left" type="mesh" mesh="switch_mesh" pos=" 0.07095 -0.0473 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_Down" type="mesh" mesh="switch_mesh" pos=" 0.09005 -0.0473 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_Right" type="mesh" mesh="switch_mesh" pos=" 0.10905 -0.0473 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+                          <geom name="ins_sw_End2" type="mesh" mesh="switch_mesh" pos=" 0.12815 -0.0473 0.0015" material="switch_housing" contype="0" conaffinity="0"/>
+      </body>
+    </body>
+
+    <body name="layer_09_keycaps" pos="0 0 0.330">
+      <body name="exp_keycaps_ref" pos="0 0 0.00750">
+      <body name="exp_kc_Esc" pos="-0.1429  0.0480 0.0050">
+        <geom name="exp_kc_Esc_geom" type="mesh" mesh="keycap_1u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_F1" pos="-0.1238  0.0480 0.0050">
+        <geom name="exp_kc_F1_geom" type="mesh" mesh="keycap_1u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_F2" pos="-0.1048  0.0480 0.0050">
+        <geom name="exp_kc_F2_geom" type="mesh" mesh="keycap_1u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_F3" pos="-0.0857  0.0480 0.0050">
+        <geom name="exp_kc_F3_geom" type="mesh" mesh="keycap_1u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_F4" pos="-0.0667  0.0480 0.0050">
+        <geom name="exp_kc_F4_geom" type="mesh" mesh="keycap_1u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_F5" pos="-0.0476  0.0480 0.0050">
+        <geom name="exp_kc_F5_geom" type="mesh" mesh="keycap_1u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_F6" pos="-0.0286  0.0480 0.0050">
+        <geom name="exp_kc_F6_geom" type="mesh" mesh="keycap_1u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_F7" pos="-0.0095  0.0480 0.0050">
+        <geom name="exp_kc_F7_geom" type="mesh" mesh="keycap_1u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_F8" pos=" 0.0095  0.0480 0.0050">
+        <geom name="exp_kc_F8_geom" type="mesh" mesh="keycap_1u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_F9" pos=" 0.0286  0.0480 0.0050">
+        <geom name="exp_kc_F9_geom" type="mesh" mesh="keycap_1u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_F10" pos=" 0.0476  0.0480 0.0050">
+        <geom name="exp_kc_F10_geom" type="mesh" mesh="keycap_1u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_F11" pos=" 0.0667  0.0480 0.0050">
+        <geom name="exp_kc_F11_geom" type="mesh" mesh="keycap_1u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_F12" pos=" 0.0857  0.0480 0.0050">
+        <geom name="exp_kc_F12_geom" type="mesh" mesh="keycap_1u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_PrtSc" pos=" 0.1048  0.0480 0.0050">
+        <geom name="exp_kc_PrtSc_geom" type="mesh" mesh="keycap_1u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_Pause" pos=" 0.1238  0.0480 0.0050">
+        <geom name="exp_kc_Pause_geom" type="mesh" mesh="keycap_1u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_Del" pos=" 0.1429  0.0480 0.0050">
+        <geom name="exp_kc_Del_geom" type="mesh" mesh="keycap_1u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_Grave" pos="-0.1429  0.0290 0.0050">
+        <geom name="exp_kc_Grave_geom" type="mesh" mesh="keycap_1u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_1" pos="-0.1238  0.0290 0.0050">
+        <geom name="exp_kc_1_geom" type="mesh" mesh="keycap_1u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_2" pos="-0.1048  0.0290 0.0050">
+        <geom name="exp_kc_2_geom" type="mesh" mesh="keycap_1u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_3" pos="-0.0857  0.0290 0.0050">
+        <geom name="exp_kc_3_geom" type="mesh" mesh="keycap_1u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_4" pos="-0.0667  0.0290 0.0050">
+        <geom name="exp_kc_4_geom" type="mesh" mesh="keycap_1u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_5" pos="-0.0476  0.0290 0.0050">
+        <geom name="exp_kc_5_geom" type="mesh" mesh="keycap_1u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_6" pos="-0.0286  0.0290 0.0050">
+        <geom name="exp_kc_6_geom" type="mesh" mesh="keycap_1u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_7" pos="-0.0095  0.0290 0.0050">
+        <geom name="exp_kc_7_geom" type="mesh" mesh="keycap_1u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_8" pos=" 0.0095  0.0290 0.0050">
+        <geom name="exp_kc_8_geom" type="mesh" mesh="keycap_1u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_9" pos=" 0.0286  0.0290 0.0050">
+        <geom name="exp_kc_9_geom" type="mesh" mesh="keycap_1u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_0" pos=" 0.0476  0.0290 0.0050">
+        <geom name="exp_kc_0_geom" type="mesh" mesh="keycap_1u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_Minus" pos=" 0.0667  0.0290 0.0050">
+        <geom name="exp_kc_Minus_geom" type="mesh" mesh="keycap_1u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_Equal" pos=" 0.0857  0.0290 0.0050">
+        <geom name="exp_kc_Equal_geom" type="mesh" mesh="keycap_1u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_Bksp" pos=" 0.1143  0.0290 0.0050">
+        <geom name="exp_kc_Bksp_geom" type="mesh" mesh="keycap_2u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_PgUp" pos=" 0.1429  0.0290 0.0050">
+        <geom name="exp_kc_PgUp_geom" type="mesh" mesh="keycap_1u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_Tab" pos="-0.1381  0.0099 0.0050">
+        <geom name="exp_kc_Tab_geom" type="mesh" mesh="keycap_1_5u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_Q" pos="-0.1143  0.0099 0.0050">
+        <geom name="exp_kc_Q_geom" type="mesh" mesh="keycap_1u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_W" pos="-0.0953  0.0099 0.0050">
+        <geom name="exp_kc_W_geom" type="mesh" mesh="keycap_1u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_E" pos="-0.0762  0.0099 0.0050">
+        <geom name="exp_kc_E_geom" type="mesh" mesh="keycap_1u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_R" pos="-0.0572  0.0099 0.0050">
+        <geom name="exp_kc_R_geom" type="mesh" mesh="keycap_1u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_T" pos="-0.0381  0.0099 0.0050">
+        <geom name="exp_kc_T_geom" type="mesh" mesh="keycap_1u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_Y" pos="-0.0191  0.0099 0.0050">
+        <geom name="exp_kc_Y_geom" type="mesh" mesh="keycap_1u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_U" pos=" 0.0000  0.0099 0.0050">
+        <geom name="exp_kc_U_geom" type="mesh" mesh="keycap_1u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_I" pos=" 0.0191  0.0099 0.0050">
+        <geom name="exp_kc_I_geom" type="mesh" mesh="keycap_1u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_O" pos=" 0.0381  0.0099 0.0050">
+        <geom name="exp_kc_O_geom" type="mesh" mesh="keycap_1u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_P" pos=" 0.0572  0.0099 0.0050">
+        <geom name="exp_kc_P_geom" type="mesh" mesh="keycap_1u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_LBrace" pos=" 0.0762  0.0099 0.0050">
+        <geom name="exp_kc_LBrace_geom" type="mesh" mesh="keycap_1u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_RBrace" pos=" 0.0953  0.0099 0.0050">
+        <geom name="exp_kc_RBrace_geom" type="mesh" mesh="keycap_1u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_Bkslash" pos=" 0.1191  0.0099 0.0050">
+        <geom name="exp_kc_Bkslash_geom" type="mesh" mesh="keycap_1_5u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_PgDn" pos=" 0.1429  0.0099 0.0050">
+        <geom name="exp_kc_PgDn_geom" type="mesh" mesh="keycap_1u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_Caps" pos="-0.1357 -0.0092 0.0050">
+        <geom name="exp_kc_Caps_geom" type="mesh" mesh="keycap_1_75u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_A" pos="-0.1095 -0.0092 0.0050">
+        <geom name="exp_kc_A_geom" type="mesh" mesh="keycap_1u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_S" pos="-0.0905 -0.0092 0.0050">
+        <geom name="exp_kc_S_geom" type="mesh" mesh="keycap_1u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_D" pos="-0.0714 -0.0092 0.0050">
+        <geom name="exp_kc_D_geom" type="mesh" mesh="keycap_1u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_F" pos="-0.0524 -0.0092 0.0050">
+        <geom name="exp_kc_F_geom" type="mesh" mesh="keycap_1u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_G" pos="-0.0333 -0.0092 0.0050">
+        <geom name="exp_kc_G_geom" type="mesh" mesh="keycap_1u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_H" pos="-0.0143 -0.0092 0.0050">
+        <geom name="exp_kc_H_geom" type="mesh" mesh="keycap_1u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_J" pos=" 0.0048 -0.0092 0.0050">
+        <geom name="exp_kc_J_geom" type="mesh" mesh="keycap_1u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_K" pos=" 0.0238 -0.0092 0.0050">
+        <geom name="exp_kc_K_geom" type="mesh" mesh="keycap_1u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_L" pos=" 0.0429 -0.0092 0.0050">
+        <geom name="exp_kc_L_geom" type="mesh" mesh="keycap_1u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_Semicol" pos=" 0.0619 -0.0092 0.0050">
+        <geom name="exp_kc_Semicol_geom" type="mesh" mesh="keycap_1u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_Quote" pos=" 0.0810 -0.0092 0.0050">
+        <geom name="exp_kc_Quote_geom" type="mesh" mesh="keycap_1u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_Enter" pos=" 0.1119 -0.0092 0.0050">
+        <geom name="exp_kc_Enter_geom" type="mesh" mesh="keycap_2_25u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_Home" pos=" 0.1429 -0.0092 0.0050">
+        <geom name="exp_kc_Home_geom" type="mesh" mesh="keycap_1u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_LShift" pos="-0.1310 -0.0282 0.0050">
+        <geom name="exp_kc_LShift_geom" type="mesh" mesh="keycap_2_25u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_Z" pos="-0.1000 -0.0282 0.0050">
+        <geom name="exp_kc_Z_geom" type="mesh" mesh="keycap_1u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_X" pos="-0.0810 -0.0282 0.0050">
+        <geom name="exp_kc_X_geom" type="mesh" mesh="keycap_1u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_C" pos="-0.0619 -0.0282 0.0050">
+        <geom name="exp_kc_C_geom" type="mesh" mesh="keycap_1u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_V" pos="-0.0429 -0.0282 0.0050">
+        <geom name="exp_kc_V_geom" type="mesh" mesh="keycap_1u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_B" pos="-0.0238 -0.0282 0.0050">
+        <geom name="exp_kc_B_geom" type="mesh" mesh="keycap_1u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_N" pos="-0.0048 -0.0282 0.0050">
+        <geom name="exp_kc_N_geom" type="mesh" mesh="keycap_1u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_M" pos=" 0.0143 -0.0282 0.0050">
+        <geom name="exp_kc_M_geom" type="mesh" mesh="keycap_1u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_Comma" pos=" 0.0333 -0.0282 0.0050">
+        <geom name="exp_kc_Comma_geom" type="mesh" mesh="keycap_1u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_Period" pos=" 0.0524 -0.0282 0.0050">
+        <geom name="exp_kc_Period_geom" type="mesh" mesh="keycap_1u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_Slash" pos=" 0.0714 -0.0282 0.0050">
+        <geom name="exp_kc_Slash_geom" type="mesh" mesh="keycap_1u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_RShift" pos=" 0.0976 -0.0282 0.0050">
+        <geom name="exp_kc_RShift_geom" type="mesh" mesh="keycap_1_75u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_Up" pos=" 0.1238 -0.0282 0.0050">
+        <geom name="exp_kc_Up_geom" type="mesh" mesh="keycap_1u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_End" pos=" 0.1429 -0.0282 0.0050">
+        <geom name="exp_kc_End_geom" type="mesh" mesh="keycap_1u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_LCtrl" pos="-0.1405 -0.0473 0.0050">
+        <geom name="exp_kc_LCtrl_geom" type="mesh" mesh="keycap_1_25u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_LWin" pos="-0.1167 -0.0473 0.0050">
+        <geom name="exp_kc_LWin_geom" type="mesh" mesh="keycap_1_25u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_LAlt" pos="-0.0929 -0.0473 0.0050">
+        <geom name="exp_kc_LAlt_geom" type="mesh" mesh="keycap_1_25u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_Space" pos="-0.0214 -0.0473 0.0050">
+        <geom name="exp_kc_Space_geom" type="mesh" mesh="keycap_6_25u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_RAlt" pos=" 0.0476 -0.0473 0.0050">
+        <geom name="exp_kc_RAlt_geom" type="mesh" mesh="keycap_1u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_Fn" pos=" 0.0667 -0.0473 0.0050">
+        <geom name="exp_kc_Fn_geom" type="mesh" mesh="keycap_1u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_Left" pos=" 0.0857 -0.0473 0.0050">
+        <geom name="exp_kc_Left_geom" type="mesh" mesh="keycap_1u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_Down" pos=" 0.1048 -0.0473 0.0050">
+        <geom name="exp_kc_Down_geom" type="mesh" mesh="keycap_1u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_Right" pos=" 0.1238 -0.0473 0.0050">
+        <geom name="exp_kc_Right_geom" type="mesh" mesh="keycap_1u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      <body name="exp_kc_End2" pos=" 0.1429 -0.0473 0.0050">
+        <geom name="exp_kc_End2_geom" type="mesh" mesh="keycap_1u" material="pbt_keycap" contype="0" conaffinity="0"/>
+      </body>
+      </body>
+    </body>
+
+  </worldbody>
+</mujoco>
