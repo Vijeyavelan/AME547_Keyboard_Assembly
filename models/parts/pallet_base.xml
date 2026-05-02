@@ -60,6 +60,13 @@
 
   <option gravity="0 0 -9.81" timestep="0.002"/>
 
+  <visual>
+    <!-- Camera-friendly studio lighting: soft ambient fill + balanced highlights. -->
+    <headlight ambient="0.35 0.35 0.35" diffuse="0.55 0.55 0.55" specular="0.25 0.25 0.25"/>
+    <quality shadowsize="4096"/>
+    <map znear="0.01" zfar="10"/>
+  </visual>
+
   <asset>
     <material name="aluminum_plate"
               rgba="0.75 0.75 0.78 1"
@@ -74,6 +81,15 @@
   </asset>
 
   <worldbody>
+
+    <!-- STUDIO LIGHTING FOR SCREENSHOTS / REPORT PHOTOS
+         Soft three-point setup: overhead key, front fill, and rear rim.
+         Visual-only; does not affect pallet geometry/controller logic. -->
+    <light name="studio_key_overhead" mode="fixed" directional="false" pos="0.00 -0.35 1.20" dir="0.00 0.30 -1.00" diffuse="0.85 0.85 0.82" ambient="0.18 0.18 0.18" specular="0.30 0.30 0.28" attenuation="1 0.25 0.10" cutoff="90" exponent="1" castshadow="true"/>
+
+    <light name="studio_fill_front" mode="fixed" directional="false" pos="0.35 -0.55 0.55" dir="-0.40 0.55 -0.35" diffuse="0.45 0.48 0.52" ambient="0.10 0.10 0.12" specular="0.12 0.12 0.14" attenuation="1 0.35 0.15" cutoff="100" exponent="1" castshadow="false"/>
+
+    <light name="studio_rim_rear" mode="fixed" directional="false" pos="-0.35 0.45 0.65" dir="0.45 -0.55 -0.45" diffuse="0.35 0.38 0.42" ambient="0.03 0.03 0.04" specular="0.35 0.35 0.40" attenuation="1 0.40 0.20" cutoff="80" exponent="2" castshadow="false"/>
 
     <geom name="ground" type="plane" size="1 1 0.1"
           pos="0 0 0"

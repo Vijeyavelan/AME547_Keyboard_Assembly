@@ -68,8 +68,8 @@
               rgba="0.88 0.88 0.82 1"
               specular="0.15" shininess="0.25" reflectance="0.03"/>
     <material name="pbt_gray"
-              rgba="0.82 0.82 0.85 1"
-              specular="0.1" shininess="0.2" reflectance="0.02"/>
+            rgba="0.28 0.30 0.32 1"
+          specular="0.08" shininess="0.18" reflectance="0.015"/>
     <!-- Switch mesh (cosmetic installed switches) -->
     <mesh name="switch_mesh"
           file="../meshes/Switch_Decimated.stl"

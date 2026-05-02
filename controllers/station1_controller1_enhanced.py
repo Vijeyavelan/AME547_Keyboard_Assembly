@@ -34,7 +34,7 @@ SETTLE_STEPS = 50
 # Place dwell = part settling + release confirmation at the seated pose.
 VACUUM_PICK_DWELL  = 1.0
 VACUUM_PLACE_DWELL = 1.0
-POST_ASSEMBLY_INSPECTION_DWELL = 4.5
+POST_ASSEMBLY_INSPECTION_DWELL = 1.0
 
 # Measured correction from release diagnostics.
 # The joint servo settles with the gripper tip a few mm below/offset from the ideal IK target.
@@ -45,6 +45,45 @@ PLACE_TCP_CORRECTION = {
     "s1_battery": np.array([-0.0023, -0.0027, 0.0071]),
     "s1_pcb":     np.array([-0.0024, -0.0025, 0.0073]),
 }
+
+# Visual logistics animation tuning
+PALLET_ARRIVAL_DISTANCE = 0.30
+PALLET_EXIT_DISTANCE    = 0.30
+PALLET_ARRIVAL_TIME     = 4.0
+PALLET_EXIT_TIME        = 3.0
+STOPPER_RAISE_TIME      = 0.45
+TRAY_ARRIVAL_TIME       = 4.0
+TRAY_TRANSFER_TIME      = 2.0
+TRAY_EXIT_TIME          = 2.0
+TRAY_STACK_TIME         = 1.0
+
+PALLET_FINAL_POS      = np.array([0.0, 0.0, 0.810])
+BOTTOM_CASE_FINAL_POS = np.array([0.0, 0.0, 0.821])
+TRAY_PICK_POS         = np.array([-0.300, 0.500, 0.815])
+TRAY_PRESTAGE_POS     = np.array([-0.300, 1.070, 0.815])
+TRAY_EXIT_POS         = np.array([-0.8475, 0.500, 0.815])
+TRAY_STACK_POS        = np.array([-1.348, 0.500, 0.815])
+TRAY_HIDE_POS         = np.array([-1.348, 0.500, 0.650])
+
+# Visual-only prestage tray: hidden during loaded-tray arrival to avoid overlap,
+# then restored once the active kit tray is locked in the pick zone.
+PRESTAGE_HIDE_DELTA  = np.array([0.0, 0.0, -0.55])
+PRESTAGE_TRAY_POS    = TRAY_PRESTAGE_POS.copy()
+PRESTAGE_PART_WORLD = {
+    "ps_epdm":    np.array([-0.3000, 0.88915, 0.81075]),
+    "ps_battery": np.array([-0.3000, 1.00630, 0.81300]),
+    "ps_pcb":     np.array([-0.3000, 1.11830, 0.81200]),
+    "ps_plate":   np.array([-0.3000, 1.25745, 0.81375]),
+}
+PRESTAGE_PART_QUAT = {
+    "ps_epdm":    np.array([0, 0, 0, 1]),
+    "ps_battery": np.array([0, 0, 0, 1]),
+    "ps_pcb":     np.array([0, 0, 0, 1]),
+    "ps_plate":   np.array([0, 0, 0, 1]),
+}
+
+STOPPER_DOWN_Z_OFFSET = -0.050
+STOPPER_UP_POS        = np.array([0.185, 0.0, 0.820])
 # j1 faces the dock, j2/j3 create a high 'elbow-up' arch, j4/j5 point the flange down
 DOCK_VAC_SEED = np.array([-1.57, -1.57, 1.57, -1.57, -1.57, 0.0])
 DOCK_PIN_SEED = np.array([-1.57, -1.57, 1.57, -1.57, -1.57, 0.0])
@@ -385,6 +424,287 @@ def dwell_seconds(m, d, v, seconds=1.0, locked=None, label="dwell"):
         mujoco.mj_step(m, d)
         v.sync()
     print(f"  ✓ {label} ({seconds:.1f}s hold)")
+
+
+# ---------------------------------------------------------------------------
+# VISUAL LOGISTICS HELPERS
+# ---------------------------------------------------------------------------
+
+def _smooth(t):
+    return t*t*(3.0 - 2.0*t)
+
+
+def _set_static_body_pos(m, body_name, pos):
+    bid = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_BODY, body_name)
+    if bid >= 0:
+        m.body_pos[bid] = np.asarray(pos, dtype=float)
+
+
+def _get_static_body_pos(m, body_name):
+    bid = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_BODY, body_name)
+    if bid < 0:
+        return None
+    return m.body_pos[bid].copy()
+
+
+def _set_geom_pos(m, geom_name, pos):
+    gid = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_GEOM, geom_name)
+    if gid >= 0:
+        m.geom_pos[gid] = np.asarray(pos, dtype=float)
+
+
+def _get_geom_pos(m, geom_name):
+    gid = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_GEOM, geom_name)
+    if gid < 0:
+        return None
+    return m.geom_pos[gid].copy()
+
+
+def _set_site_pos(m, site_name, pos):
+    sid = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_SITE, site_name)
+    if sid >= 0:
+        m.site_pos[sid] = np.asarray(pos, dtype=float)
+
+
+def _set_free_pos(d, fj, fv, pos, quat=None):
+    d.qpos[fj:fj+3] = np.asarray(pos, dtype=float)
+    d.qpos[fj+3:fj+7] = quat if quat is not None else [1, 0, 0, 0]
+    d.qvel[fv:fv+6] = 0
+
+
+def _step_visual(m, d, v, locked=None, ctrl=None):
+    if ctrl is not None:
+        d.ctrl[:] = ctrl
+    if locked:
+        for fj, fv, pos, q in locked:
+            lock_part(d, fj, fv, pos, q)
+    mujoco.mj_forward(m, d)
+    mujoco.mj_step(m, d)
+    v.sync()
+
+
+def animate_stop_geom(m, d, v, z_from, z_to, seconds, locked=None, label="stopper"):
+    base = STOPPER_UP_POS.copy()
+    steps = max(1, int(seconds / m.opt.timestep))
+    for i in range(steps):
+        te = _smooth((i+1)/steps)
+        z = z_from + (z_to - z_from)*te
+        pos = np.array([base[0], base[1], z])
+        _set_geom_pos(m, "cdlr_stop", pos)
+        _set_site_pos(m, "s_cdlr_stop", pos + np.array([0,0,0.020]))
+        _step_visual(m, d, v, locked=locked)
+    print(f"  ✓ {label}")
+
+
+def set_pallet_case_positions(m, pallet_pos, case_pos):
+    _set_static_body_pos(m, "pallet_base", pallet_pos)
+    _set_static_body_pos(m, "s1_bottom_case", case_pos)
+
+
+def phase_pallet_arrival(m, d, v, all_locks):
+    """Visual main-conveyor pallet arrival and just-in-time stopper raise."""
+    print(); print("="*60); print("[PHASE 0A] Pallet arrival and station locating"); print("="*60)
+    pallet_start = PALLET_FINAL_POS + np.array([-PALLET_ARRIVAL_DISTANCE, 0, 0])
+    case_start   = BOTTOM_CASE_FINAL_POS + np.array([-PALLET_ARRIVAL_DISTANCE, 0, 0])
+
+    _set_geom_pos(m, "cdlr_stop", STOPPER_UP_POS + np.array([0,0,STOPPER_DOWN_Z_OFFSET]))
+    _set_site_pos(m, "s_cdlr_stop", STOPPER_UP_POS + np.array([0,0,STOPPER_DOWN_Z_OFFSET+0.020]))
+    set_pallet_case_positions(m, pallet_start, case_start)
+    mujoco.mj_forward(m, d); v.sync()
+
+    print("  [PLC] Main conveyor indexing pallet into S1")
+    steps = max(1, int(PALLET_ARRIVAL_TIME / m.opt.timestep))
+    for i in range(steps):
+        te = _smooth((i+1)/steps)
+        p = pallet_start + (PALLET_FINAL_POS - pallet_start)*te
+        c = case_start + (BOTTOM_CASE_FINAL_POS - case_start)*te
+        if i == int(0.70*steps):
+            print("  [PLC] Pallet approaching stop position — raising stopper")
+        if i >= int(0.70*steps):
+            local = (i - int(0.70*steps)) / max(1, steps - int(0.70*steps))
+            z = STOPPER_UP_POS[2] + STOPPER_DOWN_Z_OFFSET*(1.0 - _smooth(local))
+            _set_geom_pos(m, "cdlr_stop", [STOPPER_UP_POS[0], STOPPER_UP_POS[1], z])
+            _set_site_pos(m, "s_cdlr_stop", [STOPPER_UP_POS[0], STOPPER_UP_POS[1], z+0.020])
+        set_pallet_case_positions(m, p, c)
+        _step_visual(m, d, v, locked=all_locks)
+
+    set_pallet_case_positions(m, PALLET_FINAL_POS, BOTTOM_CASE_FINAL_POS)
+    _set_geom_pos(m, "cdlr_stop", STOPPER_UP_POS)
+    _set_site_pos(m, "s_cdlr_stop", STOPPER_UP_POS + np.array([0,0,0.020]))
+    mujoco.mj_forward(m, d); v.sync()
+    print("  [PLC] Stopper raised; pallet located and locked at S1")
+
+
+
+def set_prestage_tray(m, d, v, prestage_jnts, visible=True, sync=True):
+    """Show/hide the visual prestage tray and its staged kit parts.
+
+    The prestage kit is hidden while the active tray moves from prestage to
+    pick zone so the two trays do not overlap/collide visually. Once the active
+    tray is locked in the pick zone, the next prestage kit is restored.
+    """
+    offset = np.zeros(3) if visible else PRESTAGE_HIDE_DELTA
+
+    tfj, tfv = prestage_jnts["kit_tray_prestage"]
+    _set_free_pos(d, tfj, tfv, PRESTAGE_TRAY_POS + offset)
+
+    for name, base_pos in PRESTAGE_PART_WORLD.items():
+        fj, fv = prestage_jnts[name]
+        _set_free_pos(d, fj, fv, base_pos + offset, PRESTAGE_PART_QUAT.get(name))
+
+    if sync:
+        mujoco.mj_forward(m, d)
+        v.sync()
+
+
+def phase_tray_arrival(m, d, v, tray_jnt, part_jnts, screw_box_locks, prestage_jnts=None):
+    """Move loaded tray from prestage to pick zone with all four kit parts."""
+    print(); print("="*60); print("[PHASE 0B] Kit tray arrival and verification"); print("="*60)
+    tray_fj, tray_fv = tray_jnt
+    delta = TRAY_PRESTAGE_POS - TRAY_PICK_POS
+
+    if prestage_jnts is not None:
+        set_prestage_tray(m, d, v, prestage_jnts, visible=False)
+        print("  [PLC] Next prestage tray hidden while active tray indexes into pick zone")
+
+    # Put tray and its contents visually at prestage before arrival.
+    _set_free_pos(d, tray_fj, tray_fv, TRAY_PRESTAGE_POS)
+    for b in PARTS:
+        fj, fv = part_jnts[b]
+        q = PLATE_TRAY_QUAT if b == "s1_alu_plate" else None
+        _set_free_pos(d, fj, fv, PICK_WORLD[b] + delta, q)
+    mujoco.mj_forward(m, d); v.sync()
+
+    print("  [PLC] Loaded kit tray entering pick zone")
+    steps = max(1, int(TRAY_ARRIVAL_TIME / m.opt.timestep))
+    for i in range(steps):
+        te = _smooth((i+1)/steps)
+        tray_pos = TRAY_PRESTAGE_POS + (TRAY_PICK_POS - TRAY_PRESTAGE_POS)*te
+        _set_free_pos(d, tray_fj, tray_fv, tray_pos)
+        offset = tray_pos - TRAY_PICK_POS
+        for b in PARTS:
+            fj, fv = part_jnts[b]
+            q = PLATE_TRAY_QUAT if b == "s1_alu_plate" else None
+            _set_free_pos(d, fj, fv, PICK_WORLD[b] + offset, q)
+        for lfj, lfv, pos, q in screw_box_locks:
+            lock_part(d, lfj, lfv, pos, q)
+        _step_visual(m, d, v)
+
+    _set_free_pos(d, tray_fj, tray_fv, TRAY_PICK_POS)
+    for b in PARTS:
+        fj, fv = part_jnts[b]
+        q = PLATE_TRAY_QUAT if b == "s1_alu_plate" else None
+        _set_free_pos(d, fj, fv, PICK_WORLD[b], q)
+    mujoco.mj_forward(m, d); v.sync()
+    print("  [QC] Tray ID scanned — K2 structural kit verified")
+    print("  [QC] EPDM, battery, PCB, and aluminum plate present in correct pockets")
+    print("  [PLC] Pick-zone stopper raised; tray locked for robot access")
+    if prestage_jnts is not None:
+        set_prestage_tray(m, d, v, prestage_jnts, visible=True)
+        print("  [PLC] Next kit tray restored at prestage position")
+
+
+def phase_empty_tray_ejection(m, d, v, tray_jnt, placed_locks, screw_box_locks, timer=None):
+    """Automatically index the empty kit tray into the horizontal exit leg and stack."""
+    print(); print("="*60); print("[PHASE 7] Empty kit tray ejection"); print("="*60)
+    tray_fj, tray_fv = tray_jnt
+    print("  [PLC] Kit tray empty — all components removed")
+    print("  [PLC] Empty tray automatically transferring to horizontal exit leg")
+
+    # Simple visual transfer: no pusher. The tray is assumed to be driven by the
+    # exit conveyor/transfer unit once the pick-zone stopper releases.
+    steps = max(1, int(TRAY_TRANSFER_TIME / m.opt.timestep))
+    for i in range(steps):
+        te = _smooth((i+1)/steps)
+        tray_pos = TRAY_PICK_POS + (TRAY_EXIT_POS - TRAY_PICK_POS)*te
+        _set_free_pos(d, tray_fj, tray_fv, tray_pos)
+        _step_visual(m, d, v, locked=placed_locks + screw_box_locks)
+
+    print("  [PLC] Empty tray captured by horizontal exit conveyor")
+    steps = max(1, int(TRAY_EXIT_TIME / m.opt.timestep))
+    for i in range(steps):
+        te = _smooth((i+1)/steps)
+        tray_pos = TRAY_EXIT_POS + (TRAY_STACK_POS - TRAY_EXIT_POS)*te
+        _set_free_pos(d, tray_fj, tray_fv, tray_pos)
+        _step_visual(m, d, v, locked=placed_locks + screw_box_locks)
+
+    print("  [PLC] Empty tray indexed into stack accumulator")
+    steps = max(1, int(TRAY_STACK_TIME / m.opt.timestep))
+    for i in range(steps):
+        te = _smooth((i+1)/steps)
+        tray_pos = TRAY_STACK_POS + (TRAY_HIDE_POS - TRAY_STACK_POS)*te
+        _set_free_pos(d, tray_fj, tray_fv, tray_pos)
+        _step_visual(m, d, v, locked=placed_locks + screw_box_locks)
+
+    _set_free_pos(d, tray_fj, tray_fv, TRAY_HIDE_POS)
+    mujoco.mj_forward(m, d); v.sync()
+    print("  [PLC] Empty tray stacked; pick zone clear for next kit")
+    if timer is not None:
+        timer.mark(d, "Empty tray ejection")
+
+def phase_pallet_release_and_exit(m, d, v, part_jnts, screw_jnts, timer=None):
+    """Lower stopper and index finished pallet/keyboard 0.3 m downstream."""
+    print(); print("="*60); print("[PHASE 11] Pallet release and downstream index"); print("="*60)
+    print("  [PLC] Final QC PASS — lowering stopper and releasing pallet")
+
+    # Release world welds that would otherwise resist visual downstream indexing.
+    for wname in ["weld_plate_world", "weld_screw_FL", "weld_screw_FR", "weld_screw_RL", "weld_screw_RR"]:
+        wid = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_EQUALITY, wname)
+        if wid >= 0:
+            d.eq_active[wid] = 0
+
+    animate_stop_geom(m, d, v, STOPPER_UP_POS[2], STOPPER_UP_POS[2]+STOPPER_DOWN_Z_OFFSET,
+                      STOPPER_RAISE_TIME, locked=None, label="stopper lowered")
+
+    # Force a clean snapshot of the assembled stack before indexing.
+    # This prevents any previously-active equality/weld state from leaving a part behind.
+    for b in PARTS:
+        fj, fv = part_jnts[b]
+        _set_free_pos(d, fj, fv, PLACE_PART_WORLD[b], PLACE_PART_QUAT.get(b))
+    mujoco.mj_forward(m, d)
+
+    # Snapshot current dynamic part/screw positions and move them with the static pallet/case.
+    dyn = []
+    for b in PARTS:
+        fj, fv = part_jnts[b]
+        dyn.append((fj, fv, d.qpos[fj:fj+3].copy(), d.qpos[fj+3:fj+7].copy()))
+    for n in SCREW_NAMES:
+        fj, fv = screw_jnts[n]
+        dyn.append((fj, fv, d.qpos[fj:fj+3].copy(), d.qpos[fj+3:fj+7].copy()))
+
+    pallet_start = PALLET_FINAL_POS.copy()
+    case_start = BOTTOM_CASE_FINAL_POS.copy()
+    delta = np.array([PALLET_EXIT_DISTANCE, 0, 0])
+
+    print(f"  [PLC] Pallet indexing {PALLET_EXIT_DISTANCE:.2f} m toward downstream buffer")
+    steps = max(1, int(PALLET_EXIT_TIME / m.opt.timestep))
+    for i in range(steps):
+        te = _smooth((i+1)/steps)
+        dd = delta * te
+        set_pallet_case_positions(m, pallet_start + dd, case_start + dd)
+        for fj, fv, p0, q0 in dyn:
+            _set_free_pos(d, fj, fv, p0 + dd, q0)
+        _step_visual(m, d, v)
+
+    print("  [PLC] Pallet has started downstream transfer")
+    if timer is not None:
+        timer.mark(d, "Pallet release/index")
+
+
+
+def phase_lower_stopper_only(m, d, v, locked=None):
+    """End-of-cycle visual: lower the main conveyor stopper only.
+
+    The assembled pallet remains at S1 so the free parts/plate are not disturbed
+    by downstream indexing. This phase is intentionally not included as a timed
+    operation in the report.
+    """
+    print(); print("="*60); print("[PHASE 11] Stopper release only"); print("="*60)
+    print("  [PLC] Final QC PASS — lowering main conveyor stopper")
+    animate_stop_geom(m, d, v,
+                      STOPPER_UP_POS[2], STOPPER_UP_POS[2] + STOPPER_DOWN_Z_OFFSET,
+                      STOPPER_RAISE_TIME, locked=locked, label="main conveyor stopper lowered")
+    print("  [PLC] Pallet remains located at S1 for end-of-demo view")
 
 
 def set_pin_lock_visual(m, amount):
@@ -1125,6 +1445,7 @@ def phase9_screws(m, d, v, home_ctrl, placed_locks, timer):
     dock_lower(m, d, v, DOCK_VAC_XY, DOCK_HOVER_Z, "  raise with vacuum", locked=placed_locks)
 
     move_to(m, d, v, home_ctrl, "  final home with vacuum", locked=placed_locks)
+    timer.mark(d, "Tool reset / ready")
     print("✓ All phases complete.")
 
 
@@ -1152,8 +1473,9 @@ def main():
     home_ctrl    = np.zeros(m.nu)
     home_ctrl[:] = m.key_ctrl[kf_idx["home"], :m.nu]
 
-    # Disable all plate/tray welds — tray locked via lock_part every step
-    for wname in ["weld_plate_pz", "weld_alu_plate", "weld_tray_pz"]:
+    # Disable all plate/tray welds — tray/plate are locked via controller every step.
+    # Keep weld_plate_world off so the plate remains a normal free body in the final view.
+    for wname in ["weld_plate_pz", "weld_plate_world", "weld_alu_plate", "weld_tray_pz"]:
         wid = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_EQUALITY, wname)
         if wid >= 0:
             m.eq_active0[wid] = 0
@@ -1178,6 +1500,28 @@ def main():
     screw_box_locks = [(screw_jnts[n][0], screw_jnts[n][1], SCREW_PICK_POS[n], None)
                        for n in SCREW_NAMES]
 
+    prestage_jnts = {"kit_tray_prestage": get_body_jnt(m, "kit_tray_prestage")}
+    for pname in PRESTAGE_PART_WORLD:
+        prestage_jnts[pname] = get_body_jnt(m, pname)
+
+    # Hide the active kit tray and its contents before the viewer opens.
+    # This prevents the initial visual pop where the tray appears at the pick zone,
+    # disappears, and then re-enters from the prestage conveyor.
+    _set_free_pos(d, tray_fj, tray_fv, TRAY_HIDE_POS)
+    hide_offset = TRAY_HIDE_POS - TRAY_PICK_POS
+    for b in PARTS:
+        fj, fv = part_jnts[b]
+        q = PLATE_TRAY_QUAT if b == "s1_alu_plate" else None
+        _set_free_pos(d, fj, fv, PICK_WORLD[b] + hide_offset, q)
+    # Also hide the visual prestage tray before launch; phase_tray_arrival()
+    # will restore it after the active tray reaches the pick zone.
+    _set_free_pos(d, prestage_jnts["kit_tray_prestage"][0], prestage_jnts["kit_tray_prestage"][1],
+                  PRESTAGE_TRAY_POS + PRESTAGE_HIDE_DELTA)
+    for pname, base_pos in PRESTAGE_PART_WORLD.items():
+        fj, fv = prestage_jnts[pname]
+        _set_free_pos(d, fj, fv, base_pos + PRESTAGE_HIDE_DELTA, PRESTAGE_PART_QUAT.get(pname))
+    mujoco.mj_forward(m, d)
+
     with mujoco.viewer.launch_passive(m, d) as v:
         v.cam.lookat[:] = [0.0, 0.3, 0.83]
         v.cam.distance  = 1.5
@@ -1189,9 +1533,18 @@ def main():
         hide_dock_vis(m, "vac", d, v)        # vac slot in dock starts empty
         # pin and SD dock visuals start visible (set in XML already)
 
-        all_locks = [(part_jnts[b][0], part_jnts[b][1], PICK_WORLD[b], None)
-                     for b in PARTS] + [TRAY_LOCK] + screw_box_locks
-        move_to(m, d, v, home_ctrl, "home", locked=all_locks)
+        # Bring the robot to home, then run the visual material-handling startup.
+        # These startup logistics are shown before the Station 1 cycle timer starts,
+        # so the existing robot/assembly cycle time remains comparable.
+        set_prestage_tray(m, d, v, prestage_jnts, visible=False)
+        move_to(m, d, v, home_ctrl, "home", locked=screw_box_locks)
+
+        phase_pallet_arrival(m, d, v, screw_box_locks)
+        phase_tray_arrival(m, d, v, (tray_fj, tray_fv), part_jnts, screw_box_locks,
+                           prestage_jnts=prestage_jnts)
+
+        # Tray is now physically at the pick-zone and remains locked there until ejection.
+        TRAY_LOCK = (tray_fj, tray_fv, TRAY_PICK_POS, None)
 
         timer = CycleTimer("Station 1")
         timer.start(d)
@@ -1315,15 +1668,19 @@ def main():
         
 
         print()
-        # Activate permanent world-weld for alu_plate — holds it absolutely, no per-step lock needed
-        wid_pw = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_EQUALITY, "weld_plate_world")
-        if wid_pw >= 0:
-            d.eq_active[wid_pw] = 1
-        # Base placed locks for assembled keyboard stack + tray.
-        # Add screw_box_locks only during the pin->screwdriver tool change, so screws
-        # stay visually in the screw box. During screwdriving, phase9 manages locks per screw.
-        placed_locks = [(part_jnts[b][0], part_jnts[b][1], PLACE_PART_WORLD[b], PLACE_PART_QUAT.get(b))
-                for b in PARTS] + [TRAY_LOCK]
+        # Keep the aluminum plate as a normal free body locked by the controller.
+        # Do not activate weld_plate_world here; a world weld prevents the plate from
+        # indexing downstream with the pallet during the final release animation.
+        # Base placed locks for assembled keyboard stack. The tray is ejected now,
+        # so do not keep locking it at the pick-zone after the kit is empty.
+        placed_locks_no_tray = [(part_jnts[b][0], part_jnts[b][1], PLACE_PART_WORLD[b], PLACE_PART_QUAT.get(b))
+                for b in PARTS]
+
+        phase_empty_tray_ejection(m, d, v, (tray_fj, tray_fv),
+                                  placed_locks_no_tray, screw_box_locks, timer)
+
+        TRAY_LOCK = (tray_fj, tray_fv, TRAY_HIDE_POS, None)
+        placed_locks = placed_locks_no_tray + [TRAY_LOCK]
         station_locks = placed_locks + screw_box_locks
         timer.mark(d, "Assembly complete")
 
@@ -1331,6 +1688,7 @@ def main():
         phase8_pin_to_sd(m, d, v, station_locks, timer)
         phase9_screws(m, d, v, home_ctrl, placed_locks, timer)
         post_assembly_inspection(m, d, v, placed_locks, timer)
+        phase_lower_stopper_only(m, d, v, locked=placed_locks)
 
         print(); print("="*60)
         print("Station 1 complete. Close viewer to exit.")
@@ -1338,8 +1696,15 @@ def main():
         timer.finish(d)
         timer.print_report()
 
+        # Keep the completed assembly locked in place after the stopper lowers.
+        # Without this final hold, the aluminum plate can drift/fall or appear to
+        # disappear because it is no longer welded to the world.
+        final_hold_locks = placed_locks
         while v.is_running():
-            mujoco.mj_step(m, d); v.sync()
+            for lfj, lfv, pos, q in final_hold_locks:
+                lock_part(d, lfj, lfv, pos, q)
+            mujoco.mj_step(m, d)
+            v.sync()
 
 
 if __name__ == "__main__":

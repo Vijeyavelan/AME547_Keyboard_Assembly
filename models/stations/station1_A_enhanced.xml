@@ -43,7 +43,7 @@
     <material name="aluminum_pallet" rgba="0.80 0.82 0.85 1" specular="0.6" shininess="0.5" />
     <material name="fixture_stop" rgba="1.0  0.75 0.0  1" />
     <material name="abs_plastic" rgba="0.12 0.12 0.15 1" />
-    <material name="tray_alu" rgba="0.12 0.18 0.24 1" specular="0.5" shininess="0.4" />
+    <material name="tray_alu" rgba="0.92 0.92 0.92 1" specular="0.5" shininess="0.4" />
     <material name="tray_foam_epdm" rgba="0.12 0.12 0.14 1" specular="0.02" />
     <material name="tray_foam_batt" rgba="0.12 0.12 0.14 1" specular="0.02" />
     <material name="tray_foam_pcb" rgba="0.12 0.12 0.14 1" specular="0.02" />
@@ -60,8 +60,6 @@
     <material name="mat_cup" rgba="0.55 0.55 0.58 1" />
     <material name="mat_screw_box" rgba="0.25 0.25 0.28 1" />
     <material name="mat_screw" rgba="0.005 0.005 0.006 1" specular="0.35" shininess="0.35" />
-    <material name="qc_camera_mat" rgba="0.04 0.04 0.045 1" specular="0.3" shininess="0.4" />
-    <material name="qc_lens_mat" rgba="0.02 0.02 0.025 1" specular="0.8" shininess="0.8" />
     <material name="stab_white" rgba="0.86 0.86 0.86 1" specular="0.25" shininess="0.20" />
     <material name="stab_wire" rgba="0.70 0.70 0.72 1" specular="0.7" shininess="0.7" />
     <material class="ur5e" name="black" rgba="0.033 0.033 0.033 1" />
@@ -284,11 +282,21 @@
       <geom name="fhl2f" type="box" size="0.015 0.015 0.392" pos=" 0.200 -0.250 0.392" material="conveyor_rail" />
       <geom name="fhl2r" type="box" size="0.015 0.015 0.392" pos=" 0.200  0.250 0.392" material="conveyor_rail" />
     </body>
+    <!-- Empty tray exits automatically into the horizontal exit leg; pusher removed for simpler visual flow. -->
+    <!-- Empty tray stack accumulator sized for the 0.35 m x 0.52 m kit tray.
+         Open side faces +X so trays can enter from the horizontal exit leg. -->
     <body name="tray_stack" pos="-1.348 0.500 0.800">
-      <geom name="ts_base" type="box" size="0.140 0.270 0.008" pos="0 0 0" material="stack_mat" contype="1" conaffinity="1" mass="5.0" />
-      <geom name="ts_wall_l" type="box" size="0.006 0.270 0.120" pos="-0.146 0 0.120" material="stack_mat" contype="0" conaffinity="0" />
-      <geom name="ts_wall_f" type="box" size="0.146 0.006 0.120" pos="0 -0.276 0.120" material="stack_mat" contype="0" conaffinity="0" />
-      <geom name="ts_wall_b" type="box" size="0.146 0.006 0.120" pos="0  0.276 0.120" material="stack_mat" contype="0" conaffinity="0" />
+      <geom name="ts_base" type="box" size="0.220 0.300 0.008" pos="0 0 0" material="stack_mat" contype="1" conaffinity="1" mass="5.0" />
+      <geom name="ts_post_FL" type="box" size="0.010 0.010 0.150" pos=" 0.205 -0.285 0.150" material="stack_mat" contype="0" conaffinity="0" />
+      <geom name="ts_post_RL" type="box" size="0.010 0.010 0.150" pos="-0.205 -0.285 0.150" material="stack_mat" contype="0" conaffinity="0" />
+      <geom name="ts_post_FR" type="box" size="0.010 0.010 0.150" pos=" 0.205  0.285 0.150" material="stack_mat" contype="0" conaffinity="0" />
+      <geom name="ts_post_RR" type="box" size="0.010 0.010 0.150" pos="-0.205  0.285 0.150" material="stack_mat" contype="0" conaffinity="0" />
+      <geom name="ts_back_wall" type="box" size="0.008 0.300 0.120" pos="-0.215 0 0.120" material="stack_mat" contype="0" conaffinity="0" />
+      <geom name="ts_side_front" type="box" size="0.220 0.006 0.090" pos="0 -0.296 0.090" material="stack_mat" contype="0" conaffinity="0" />
+      <geom name="ts_side_rear" type="box" size="0.220 0.006 0.090" pos="0  0.296 0.090" material="stack_mat" contype="0" conaffinity="0" />
+      <!-- Ghost trays already stacked in the accumulator -->
+      <geom name="ts_ghost_tray_1" type="box" size="0.175 0.260 0.006" pos="0.000 0 0.030" material="tray_alu" rgba="0.55 0.58 0.60 0.35" contype="0" conaffinity="0" />
+      <geom name="ts_ghost_tray_2" type="box" size="0.175 0.260 0.006" pos="0.000 0 0.050" material="tray_alu" rgba="0.55 0.58 0.60 0.35" contype="0" conaffinity="0" />
     </body>
     <body name="kit_tray_pickzone" pos="-0.300 0.500 0.815">
       <freejoint name="jnt_tray_pz" />
@@ -543,88 +551,10 @@
         <site name="s_slider_tip" type="sphere" size="0.004" pos="-0.016 0 0" rgba="1 0.5 0 1" />
       </body>
     </body>
-    <!-- Fixed overhead QC camera for Station 1 post-assembly inspection.
-         It represents the release-gate vision check over the pallet after screwing. -->
-    <!-- =========================================================
-     S1 Post-Assembly QC Camera — Inverted-L Support Mount
-     Fixed overhead camera above pallet for final inspection
-     ========================================================= -->
-
-<body name="s1_qc_camera_support" pos="0 -0.42 0">
-
-    <!-- Tall vertical floor-mounted post on -Y side of pallet -->
-    <geom name="s1_qc_post"
-          type="box"
-          size="0.018 0.018 1.3"
-          pos="0 0 0.42"
-          rgba="0.08 0.08 0.08 1"
-          contype="0"
-          conaffinity="0"/>
-
-    <!-- Floor/base mounting plate -->
-    <geom name="s1_qc_post_base"
-          type="box"
-          size="0.08 0.06 0.008"
-          pos="0 0 -0.872"
-          rgba="0.04 0.04 0.04 1"
-          contype="0"
-          conaffinity="0"/>
-
-    <!-- Horizontal cantilever arm running from -Y support toward pallet center -->
-    <geom name="s1_qc_overhead_arm"
-          type="box"
-          size="0.016 0.22 0.016"
-          pos="0 0.22 1.72"
-          rgba="0.08 0.08 0.08 1"
-          contype="0"
-          conaffinity="0"/>
-
-    <!-- Diagonal support strut from post to underside of overhead arm -->
-    <geom name="s1_qc_support_strut"
-          type="capsule"
-          size="0.008"
-          fromto="0 -0.005 1.56   0 0.15 1.70"
-          rgba="0.08 0.08 0.08 1"
-          contype="0"
-          conaffinity="0"/>
-
-    <!-- Camera mounting bracket at the arm tip -->
-    <geom name="s1_qc_camera_bracket"
-          type="box"
-          size="0.045 0.025 0.008"
-          pos="0 0.44 1.69"
-          rgba="0.02 0.02 0.02 1"
-          contype="0"
-          conaffinity="0"/>
-
-    <!-- Camera body at tip of inverted-L support -->
-    <geom name="s1_qc_camera_body"
-          type="box"
-          size="0.035 0.025 0.025"
-          pos="0 0.44 1.655"
-          rgba="0.01 0.01 0.01 1"
-          contype="0"
-          conaffinity="0"/>
-
-    <!-- Downward-facing lens -->
-    <geom name="s1_qc_camera_lens"
-          type="cylinder"
-          size="0.012 0.010"
-          pos="0 0.44 1.622"
-          quat="0.7071 0.7071 0 0"
-          rgba="0.02 0.02 0.025 1"
-          contype="0"
-          conaffinity="0"/>
-
-</body>
     <camera name="overview" pos="1.0  0.2  2.8" xyaxes="0.6 0.8 0 -0.3 0.2 0.93" />
     <camera name="robot_pov" pos="0.8  0.4  2.0" xyaxes="1 0 0 0 0.4 0.9" />
     <camera name="tray_cam" pos="-0.8 0.4  1.6" xyaxes="1 0 0 0 0.5 0.87" />
     <camera name="pallet_cam" pos="0.2  -0.5 1.8" xyaxes="1 0 0 0 0.7 0.7" />
-    <!-- Viewer camera looking from the QC camera direction -->
-    <camera name="s1_overhead_qc_cam"
-        pos="0 0.44 2.90"
-        xyaxes="1 0 0  0 1 0"/>
   </worldbody>
   <actuator>
     <general class="size3" name="shoulder_pan" joint="shoulder_pan_joint" />
