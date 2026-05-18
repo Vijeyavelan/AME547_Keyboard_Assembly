@@ -224,3 +224,4 @@ models/robots/mujoco_menagerie/
 *.code-workspace
 MUJOCO_LOG.TXT
 AME547_Keyboard_Assembly.code-workspace
+logs/
