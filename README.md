@@ -32,13 +32,22 @@ Flow:      S0 → S1 → S2 → S3 → S4 → S5 → S6 → return conveyor → 
 **Throughput:** 36.3 units/hr theoretical · 30.4 units/hr effective (83.8% OEE)  
 **Balance efficiency:** 91.6% across the three automated core stations (S1–S3)
 
-| ![Exploded View](assets/images/exploded_view.png) | ![Cell Top-Down](assets/images/cell_overview_topview.png) |
-|:---:|:---:|
-| *Assembly stack — bottom case to keycaps* | *Full 18.5m cell, top-down plan view* |
+## Simulation Screenshots
 
-| ![S1](assets/images/station1.png) | ![S2](assets/images/station2.png) | ![S3](assets/images/station3.png) |
-|:---:|:---:|:---:|
-| *S1 — UR5e structural assembly* | *S2 — Switch insertion mid-sequence* | *S3 — Keycap installation complete* |
+![Exploded View](assets/images/exploded_view.png)
+*Assembly stack — bottom case (dark), sound foam, battery, PCB, aluminium plate with stabilizers, switches, keycaps*
+
+![Cell Top-Down](assets/images/cell_overview_topview.png)
+*Full 18.5m cell top-down plan view — S0 (left) through S6 (right)*
+
+![S1 — UR5e Structural Assembly](assets/images/station1.png)
+*S1 — UR5e collaborative robot with kit tray feeder, tool dock, and pallet on main CDLR*
+
+![S2 — Switch Insertion](assets/images/station2.png)
+*S2 — Dual-head rotating gantry mid-sequence, ~40 switches inserted*
+
+![S3 — Keycap Installation](assets/images/station3.png)
+*S3 — All 84 keycaps installed across 7 key sizes*
 
 ---
 
