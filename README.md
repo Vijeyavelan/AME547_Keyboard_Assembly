@@ -1,8 +1,9 @@
 # Keychron K2 V3 — Robotic Assembly Cell Simulation
 
-<!-- HERO: Replace with demo GIF once recorded, or a screenshot from the simulation -->
-<!-- Strong candidates: Figure 1 (exploded view), Figure 21 (full-cell top-down plan) -->
-<!-- ![Assembly Cell Demo](assets/demo.gif) -->
+![Assembly Cell — Full Cell Overview](assets/images/cell_overview.png)
+
+> 📹 Demo videos: [S1 Structural Assembly](#) · [S2 Switch Insertion](#) · [S3 Keycap Installation](#)  
+> *(replace `#` with your video links)*
 
 A full multi-station robotic assembly cell for the **Keychron K2 V3 75% mechanical keyboard** (84 keys), designed and simulated in MuJoCo 3.5.0 as a solo project for AME 547 — Foundations for Manufacturing Automation at USC. The cell assembles a complete keyboard from kitted components across 4 active automated stations on an 18.5-meter CDLR conveyor, simulating 89.1s of UR5e structural assembly, 99.1s of switch insertion across all 84 sockets, and 94.1s of keycap installation across 7 key sizes — all with physics-stable part carry throughout.
 
@@ -30,6 +31,14 @@ Flow:      S0 → S1 → S2 → S3 → S4 → S5 → S6 → return conveyor → 
 
 **Throughput:** 36.3 units/hr theoretical · 30.4 units/hr effective (83.8% OEE)  
 **Balance efficiency:** 91.6% across the three automated core stations (S1–S3)
+
+| ![Exploded View](assets/images/exploded_view.png) | ![Cell Top-Down](assets/images/cell_overview_topview.png) |
+|:---:|:---:|
+| *Assembly stack — bottom case to keycaps* | *Full 18.5m cell, top-down plan view* |
+
+| ![S1](assets/images/station1.png) | ![S2](assets/images/station2.png) | ![S3](assets/images/station3.png) |
+|:---:|:---:|:---:|
+| *S1 — UR5e structural assembly* | *S2 — Switch insertion mid-sequence* | *S3 — Keycap installation complete* |
 
 ---
 
@@ -114,8 +123,7 @@ AME547_Keyboard_Assembly/
 │   │   └── station4.xml             # S3 gantry + XY table model
 │   └── assembly_cell.xml            # Full 18.5m cell, all stations on CDLR backbone
 ├── assets/
-│   └── ur5e/                        # UR5e Menagerie meshes + keyboard component STLs
-│       └── Stabilizer_Decimated.stl
+│   └── images/                      # Simulation screenshots for README
 ├── requirements.txt
 ├── LICENSE
 └── README.md
