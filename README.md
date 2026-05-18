@@ -2,8 +2,8 @@
 
 ![Assembly Cell — Full Cell Overview](assets/images/cell_overview.png)
 
-> 📹 Demo videos: [S1 Structural Assembly](#) · [S2 Switch Insertion](#) · [S3 Keycap Installation](#)  
-> *(replace `#` with your video links)*
+> 📹 Demo videos: [S1 Structural Assembly](https://youtu.be/91N1WJFZktE) · [S2 Switch Insertion](https://youtu.be/BPTmAEZaAYw) · [S3 Keycap Installation](https://youtu.be/ty300jLMMVc)  
+
 
 A full multi-station robotic assembly cell for the **Keychron K2 V3 75% mechanical keyboard** (84 keys), designed and simulated in MuJoCo 3.5.0 as a solo project for AME 547 — Foundations for Manufacturing Automation at USC. The cell assembles a complete keyboard from kitted components across 4 active automated stations on an 18.5-meter CDLR conveyor, simulating 89.1s of UR5e structural assembly, 99.1s of switch insertion across all 84 sockets, and 94.1s of keycap installation across 7 key sizes — all with physics-stable part carry throughout.
 
