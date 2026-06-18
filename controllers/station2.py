@@ -1,5 +1,5 @@
 """
-station3_controller.py — Sequential insert → pick with tray belt advance, 84 switches
+station2.py — Sequential insert → pick with tray belt advance, 84 switches
 
 Tray system:
   All 84 sw_* bodies start at XML positions spread along the tray

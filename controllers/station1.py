@@ -1,5 +1,5 @@
 """
-station1_controller.py — EPDM -> Battery -> PCB -> Alu Plate -> Screws
+station1.py — EPDM -> Battery -> PCB -> Alu Plate -> Screws
 Updated for new station1.xml layout (kit tray + pre-stage, no belt conveyor).
 
 Key fix: parts are gravity-locked at their keyframe positions until picked.

@@ -1,6 +1,6 @@
 """
-station4_controller.py — Keycap installation, 84 keycaps
-Identical architecture to station3_controller.py with these differences:
+station3.py — Keycap installation, 84 keycaps
+Identical architecture to station2.py with these differences:
   - Keycap bodies (kc_*) instead of switch bodies (sw_*)
   - kc_* sites at switch stem top (z_local=0.012 above sw_* site)
   - No MESH_OFFSET_Z — keycap body origin = bottom face

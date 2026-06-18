@@ -91,16 +91,16 @@ pip install mujoco==3.5.0 numpy
 
 ```bash
 # Station 1 — UR5e structural assembly, tool changes, screwing (89.1s cycle)
-mjpython controllers/station1_controller1.py
+mjpython controllers/station1.py
 
 # Station 2 — Switch insertion, 84 switches (99.1s cycle)
-mjpython controllers/station3_controller.py
+mjpython controllers/station2.py
 
 # Station 3 — Keycap installation, 84 keycaps × 7 sizes (94.1s cycle)
-mjpython controllers/station4_controller.py
+mjpython controllers/station3.py
 
 # Full assembly cell — complete S0→S6 pallet flow
-mjpython controllers/assembly_cell_controller.py
+mjpython controllers/assembly_cell.py
 ```
 
 > **Note:** Use `mjpython`, not `python`. On macOS, MuJoCo requires its own launcher to satisfy the platform's main-thread OpenGL rendering constraint. Ordinary `python` will fail silently or crash at viewer launch.
