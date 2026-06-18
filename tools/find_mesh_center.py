@@ -1,12 +1,16 @@
 # find_mesh_center.py
+from pathlib import Path
+
 import mujoco
 import numpy as np
 
-xml = """
+mesh_path = Path(__file__).resolve().parent.parent / "models" / "meshes" / "Switch_Decimated.stl"
+
+xml = f"""
 <mujoco>
   <asset>
     <mesh name="switch_mesh"
-          file="/Users/vijeyavelan/AME547_Keyboard_Assembly/models/meshes/Switch_Decimated.stl"
+          file="{mesh_path}"
           scale="0.001 0.001 0.001"
           refpos="0 0 0"
           refquat="0.7071 0.7071 0 0"/>
