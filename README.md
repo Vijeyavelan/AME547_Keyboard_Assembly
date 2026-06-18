@@ -121,13 +121,13 @@ mjpython controllers/assembly_cell_controller.py
 ```
 AME547_Keyboard_Assembly/
 ├── controllers/
-│   ├── station1_controller1.py      # S1: UR5e pick-place, tool change, screwing
-│   ├── station3_controller.py       # S2: switch insertion gantry
-│   ├── station4_controller.py       # S3: keycap installation gantry
-│   └── assembly_cell_controller.py  # Full cell sequencing, S0–S6
+│   ├── station1.py                  # S1: UR5e pick-place, tool change, screwing
+│   ├── station2.py                  # S2: switch insertion gantry
+│   ├── station3.py                  # S3: keycap installation gantry
+│   └── assembly_cell.py             # Full cell sequencing, S0–S6
 ├── models/
 │   ├── stations/
-│   │   ├── station1_A.xml           # S1 model (UR5e, CDLR segment, kit tray, tool dock)
+│   │   ├── station1.xml             # S1 model (UR5e, CDLR segment, kit tray, tool dock)
 │   │   ├── station2.xml             # S2 gantry + XY table model
 │   │   └── station3.xml             # S3 gantry + XY table model
 │   └── assembly_cell.xml            # Full 18.5m cell, all stations on CDLR backbone

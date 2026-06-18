@@ -84,15 +84,7 @@ def model_path() -> Path:
         return Path(env_path).expanduser().resolve()
 
     root = project_root()
-    candidates = [
-        root / "models" / "stations" / "assembly_cell.xml",
-        root / "models" / "stations" / "assembly_cellA_pass3A.xml",
-        root / "models" / "stations" / "assembly_cellA.xml",
-    ]
-    for p in candidates:
-        if p.exists():
-            return p
-    return candidates[0]
+    return root / "models" / "stations" / "assembly_cell.xml"
 
 
 @dataclass
