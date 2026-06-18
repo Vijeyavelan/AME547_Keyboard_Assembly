@@ -15,7 +15,7 @@ The correct order is determined by body declaration order in worldbody.
 ps_ bodies are declared before s1_ bodies in the XML.
 
 Run from repo root:
-    mjpython controllers/station1_controller.py
+    mjpython controllers/station1.py
 """
 
 import mujoco
@@ -25,7 +25,7 @@ import sys, os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from cycle_timer import CycleTimer
 
-MODEL_PATH   = "models/stations/station1_A.xml"
+MODEL_PATH   = "models/stations/station1.xml"
 SETTLE_TOL   = 0.020   # v7: avoid false timeouts at harmless ~0.018-0.019 rad residual
 SETTLE_STEPS = 50
 

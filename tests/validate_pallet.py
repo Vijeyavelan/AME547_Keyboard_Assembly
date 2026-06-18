@@ -10,7 +10,7 @@ Checks:
 import sys
 import mujoco
 
-model_path = sys.argv[1] if len(sys.argv) > 1 else "assembly_pallet.xml"
+model_path = sys.argv[1] if len(sys.argv) > 1 else "models/fixtures/assembly_pallet.xml"
 model = mujoco.MjModel.from_xml_path(model_path)
 data = mujoco.MjData(model)
 mujoco.mj_forward(model, data)

@@ -5,10 +5,10 @@ physics integration. One kinematic/mocap overview pallet moves through S0→S7
 and staged visual parts are revealed at S0, S1, S3, and S4.
 
 Recommended XML:
-    models/stations/assembly_cellA_overview.xml
+    models/stations/assembly_cell.xml
 
 Run:
-    mjpython controllers/assembly_cell_overview_controller_A.py
+    mjpython controllers/assembly_cell.py
 """
 
 
@@ -26,7 +26,7 @@ try:
 except ImportError as exc:  # pragma: no cover
     raise SystemExit(
         "Could not import mujoco. Run with the project venv and mjpython, e.g.\n"
-        "    mjpython controllers/assembly_cell_overview_controller_A.py"
+        "    mjpython controllers/assembly_cell.py"
     ) from exc
 
 PALLET_BODY = "p3a_overview_pallet"
@@ -85,7 +85,7 @@ def model_path() -> Path:
 
     root = project_root()
     candidates = [
-        root / "models" / "stations" / "assembly_cellA_overview.xml",
+        root / "models" / "stations" / "assembly_cell.xml",
         root / "models" / "stations" / "assembly_cellA_pass3A.xml",
         root / "models" / "stations" / "assembly_cellA.xml",
     ]

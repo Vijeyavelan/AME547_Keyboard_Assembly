@@ -43,9 +43,14 @@
     <texture name="grid" type="2d" builtin="checker"
              rgb1="0.3 0.3 0.3" rgb2="0.4 0.4 0.4" width="512" height="512"/>
     <material name="floor_mat"      texture="grid" texrepeat="5 5" reflectance="0.2"/>
-    <material name="aluminum_plate" rgba="0.30 0.32 0.35 1"
+    <material name="aluminum_plate" rgba="0.75 0.75 0.78 1"
               specular="0.7" shininess="0.6" reflectance="0.20"/>
     <material name="fixture_stop"   rgba="1.0 0.85 0.0 1"/>
+    <material name="mat_fr4"        rgba="0.06 0.30 0.08 1" specular="0.15" shininess="0.25"/>
+    <material name="mat_epdm"       rgba="0.35 0.35 0.35 1" specular="0.02" shininess="0.02"/>
+    <material name="mat_screw"      rgba="0.005 0.005 0.006 1" specular="0.35" shininess="0.35"/>
+    <material name="stab_white"     rgba="0.86 0.86 0.86 1" specular="0.25" shininess="0.20"/>
+    <material name="stab_wire"      rgba="0.70 0.70 0.72 1" specular="0.7" shininess="0.7"/>
     <material name="abs_plastic"    rgba="0.15 0.15 0.15 1"/>
     <material name="table_surface"  rgba="0.55 0.45 0.35 1"/>
     <material name="steel_dark"     rgba="0.25 0.25 0.28 1"/>
@@ -63,13 +68,21 @@
               rgba="0.88 0.88 0.82 1"
               specular="0.15" shininess="0.25" reflectance="0.03"/>
     <material name="pbt_gray"
-              rgba="0.82 0.82 0.85 1"
-              specular="0.1" shininess="0.2" reflectance="0.02"/>
+            rgba="0.28 0.30 0.32 1"
+          specular="0.08" shininess="0.18" reflectance="0.015"/>
     <!-- Switch mesh (cosmetic installed switches) -->
     <mesh name="switch_mesh"
           file="../meshes/Switch_Decimated.stl"
           scale="0.001 0.001 0.001"
           refpos="-7.350 0.053 -7.350"
+          refquat="0.7071 -0.7071 0 0"/>
+    <mesh name="aluminum_plate_mesh"
+          file="../meshes/aluminum_plate.stl"
+          scale="0.001 0.001 0.001"/>
+    <mesh name="stabilizer_mesh"
+          file="../meshes/Stabilizer_Decimated.stl"
+          scale="0.001 0.001 0.001"
+          refpos="-23.958 0.000 -1.712"
           refquat="0.7071 -0.7071 0 0"/>
     <!-- Keycap meshes -->
     <mesh name="keycap_1u"    file="../meshes/keycap_1u.stl"/>
@@ -141,106 +154,143 @@
                   pos="0 0 0.005" material="table_surface" mass="2.0"/>
 
             <body name="pallet_base" pos="0 0 0.010">
-              <geom name="base_plate" type="box" size="0.170 0.065 0.004"
-                    pos="0 0 0.004" material="aluminum_plate" mass="1.5"/>
-              <geom name="stop_FL_x" type="box" size="0.0125 0.0025 0.003"
-                    pos="-0.1500 -0.0600 0.010" material="fixture_stop" mass="0.02"/>
-              <geom name="stop_FL_y" type="box" size="0.0025 0.0125 0.003"
-                    pos="-0.1650 -0.0475 0.010" material="fixture_stop" mass="0.02"/>
-              <geom name="stop_FR_x" type="box" size="0.0125 0.0025 0.003"
-                    pos="0.1500 -0.0600 0.010"  material="fixture_stop" mass="0.02"/>
-              <geom name="stop_FR_y" type="box" size="0.0025 0.0125 0.003"
-                    pos="0.1650 -0.0475 0.010"  material="fixture_stop" mass="0.02"/>
-              <geom name="stop_RL_x" type="box" size="0.0125 0.0025 0.003"
-                    pos="-0.1500 0.0600 0.010"  material="fixture_stop" mass="0.02"/>
-              <geom name="stop_RL_y" type="box" size="0.0025 0.0125 0.003"
-                    pos="-0.1650 0.0475 0.010"  material="fixture_stop" mass="0.02"/>
-              <geom name="stop_RR_x" type="box" size="0.0125 0.0025 0.003"
-                    pos="0.1500 0.0600 0.010"   material="fixture_stop" mass="0.02"/>
-              <geom name="stop_RR_y" type="box" size="0.0025 0.0125 0.003"
-                    pos="0.1650 0.0475 0.010"   material="fixture_stop" mass="0.02"/>
+              <!-- New 350mm x 150mm x 8mm pallet base.
+                   S4 keeps body origin at pallet bottom face; top is z=+0.008. -->
+              <geom name="base_plate" type="box" size="0.175 0.075 0.004"
+                    pos="0 0 0.004" material="aluminum_plate" mass="1.5"
+                    friction="0.8 0.005 0.0001" condim="4" priority="1"/>
 
+              <!-- Updated corner fixture stops for 312.8mm x 122.3mm bottom case. -->
+              <geom name="stop_FL_x" type="box" size="0.0125 0.0025 0.003" pos="-0.1439 -0.0637 0.011" material="fixture_stop" mass="0.02"/>
+              <geom name="stop_FL_y" type="box" size="0.0025 0.0125 0.003" pos="-0.1589 -0.04865 0.011" material="fixture_stop" mass="0.02"/>
+              <geom name="stop_FR_x" type="box" size="0.0125 0.0025 0.003" pos="0.1439 -0.0637 0.011" material="fixture_stop" mass="0.02"/>
+              <geom name="stop_FR_y" type="box" size="0.0025 0.0125 0.003" pos="0.1589 -0.04865 0.011" material="fixture_stop" mass="0.02"/>
+              <geom name="stop_RL_x" type="box" size="0.0125 0.0025 0.003" pos="-0.1439 0.0637 0.011" material="fixture_stop" mass="0.02"/>
+              <geom name="stop_RL_y" type="box" size="0.0025 0.0125 0.003" pos="-0.1589 0.04865 0.011" material="fixture_stop" mass="0.02"/>
+              <geom name="stop_RR_x" type="box" size="0.0125 0.0025 0.003" pos="0.1439 0.0637 0.011" material="fixture_stop" mass="0.02"/>
+              <geom name="stop_RR_y" type="box" size="0.0025 0.0125 0.003" pos="0.1589 0.04865 0.011" material="fixture_stop" mass="0.02"/>
+
+              <!-- BOTTOM CASE + S1 OUTPUT STACK. Body name and pos preserved. -->
               <body name="bottom_case" pos="0 0 0.020">
-                <geom name="case_bottom" type="box" size="0.1625 0.0575 0.001"
-                      pos="0 0 -0.011" material="abs_plastic" mass="0.15"/>
-                <geom name="case_wall_left"  type="box" size="0.001 0.0575 0.011"
-                      pos="-0.1625 0 0" material="abs_plastic" mass="0.05"/>
-                <geom name="case_wall_right" type="box" size="0.001 0.0575 0.011"
-                      pos=" 0.1625 0 0" material="abs_plastic" mass="0.05"/>
-                <geom name="case_wall_front" type="box" size="0.1625 0.001 0.011"
-                      pos="0 -0.0575 0" material="abs_plastic" mass="0.05"/>
-                <geom name="case_wall_rear"  type="box" size="0.1625 0.001 0.011"
-                      pos="0  0.0575 0" material="abs_plastic" mass="0.05"/>
-                <geom name="s4_epdm_front" type="box" size="0.1515 0.01225 0.00075"
-                      pos="0 -0.04075 0.00620" mass="0" rgba="0.08 0.08 0.08 1"
-                      contype="0" conaffinity="0"/>
-                <geom name="s4_epdm_rear"  type="box" size="0.1515 0.01225 0.00075"
-                      pos="0  0.04075 0.00620" mass="0" rgba="0.08 0.08 0.08 1"
-                      contype="0" conaffinity="0"/>
-                <geom name="s4_battery" type="box" size="0.045 0.030 0.003"
-                      pos="-0.060 0 -0.00700" mass="0" rgba="0.15 0.25 0.15 1"
-                      contype="0" conaffinity="0"/>
-                <geom name="s4_pcb" type="box" size="0.1565 0.0535 0.0008"
-                      pos="0 0 0.00695" mass="0" rgba="0.10 0.30 0.10 1"
-                      contype="0" conaffinity="0"/>
-                <geom name="s4_sound_foam" type="box" size="0.1480 0.0535 0.0005"
-                      pos="0 0 0.00775" mass="0" rgba="0.18 0.18 0.18 1"
-                      contype="0" conaffinity="0"/>
+                <inertial pos="0 0 0" mass="0.085" diaginertia="3.2e-5 2.4e-4 2.5e-4"/>
 
+                <!-- New bottom case visual: 312.8mm x 122.3mm x 22mm shell. -->
+                <geom name="case_floor" type="box" size="0.1564 0.06115 0.0015" pos="0 0 -0.0095" material="abs_plastic" density="1050" friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+                <geom name="case_wall_left_A" type="box" size="0.0015 0.01433 0.0095" pos="-0.1549 0.04682 0.0015" material="abs_plastic" density="1050" friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+                <geom name="case_wall_left_usbc_below" type="box" size="0.0015 0.0045 0.0045" pos="-0.1549 0.028 -0.0035" material="abs_plastic" density="1050" friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+                <geom name="case_wall_left_usbc_above" type="box" size="0.0015 0.0045 0.003" pos="-0.1549 0.028 0.008" material="abs_plastic" density="1050" friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+                <geom name="case_wall_left_B" type="box" size="0.0015 0.003 0.0095" pos="-0.1549 0.0205 0.0015" material="abs_plastic" density="1050" friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+                <geom name="case_wall_left_pwr_below" type="box" size="0.0015 0.007 0.004" pos="-0.1549 0.0105 -0.004" material="abs_plastic" density="1050" friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+                <geom name="case_wall_left_pwr_above" type="box" size="0.0015 0.007 0.0025" pos="-0.1549 0.0105 0.0085" material="abs_plastic" density="1050" friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+                <geom name="case_wall_left_C" type="box" size="0.0015 0.005 0.0095" pos="-0.1549 -0.0005 0.0015" material="abs_plastic" density="1050" friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+                <geom name="case_wall_left_os_below" type="box" size="0.0015 0.007 0.004" pos="-0.1549 -0.0095 -0.004" material="abs_plastic" density="1050" friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+                <geom name="case_wall_left_os_above" type="box" size="0.0015 0.007 0.0025" pos="-0.1549 -0.0095 0.0085" material="abs_plastic" density="1050" friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+                <geom name="case_wall_left_D" type="box" size="0.0015 0.02233 0.0095" pos="-0.1549 -0.03883 0.0015" material="abs_plastic" density="1050" friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+                <site name="case_usbc_cutout" type="box" size="0.001 0.0045 0.002" pos="-0.1565 0.028 0.003" rgba="0 0.5 1 0.9"/>
+                <site name="case_power_switch" type="box" size="0.001 0.007 0.002" pos="-0.1565 0.0105 0.003" rgba="1 0.5 0 0.9"/>
+                <site name="case_os_switch" type="box" size="0.001 0.007 0.002" pos="-0.1565 -0.0095 0.003" rgba="1 0.5 0 0.9"/>
+                <geom name="case_wall_right" type="box" size="0.0015 0.06115 0.0095" pos="0.1549 0 0.0015" material="abs_plastic" density="1050" friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+                <geom name="case_wall_rear" type="box" size="0.1564 0.0015 0.0095" pos="0 0.05965 0.0015" material="abs_plastic" density="1050" friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+                <geom name="case_wall_front" type="box" size="0.1564 0.0015 0.0095" pos="0 -0.05965 0.0015" material="abs_plastic" density="1050" friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+                <geom name="case_battery_rib_left" type="box" size="0.045 0.00075 0.002" pos="0.025 -0.03075 -0.006" material="abs_plastic" density="1050" friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+                <geom name="case_battery_rib_right" type="box" size="0.045 0.00075 0.002" pos="0.025 0.03075 -0.006" material="abs_plastic" density="1050" friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+                <geom name="case_battery_rib_front_left" type="box" size="0.00075 0.0125 0.002" pos="-0.02025 -0.0175 -0.006" material="abs_plastic" density="1050" friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+                <geom name="case_battery_rib_front_right" type="box" size="0.00075 0.0125 0.002" pos="-0.02025 0.0175 -0.006" material="abs_plastic" density="1050" friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+                <geom name="case_battery_rib_rear" type="box" size="0.00075 0.030 0.002" pos="0.07025 0 -0.006" material="abs_plastic" density="1050" friction="1.0 0.005 0.0001" condim="4" priority="1"/>
+                <!-- Screw bosses copied from Station 1 final bottom case; visual-only for S4. -->
+                <geom name="case_boss_FL" type="cylinder" size="0.003 0.004" pos="-0.1515 -0.0495 -0.004" material="abs_plastic" mass="0" contype="0" conaffinity="0"/>
+                <geom name="case_boss_FR" type="cylinder" size="0.003 0.004" pos=" 0.1545 -0.0495 -0.004" material="abs_plastic" mass="0" contype="0" conaffinity="0"/>
+                <geom name="case_boss_RL" type="cylinder" size="0.003 0.004" pos="-0.1515  0.0495 -0.004" material="abs_plastic" mass="0" contype="0" conaffinity="0"/>
+                <geom name="case_boss_RR" type="cylinder" size="0.003 0.004" pos=" 0.1545  0.0495 -0.004" material="abs_plastic" mass="0" contype="0" conaffinity="0"/>
+
+                <!-- Installed screws for Station 4 visual continuity.
+                  Positions are manually tuned to align with the shifted Station 4 aluminum plate
+                  and represent the completed Station 1 screw installation.
+                  Visual-only; does not affect S4 insertion physics/controller. -->
+                <geom name="s4_screw_FL_shaft" type="cylinder" size="0.0014 0.005" pos=" 0.133561  0.047060 0.005" material="mat_screw" mass="0" contype="0" conaffinity="0"/>
+                <geom name="s4_screw_FL_head"  type="cylinder" size="0.0020 0.001" pos=" 0.133561  0.047060 0.011" material="mat_screw" mass="0" contype="0" conaffinity="0"/>
+                <geom name="s4_screw_FR_shaft" type="cylinder" size="0.0014 0.005" pos="-0.1329  0.0476 0.005" material="mat_screw" mass="0" contype="0" conaffinity="0"/>
+                <geom name="s4_screw_FR_head"  type="cylinder" size="0.0020 0.001" pos="-0.1329  0.0476 0.011" material="mat_screw" mass="0" contype="0" conaffinity="0"/>
+                <geom name="s4_screw_RL_shaft" type="cylinder" size="0.0014 0.005" pos=" 0.1334 -0.0468 0.005" material="mat_screw" mass="0" contype="0" conaffinity="0"/>
+                <geom name="s4_screw_RL_head"  type="cylinder" size="0.0020 0.001" pos=" 0.1334 -0.0468 0.011" material="mat_screw" mass="0" contype="0" conaffinity="0"/>
+                <geom name="s4_screw_RR_shaft" type="cylinder" size="0.0014 0.005" pos="-0.1288 -0.0472 0.005" material="mat_screw" mass="0" contype="0" conaffinity="0"/>
+                <geom name="s4_screw_RR_head"  type="cylinder" size="0.0020 0.001" pos="-0.1288 -0.0472 0.011" material="mat_screw" mass="0" contype="0" conaffinity="0"/>
+                <!-- S1 output stack visual, Z-packed between bottom-case floor and aluminum plate.
+                     Reference: case floor bottom ≈ -0.011, plate/switch datum ≈ +0.009.
+                     These are visual-only so S4 insertion physics/controller stay unchanged. -->
+                <geom name="s4_epdm_front" type="box" size="0.1454 0.01408 0.00075" pos="0 -0.04408 -0.00625" material="mat_epdm" mass="0" contype="0" conaffinity="0"/>
+                <geom name="s4_epdm_rear"  type="box" size="0.1454 0.01408 0.00075" pos="0  0.04408 -0.00625" material="mat_epdm" mass="0" contype="0" conaffinity="0"/>
+                <geom name="s4_epdm_left"  type="box" size="0.06670 0.03000 0.00075" pos="-0.08670 0 -0.00625" material="mat_epdm" mass="0" contype="0" conaffinity="0"/>
+                <geom name="s4_epdm_right" type="box" size="0.04170 0.03000 0.00075" pos=" 0.11170 0 -0.00625" material="mat_epdm" mass="0" contype="0" conaffinity="0"/>
+                <geom name="s4_battery" type="box" size="0.043 0.028 0.003" pos="-0.060 0 -0.00250" mass="0" rgba="0.15 0.25 0.15 1" contype="0" conaffinity="0"/>
+                <geom name="s4_pcb" type="box" size="0.1510 0.0560 0.0020" pos="0 0 0.00350" mass="0" material="mat_fr4" contype="0" conaffinity="0"/>
+                <geom name="s4_pcb_usbc" type="box" size="0.0015 0.0045 0.0020" pos="-0.1525 0.0280 0.00450" mass="0" rgba="0.025 0.025 0.025 1" contype="0" conaffinity="0"/>
+                <geom name="s4_pcb_pwr"  type="box" size="0.0015 0.0070 0.0030" pos="-0.1525 0.0105 0.00500" mass="0" rgba="0.025 0.025 0.025 1" contype="0" conaffinity="0"/>
+                <geom name="s4_pcb_os"   type="box" size="0.0015 0.0070 0.0030" pos="-0.1525 -0.0095 0.00500" mass="0" rgba="0.025 0.025 0.025 1" contype="0" conaffinity="0"/>
+
+                <!-- ALUMINUM PLATE BODY — name, position, and kc_* sites preserved. -->
                 <body name="alu_plate" pos="0 0 0.00750">
-                  <geom name="s4_alu_plate" type="box"
-                        size="0.1585 0.0535 0.00075"
-                        pos="0 0 0.00075" mass="0"
-                        material="aluminum_plate"
-                        contype="0" conaffinity="0"/>
-
-                  <!-- ═══ COSMETIC INSTALLED SWITCHES (from S3) ═══ -->
-                  <geom name="ins_sw_Esc" type="mesh" mesh="switch_mesh" pos="-0.15765 0.0480 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
-                  <geom name="ins_sw_F1" type="mesh" mesh="switch_mesh" pos="-0.13855 0.0480 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
-                  <geom name="ins_sw_F2" type="mesh" mesh="switch_mesh" pos="-0.11955 0.0480 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
-                  <geom name="ins_sw_F3" type="mesh" mesh="switch_mesh" pos="-0.10045 0.0480 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
-                  <geom name="ins_sw_F4" type="mesh" mesh="switch_mesh" pos="-0.08145 0.0480 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
-                  <geom name="ins_sw_F5" type="mesh" mesh="switch_mesh" pos="-0.06235 0.0480 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
-                  <geom name="ins_sw_F6" type="mesh" mesh="switch_mesh" pos="-0.04335 0.0480 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
-                  <geom name="ins_sw_F7" type="mesh" mesh="switch_mesh" pos="-0.02425 0.0480 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
-                  <geom name="ins_sw_F8" type="mesh" mesh="switch_mesh" pos="-0.00525 0.0480 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
-                  <geom name="ins_sw_F9" type="mesh" mesh="switch_mesh" pos="0.01385 0.0480 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
-                  <geom name="ins_sw_F10" type="mesh" mesh="switch_mesh" pos="0.03285 0.0480 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
-                  <geom name="ins_sw_F11" type="mesh" mesh="switch_mesh" pos="0.05195 0.0480 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
-                  <geom name="ins_sw_F12" type="mesh" mesh="switch_mesh" pos="0.07095 0.0480 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
-                  <geom name="ins_sw_PrtSc" type="mesh" mesh="switch_mesh" pos="0.09005 0.0480 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
-                  <geom name="ins_sw_Pause" type="mesh" mesh="switch_mesh" pos="0.10905 0.0480 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
-                  <geom name="ins_sw_Del" type="mesh" mesh="switch_mesh" pos="0.12815 0.0480 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
-                  <geom name="ins_sw_Grave" type="mesh" mesh="switch_mesh" pos="-0.15765 0.0290 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
-                  <geom name="ins_sw_1" type="mesh" mesh="switch_mesh" pos="-0.13855 0.0290 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
-                  <geom name="ins_sw_2" type="mesh" mesh="switch_mesh" pos="-0.11955 0.0290 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
-                  <geom name="ins_sw_3" type="mesh" mesh="switch_mesh" pos="-0.10045 0.0290 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
-                  <geom name="ins_sw_4" type="mesh" mesh="switch_mesh" pos="-0.08145 0.0290 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
-                  <geom name="ins_sw_5" type="mesh" mesh="switch_mesh" pos="-0.06235 0.0290 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
-                  <geom name="ins_sw_6" type="mesh" mesh="switch_mesh" pos="-0.04335 0.0290 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
-                  <geom name="ins_sw_7" type="mesh" mesh="switch_mesh" pos="-0.02425 0.0290 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
-                  <geom name="ins_sw_8" type="mesh" mesh="switch_mesh" pos="-0.00525 0.0290 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
-                  <geom name="ins_sw_9" type="mesh" mesh="switch_mesh" pos="0.01385 0.0290 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
-                  <geom name="ins_sw_0" type="mesh" mesh="switch_mesh" pos="0.03285 0.0290 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
-                  <geom name="ins_sw_Minus" type="mesh" mesh="switch_mesh" pos="0.05195 0.0290 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
-                  <geom name="ins_sw_Equal" type="mesh" mesh="switch_mesh" pos="0.07095 0.0290 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
-                  <geom name="ins_sw_Bksp" type="mesh" mesh="switch_mesh" pos="0.09955 0.0290 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
-                  <geom name="ins_sw_PgUp" type="mesh" mesh="switch_mesh" pos="0.12815 0.0290 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
-                  <geom name="ins_sw_Tab" type="mesh" mesh="switch_mesh" pos="-0.15285 0.0099 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
-                  <geom name="ins_sw_Q" type="mesh" mesh="switch_mesh" pos="-0.12905 0.0099 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
-                  <geom name="ins_sw_W" type="mesh" mesh="switch_mesh" pos="-0.11005 0.0099 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
-                  <geom name="ins_sw_E" type="mesh" mesh="switch_mesh" pos="-0.09095 0.0099 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
-                  <geom name="ins_sw_R" type="mesh" mesh="switch_mesh" pos="-0.07195 0.0099 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
-                  <geom name="ins_sw_T" type="mesh" mesh="switch_mesh" pos="-0.05285 0.0099 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
-                  <geom name="ins_sw_Y" type="mesh" mesh="switch_mesh" pos="-0.03385 0.0099 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
-                  <geom name="ins_sw_U" type="mesh" mesh="switch_mesh" pos="-0.01475 0.0099 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
-                  <geom name="ins_sw_I" type="mesh" mesh="switch_mesh" pos="0.00435 0.0099 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
-                  <geom name="ins_sw_O" type="mesh" mesh="switch_mesh" pos="0.02335 0.0099 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
-                  <geom name="ins_sw_P" type="mesh" mesh="switch_mesh" pos="0.04245 0.0099 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
-                  <geom name="ins_sw_LBrace" type="mesh" mesh="switch_mesh" pos="0.06145 0.0099 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
-                  <geom name="ins_sw_RBrace" type="mesh" mesh="switch_mesh" pos="0.08055 0.0099 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
-                  <geom name="ins_sw_Bkslash" type="mesh" mesh="switch_mesh" pos="0.10435 0.0099 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
-                  <geom name="ins_sw_PgDn" type="mesh" mesh="switch_mesh" pos="0.12815 0.0099 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
+                  <geom name="s4_alu_plate" type="mesh" mesh="aluminum_plate_mesh" pos="0.003361 0.00256 0.000747" mass="0" material="aluminum_plate" contype="0" conaffinity="0"/>
+                  <!-- Stabilizers: visual-only, aligned to the shifted aluminum plate mesh. -->
+                  <body name="s4_stab_space_L" pos="-0.071208 -0.048626 -0.00550"><geom name="s4_stab_space_L_mesh" type="mesh" mesh="stabilizer_mesh" pos="-0.047852 0.0017 0.00650" material="stab_white" contype="0" conaffinity="0"/></body>
+                  <body name="s4_stab_space_R" pos="0.028792 -0.048626 -0.00550"><geom name="s4_stab_space_R_mesh" type="mesh" mesh="stabilizer_mesh" pos="-0.047852 0.0017 0.00650" material="stab_white" contype="0" conaffinity="0"/></body>
+                  <body name="s4_stab_lshift_L" pos="-0.142688 -0.029576 -0.00550"><geom name="s4_stab_lshift_L_mesh" type="mesh" mesh="stabilizer_mesh" pos="-0.047852 0.0017 0.00650" material="stab_white" contype="0" conaffinity="0"/></body>
+                  <body name="s4_stab_lshift_R" pos="-0.118808 -0.029576 -0.00550"><geom name="s4_stab_lshift_R_mesh" type="mesh" mesh="stabilizer_mesh" pos="-0.047852 0.0017 0.00650" material="stab_white" contype="0" conaffinity="0"/></body>
+                  <body name="s4_stab_enter_L" pos="0.100202 -0.010516 -0.00550"><geom name="s4_stab_enter_L_mesh" type="mesh" mesh="stabilizer_mesh" pos="-0.047852 0.0017 0.00650" material="stab_white" contype="0" conaffinity="0"/></body>
+                  <body name="s4_stab_enter_R" pos="0.124082 -0.010516 -0.00550"><geom name="s4_stab_enter_R_mesh" type="mesh" mesh="stabilizer_mesh" pos="-0.047852 0.0017 0.00650" material="stab_white" contype="0" conaffinity="0"/></body>
+                  <body name="s4_stab_bksp_L" pos="0.102582 0.027584 -0.00550"><geom name="s4_stab_bksp_L_mesh" type="mesh" mesh="stabilizer_mesh" pos="-0.047852 0.0017 0.00650" material="stab_white" contype="0" conaffinity="0"/></body>
+                  <body name="s4_stab_bksp_R" pos="0.126462 0.027584 -0.00550"><geom name="s4_stab_bksp_R_mesh" type="mesh" mesh="stabilizer_mesh" pos="-0.047852 0.0017 0.00650" material="stab_white" contype="0" conaffinity="0"/></body>
+                  <!-- ROW 0 — Function row -->
+                                    <!-- Installed switches from Station 3 output; visual-only incoming workpiece for Station 4. -->
+                  <geom name="ins_sw_Esc" type="mesh" mesh="switch_mesh" pos="-0.15765  0.0480 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
+                  <geom name="ins_sw_F1" type="mesh" mesh="switch_mesh" pos="-0.13855  0.0480 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
+                  <geom name="ins_sw_F2" type="mesh" mesh="switch_mesh" pos="-0.11955  0.0480 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
+                  <geom name="ins_sw_F3" type="mesh" mesh="switch_mesh" pos="-0.10045  0.0480 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
+                  <geom name="ins_sw_F4" type="mesh" mesh="switch_mesh" pos="-0.08145  0.0480 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
+                  <geom name="ins_sw_F5" type="mesh" mesh="switch_mesh" pos="-0.06235  0.0480 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
+                  <geom name="ins_sw_F6" type="mesh" mesh="switch_mesh" pos="-0.04335  0.0480 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
+                  <geom name="ins_sw_F7" type="mesh" mesh="switch_mesh" pos="-0.02425  0.0480 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
+                  <geom name="ins_sw_F8" type="mesh" mesh="switch_mesh" pos="-0.00525  0.0480 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
+                  <geom name="ins_sw_F9" type="mesh" mesh="switch_mesh" pos=" 0.01385  0.0480 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
+                  <geom name="ins_sw_F10" type="mesh" mesh="switch_mesh" pos=" 0.03285  0.0480 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
+                  <geom name="ins_sw_F11" type="mesh" mesh="switch_mesh" pos=" 0.05195  0.0480 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
+                  <geom name="ins_sw_F12" type="mesh" mesh="switch_mesh" pos=" 0.07095  0.0480 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
+                  <geom name="ins_sw_PrtSc" type="mesh" mesh="switch_mesh" pos=" 0.09005  0.0480 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
+                  <geom name="ins_sw_Pause" type="mesh" mesh="switch_mesh" pos=" 0.10905  0.0480 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
+                  <geom name="ins_sw_Del" type="mesh" mesh="switch_mesh" pos=" 0.12815  0.0480 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
+                  <!-- INSTALLED SWITCH ROW 1 — Number row -->
+                  <geom name="ins_sw_Grave" type="mesh" mesh="switch_mesh" pos="-0.15765  0.0290 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
+                  <geom name="ins_sw_1" type="mesh" mesh="switch_mesh" pos="-0.13855  0.0290 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
+                  <geom name="ins_sw_2" type="mesh" mesh="switch_mesh" pos="-0.11955  0.0290 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
+                  <geom name="ins_sw_3" type="mesh" mesh="switch_mesh" pos="-0.10045  0.0290 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
+                  <geom name="ins_sw_4" type="mesh" mesh="switch_mesh" pos="-0.08145  0.0290 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
+                  <geom name="ins_sw_5" type="mesh" mesh="switch_mesh" pos="-0.06235  0.0290 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
+                  <geom name="ins_sw_6" type="mesh" mesh="switch_mesh" pos="-0.04335  0.0290 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
+                  <geom name="ins_sw_7" type="mesh" mesh="switch_mesh" pos="-0.02425  0.0290 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
+                  <geom name="ins_sw_8" type="mesh" mesh="switch_mesh" pos="-0.00525  0.0290 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
+                  <geom name="ins_sw_9" type="mesh" mesh="switch_mesh" pos=" 0.01385  0.0290 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
+                  <geom name="ins_sw_0" type="mesh" mesh="switch_mesh" pos=" 0.03285  0.0290 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
+                  <geom name="ins_sw_Minus" type="mesh" mesh="switch_mesh" pos=" 0.05195  0.0290 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
+                  <geom name="ins_sw_Equal" type="mesh" mesh="switch_mesh" pos=" 0.07095  0.0290 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
+                  <geom name="ins_sw_Bksp" type="mesh" mesh="switch_mesh" pos=" 0.09955  0.0290 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
+                  <geom name="ins_sw_PgUp" type="mesh" mesh="switch_mesh" pos=" 0.12815  0.0290 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
+                  <!-- INSTALLED SWITCH ROW 2 — QWERTY row -->
+                  <geom name="ins_sw_Tab" type="mesh" mesh="switch_mesh" pos="-0.15285  0.0099 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
+                  <geom name="ins_sw_Q" type="mesh" mesh="switch_mesh" pos="-0.12905  0.0099 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
+                  <geom name="ins_sw_W" type="mesh" mesh="switch_mesh" pos="-0.11005  0.0099 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
+                  <geom name="ins_sw_E" type="mesh" mesh="switch_mesh" pos="-0.09095  0.0099 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
+                  <geom name="ins_sw_R" type="mesh" mesh="switch_mesh" pos="-0.07195  0.0099 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
+                  <geom name="ins_sw_T" type="mesh" mesh="switch_mesh" pos="-0.05285  0.0099 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
+                  <geom name="ins_sw_Y" type="mesh" mesh="switch_mesh" pos="-0.03385  0.0099 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
+                  <geom name="ins_sw_U" type="mesh" mesh="switch_mesh" pos="-0.01475  0.0099 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
+                  <geom name="ins_sw_I" type="mesh" mesh="switch_mesh" pos=" 0.00435  0.0099 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
+                  <geom name="ins_sw_O" type="mesh" mesh="switch_mesh" pos=" 0.02335  0.0099 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
+                  <geom name="ins_sw_P" type="mesh" mesh="switch_mesh" pos=" 0.04245  0.0099 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
+                  <geom name="ins_sw_LBrace" type="mesh" mesh="switch_mesh" pos=" 0.06145  0.0099 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
+                  <geom name="ins_sw_RBrace" type="mesh" mesh="switch_mesh" pos=" 0.08055  0.0099 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
+                  <geom name="ins_sw_Bkslash" type="mesh" mesh="switch_mesh" pos=" 0.10435  0.0099 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
+                  <geom name="ins_sw_PgDn" type="mesh" mesh="switch_mesh" pos=" 0.12815  0.0099 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
+                  <!-- INSTALLED SWITCH ROW 3 — Home row -->
                   <geom name="ins_sw_Caps" type="mesh" mesh="switch_mesh" pos="-0.15045 -0.0092 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
                   <geom name="ins_sw_A" type="mesh" mesh="switch_mesh" pos="-0.12425 -0.0092 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
                   <geom name="ins_sw_S" type="mesh" mesh="switch_mesh" pos="-0.10525 -0.0092 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
@@ -249,12 +299,13 @@
                   <geom name="ins_sw_G" type="mesh" mesh="switch_mesh" pos="-0.04805 -0.0092 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
                   <geom name="ins_sw_H" type="mesh" mesh="switch_mesh" pos="-0.02905 -0.0092 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
                   <geom name="ins_sw_J" type="mesh" mesh="switch_mesh" pos="-0.00995 -0.0092 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
-                  <geom name="ins_sw_K" type="mesh" mesh="switch_mesh" pos="0.00905 -0.0092 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
-                  <geom name="ins_sw_L" type="mesh" mesh="switch_mesh" pos="0.02815 -0.0092 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
-                  <geom name="ins_sw_Semicol" type="mesh" mesh="switch_mesh" pos="0.04715 -0.0092 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
-                  <geom name="ins_sw_Quote" type="mesh" mesh="switch_mesh" pos="0.06625 -0.0092 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
-                  <geom name="ins_sw_Enter" type="mesh" mesh="switch_mesh" pos="0.09715 -0.0092 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
-                  <geom name="ins_sw_Home" type="mesh" mesh="switch_mesh" pos="0.12815 -0.0092 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
+                  <geom name="ins_sw_K" type="mesh" mesh="switch_mesh" pos=" 0.00905 -0.0092 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
+                  <geom name="ins_sw_L" type="mesh" mesh="switch_mesh" pos=" 0.02815 -0.0092 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
+                  <geom name="ins_sw_Semicol" type="mesh" mesh="switch_mesh" pos=" 0.04715 -0.0092 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
+                  <geom name="ins_sw_Quote" type="mesh" mesh="switch_mesh" pos=" 0.06625 -0.0092 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
+                  <geom name="ins_sw_Enter" type="mesh" mesh="switch_mesh" pos=" 0.09715 -0.0092 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
+                  <geom name="ins_sw_Home" type="mesh" mesh="switch_mesh" pos=" 0.12815 -0.0092 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
+                  <!-- INSTALLED SWITCH ROW 4 — Shift row -->
                   <geom name="ins_sw_LShift" type="mesh" mesh="switch_mesh" pos="-0.14575 -0.0282 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
                   <geom name="ins_sw_Z" type="mesh" mesh="switch_mesh" pos="-0.11475 -0.0282 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
                   <geom name="ins_sw_X" type="mesh" mesh="switch_mesh" pos="-0.09575 -0.0282 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
@@ -263,70 +314,74 @@
                   <geom name="ins_sw_B" type="mesh" mesh="switch_mesh" pos="-0.03855 -0.0282 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
                   <geom name="ins_sw_N" type="mesh" mesh="switch_mesh" pos="-0.01955 -0.0282 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
                   <geom name="ins_sw_M" type="mesh" mesh="switch_mesh" pos="-0.00045 -0.0282 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
-                  <geom name="ins_sw_Comma" type="mesh" mesh="switch_mesh" pos="0.01855 -0.0282 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
-                  <geom name="ins_sw_Period" type="mesh" mesh="switch_mesh" pos="0.03765 -0.0282 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
-                  <geom name="ins_sw_Slash" type="mesh" mesh="switch_mesh" pos="0.05665 -0.0282 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
-                  <geom name="ins_sw_RShift" type="mesh" mesh="switch_mesh" pos="0.08285 -0.0282 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
-                  <geom name="ins_sw_Up" type="mesh" mesh="switch_mesh" pos="0.10905 -0.0282 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
-                  <geom name="ins_sw_End" type="mesh" mesh="switch_mesh" pos="0.12815 -0.0282 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
+                  <geom name="ins_sw_Comma" type="mesh" mesh="switch_mesh" pos=" 0.01855 -0.0282 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
+                  <geom name="ins_sw_Period" type="mesh" mesh="switch_mesh" pos=" 0.03765 -0.0282 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
+                  <geom name="ins_sw_Slash" type="mesh" mesh="switch_mesh" pos=" 0.05665 -0.0282 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
+                  <geom name="ins_sw_RShift" type="mesh" mesh="switch_mesh" pos=" 0.08285 -0.0282 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
+                  <geom name="ins_sw_Up" type="mesh" mesh="switch_mesh" pos=" 0.10905 -0.0282 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
+                  <geom name="ins_sw_End" type="mesh" mesh="switch_mesh" pos=" 0.12815 -0.0282 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
+                  <!-- INSTALLED SWITCH ROW 5 — Bottom row -->
                   <geom name="ins_sw_LCtrl" type="mesh" mesh="switch_mesh" pos="-0.15525 -0.0473 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
                   <geom name="ins_sw_LWin" type="mesh" mesh="switch_mesh" pos="-0.13145 -0.0473 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
                   <geom name="ins_sw_LAlt" type="mesh" mesh="switch_mesh" pos="-0.10765 -0.0473 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
                   <geom name="ins_sw_Space" type="mesh" mesh="switch_mesh" pos="-0.03615 -0.0473 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
-                  <geom name="ins_sw_RAlt" type="mesh" mesh="switch_mesh" pos="0.03285 -0.0473 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
-                  <geom name="ins_sw_Fn" type="mesh" mesh="switch_mesh" pos="0.05195 -0.0473 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
-                  <geom name="ins_sw_Left" type="mesh" mesh="switch_mesh" pos="0.07095 -0.0473 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
-                  <geom name="ins_sw_Down" type="mesh" mesh="switch_mesh" pos="0.09005 -0.0473 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
-                  <geom name="ins_sw_Right" type="mesh" mesh="switch_mesh" pos="0.10905 -0.0473 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
-                  <geom name="ins_sw_End2" type="mesh" mesh="switch_mesh" pos="0.12815 -0.0473 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
+                  <geom name="ins_sw_RAlt" type="mesh" mesh="switch_mesh" pos=" 0.03285 -0.0473 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
+                  <geom name="ins_sw_Fn" type="mesh" mesh="switch_mesh" pos=" 0.05195 -0.0473 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
+                  <geom name="ins_sw_Left" type="mesh" mesh="switch_mesh" pos=" 0.07095 -0.0473 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
+                  <geom name="ins_sw_Down" type="mesh" mesh="switch_mesh" pos=" 0.09005 -0.0473 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
+                  <geom name="ins_sw_Right" type="mesh" mesh="switch_mesh" pos=" 0.10905 -0.0473 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
+                  <geom name="ins_sw_End2" type="mesh" mesh="switch_mesh" pos=" 0.12815 -0.0473 0.0015" material="abs_dark" contype="0" conaffinity="0"/>
 
-                  <!-- ═══ KEYCAP PLACEMENT SITES (switch stem top) ═══ -->
-                  <site name="kc_Esc" type="cylinder" size="0.003 0.001" pos="-0.1429 0.0480 0.0050" rgba="1 0.5 0 0.7"/>
-                  <site name="kc_F1" type="cylinder" size="0.003 0.001" pos="-0.1238 0.0480 0.0050" rgba="1 0.5 0 0.7"/>
-                  <site name="kc_F2" type="cylinder" size="0.003 0.001" pos="-0.1048 0.0480 0.0050" rgba="1 0.5 0 0.7"/>
-                  <site name="kc_F3" type="cylinder" size="0.003 0.001" pos="-0.0857 0.0480 0.0050" rgba="1 0.5 0 0.7"/>
-                  <site name="kc_F4" type="cylinder" size="0.003 0.001" pos="-0.0667 0.0480 0.0050" rgba="1 0.5 0 0.7"/>
-                  <site name="kc_F5" type="cylinder" size="0.003 0.001" pos="-0.0476 0.0480 0.0050" rgba="1 0.5 0 0.7"/>
-                  <site name="kc_F6" type="cylinder" size="0.003 0.001" pos="-0.0286 0.0480 0.0050" rgba="1 0.5 0 0.7"/>
-                  <site name="kc_F7" type="cylinder" size="0.003 0.001" pos="-0.0095 0.0480 0.0050" rgba="1 0.5 0 0.7"/>
-                  <site name="kc_F8" type="cylinder" size="0.003 0.001" pos="0.0095 0.0480 0.0050" rgba="1 0.5 0 0.7"/>
-                  <site name="kc_F9" type="cylinder" size="0.003 0.001" pos="0.0286 0.0480 0.0050" rgba="1 0.5 0 0.7"/>
-                  <site name="kc_F10" type="cylinder" size="0.003 0.001" pos="0.0476 0.0480 0.0050" rgba="1 0.5 0 0.7"/>
-                  <site name="kc_F11" type="cylinder" size="0.003 0.001" pos="0.0667 0.0480 0.0050" rgba="1 0.5 0 0.7"/>
-                  <site name="kc_F12" type="cylinder" size="0.003 0.001" pos="0.0857 0.0480 0.0050" rgba="1 0.5 0 0.7"/>
-                  <site name="kc_PrtSc" type="cylinder" size="0.003 0.001" pos="0.1048 0.0480 0.0050" rgba="1 0.5 0 0.7"/>
-                  <site name="kc_Pause" type="cylinder" size="0.003 0.001" pos="0.1238 0.0480 0.0050" rgba="1 0.5 0 0.7"/>
-                  <site name="kc_Del" type="cylinder" size="0.003 0.001" pos="0.1429 0.0480 0.0050" rgba="1 0.5 0 0.7"/>
-                  <site name="kc_Grave" type="cylinder" size="0.003 0.001" pos="-0.1429 0.0290 0.0050" rgba="1 0.5 0 0.7"/>
-                  <site name="kc_1" type="cylinder" size="0.003 0.001" pos="-0.1238 0.0290 0.0050" rgba="1 0.5 0 0.7"/>
-                  <site name="kc_2" type="cylinder" size="0.003 0.001" pos="-0.1048 0.0290 0.0050" rgba="1 0.5 0 0.7"/>
-                  <site name="kc_3" type="cylinder" size="0.003 0.001" pos="-0.0857 0.0290 0.0050" rgba="1 0.5 0 0.7"/>
-                  <site name="kc_4" type="cylinder" size="0.003 0.001" pos="-0.0667 0.0290 0.0050" rgba="1 0.5 0 0.7"/>
-                  <site name="kc_5" type="cylinder" size="0.003 0.001" pos="-0.0476 0.0290 0.0050" rgba="1 0.5 0 0.7"/>
-                  <site name="kc_6" type="cylinder" size="0.003 0.001" pos="-0.0286 0.0290 0.0050" rgba="1 0.5 0 0.7"/>
-                  <site name="kc_7" type="cylinder" size="0.003 0.001" pos="-0.0095 0.0290 0.0050" rgba="1 0.5 0 0.7"/>
-                  <site name="kc_8" type="cylinder" size="0.003 0.001" pos="0.0095 0.0290 0.0050" rgba="1 0.5 0 0.7"/>
-                  <site name="kc_9" type="cylinder" size="0.003 0.001" pos="0.0286 0.0290 0.0050" rgba="1 0.5 0 0.7"/>
-                  <site name="kc_0" type="cylinder" size="0.003 0.001" pos="0.0476 0.0290 0.0050" rgba="1 0.5 0 0.7"/>
-                  <site name="kc_Minus" type="cylinder" size="0.003 0.001" pos="0.0667 0.0290 0.0050" rgba="1 0.5 0 0.7"/>
-                  <site name="kc_Equal" type="cylinder" size="0.003 0.001" pos="0.0857 0.0290 0.0050" rgba="1 0.5 0 0.7"/>
-                  <site name="kc_Bksp" type="cylinder" size="0.003 0.001" pos="0.1143 0.0290 0.0050" rgba="1 0.5 0 0.7"/>
-                  <site name="kc_PgUp" type="cylinder" size="0.003 0.001" pos="0.1429 0.0290 0.0050" rgba="1 0.5 0 0.7"/>
-                  <site name="kc_Tab" type="cylinder" size="0.003 0.001" pos="-0.1381 0.0099 0.0050" rgba="1 0.5 0 0.7"/>
-                  <site name="kc_Q" type="cylinder" size="0.003 0.001" pos="-0.1143 0.0099 0.0050" rgba="1 0.5 0 0.7"/>
-                  <site name="kc_W" type="cylinder" size="0.003 0.001" pos="-0.0953 0.0099 0.0050" rgba="1 0.5 0 0.7"/>
-                  <site name="kc_E" type="cylinder" size="0.003 0.001" pos="-0.0762 0.0099 0.0050" rgba="1 0.5 0 0.7"/>
-                  <site name="kc_R" type="cylinder" size="0.003 0.001" pos="-0.0572 0.0099 0.0050" rgba="1 0.5 0 0.7"/>
-                  <site name="kc_T" type="cylinder" size="0.003 0.001" pos="-0.0381 0.0099 0.0050" rgba="1 0.5 0 0.7"/>
-                  <site name="kc_Y" type="cylinder" size="0.003 0.001" pos="-0.0191 0.0099 0.0050" rgba="1 0.5 0 0.7"/>
-                  <site name="kc_U" type="cylinder" size="0.003 0.001" pos="0.0000 0.0099 0.0050" rgba="1 0.5 0 0.7"/>
-                  <site name="kc_I" type="cylinder" size="0.003 0.001" pos="0.0191 0.0099 0.0050" rgba="1 0.5 0 0.7"/>
-                  <site name="kc_O" type="cylinder" size="0.003 0.001" pos="0.0381 0.0099 0.0050" rgba="1 0.5 0 0.7"/>
-                  <site name="kc_P" type="cylinder" size="0.003 0.001" pos="0.0572 0.0099 0.0050" rgba="1 0.5 0 0.7"/>
-                  <site name="kc_LBrace" type="cylinder" size="0.003 0.001" pos="0.0762 0.0099 0.0050" rgba="1 0.5 0 0.7"/>
-                  <site name="kc_RBrace" type="cylinder" size="0.003 0.001" pos="0.0953 0.0099 0.0050" rgba="1 0.5 0 0.7"/>
-                  <site name="kc_Bkslash" type="cylinder" size="0.003 0.001" pos="0.1191 0.0099 0.0050" rgba="1 0.5 0 0.7"/>
-                  <site name="kc_PgDn" type="cylinder" size="0.003 0.001" pos="0.1429 0.0099 0.0050" rgba="1 0.5 0 0.7"/>
+                  <!-- Keycap insertion target sites; XY matched to Station 3 switch sites. -->
+                  <site name="kc_Esc" type="cylinder" size="0.003 0.001" pos="-0.1429  0.0480 0.0050" rgba="1 0.5 0 0.7"/>
+                  <site name="kc_F1" type="cylinder" size="0.003 0.001" pos="-0.1238  0.0480 0.0050" rgba="1 0.5 0 0.7"/>
+                  <site name="kc_F2" type="cylinder" size="0.003 0.001" pos="-0.1048  0.0480 0.0050" rgba="1 0.5 0 0.7"/>
+                  <site name="kc_F3" type="cylinder" size="0.003 0.001" pos="-0.0857  0.0480 0.0050" rgba="1 0.5 0 0.7"/>
+                  <site name="kc_F4" type="cylinder" size="0.003 0.001" pos="-0.0667  0.0480 0.0050" rgba="1 0.5 0 0.7"/>
+                  <site name="kc_F5" type="cylinder" size="0.003 0.001" pos="-0.0476  0.0480 0.0050" rgba="1 0.5 0 0.7"/>
+                  <site name="kc_F6" type="cylinder" size="0.003 0.001" pos="-0.0286  0.0480 0.0050" rgba="1 0.5 0 0.7"/>
+                  <site name="kc_F7" type="cylinder" size="0.003 0.001" pos="-0.0095  0.0480 0.0050" rgba="1 0.5 0 0.7"/>
+                  <site name="kc_F8" type="cylinder" size="0.003 0.001" pos=" 0.0095  0.0480 0.0050" rgba="1 0.5 0 0.7"/>
+                  <site name="kc_F9" type="cylinder" size="0.003 0.001" pos=" 0.0286  0.0480 0.0050" rgba="1 0.5 0 0.7"/>
+                  <site name="kc_F10" type="cylinder" size="0.003 0.001" pos=" 0.0476  0.0480 0.0050" rgba="1 0.5 0 0.7"/>
+                  <site name="kc_F11" type="cylinder" size="0.003 0.001" pos=" 0.0667  0.0480 0.0050" rgba="1 0.5 0 0.7"/>
+                  <site name="kc_F12" type="cylinder" size="0.003 0.001" pos=" 0.0857  0.0480 0.0050" rgba="1 0.5 0 0.7"/>
+                  <site name="kc_PrtSc" type="cylinder" size="0.003 0.001" pos=" 0.1048  0.0480 0.0050" rgba="1 0.5 0 0.7"/>
+                  <site name="kc_Pause" type="cylinder" size="0.003 0.001" pos=" 0.1238  0.0480 0.0050" rgba="1 0.5 0 0.7"/>
+                  <site name="kc_Del" type="cylinder" size="0.003 0.001" pos=" 0.1429  0.0480 0.0050" rgba="1 0.5 0 0.7"/>
+                  <!-- KEYCAP TARGET ROW 1 — Number row -->
+                  <site name="kc_Grave" type="cylinder" size="0.003 0.001" pos="-0.1429  0.0290 0.0050" rgba="1 0.5 0 0.7"/>
+                  <site name="kc_1" type="cylinder" size="0.003 0.001" pos="-0.1238  0.0290 0.0050" rgba="1 0.5 0 0.7"/>
+                  <site name="kc_2" type="cylinder" size="0.003 0.001" pos="-0.1048  0.0290 0.0050" rgba="1 0.5 0 0.7"/>
+                  <site name="kc_3" type="cylinder" size="0.003 0.001" pos="-0.0857  0.0290 0.0050" rgba="1 0.5 0 0.7"/>
+                  <site name="kc_4" type="cylinder" size="0.003 0.001" pos="-0.0667  0.0290 0.0050" rgba="1 0.5 0 0.7"/>
+                  <site name="kc_5" type="cylinder" size="0.003 0.001" pos="-0.0476  0.0290 0.0050" rgba="1 0.5 0 0.7"/>
+                  <site name="kc_6" type="cylinder" size="0.003 0.001" pos="-0.0286  0.0290 0.0050" rgba="1 0.5 0 0.7"/>
+                  <site name="kc_7" type="cylinder" size="0.003 0.001" pos="-0.0095  0.0290 0.0050" rgba="1 0.5 0 0.7"/>
+                  <site name="kc_8" type="cylinder" size="0.003 0.001" pos=" 0.0095  0.0290 0.0050" rgba="1 0.5 0 0.7"/>
+                  <site name="kc_9" type="cylinder" size="0.003 0.001" pos=" 0.0286  0.0290 0.0050" rgba="1 0.5 0 0.7"/>
+                  <site name="kc_0" type="cylinder" size="0.003 0.001" pos=" 0.0476  0.0290 0.0050" rgba="1 0.5 0 0.7"/>
+                  <site name="kc_Minus" type="cylinder" size="0.003 0.001" pos=" 0.0667  0.0290 0.0050" rgba="1 0.5 0 0.7"/>
+                  <site name="kc_Equal" type="cylinder" size="0.003 0.001" pos=" 0.0857  0.0290 0.0050" rgba="1 0.5 0 0.7"/>
+                  <site name="kc_Bksp" type="cylinder" size="0.003 0.001" pos=" 0.1143  0.0290 0.0050" rgba="1 0.5 0 0.7"/>
+                  <site name="kc_PgUp" type="cylinder" size="0.003 0.001" pos=" 0.1429  0.0290 0.0050" rgba="1 0.5 0 0.7"/>
+                  <!-- KEYCAP TARGET ROW 2 — QWERTY row -->
+                  <site name="kc_Tab" type="cylinder" size="0.003 0.001" pos="-0.1381  0.0099 0.0050" rgba="1 0.5 0 0.7"/>
+                  <site name="kc_Q" type="cylinder" size="0.003 0.001" pos="-0.1143  0.0099 0.0050" rgba="1 0.5 0 0.7"/>
+                  <site name="kc_W" type="cylinder" size="0.003 0.001" pos="-0.0953  0.0099 0.0050" rgba="1 0.5 0 0.7"/>
+                  <site name="kc_E" type="cylinder" size="0.003 0.001" pos="-0.0762  0.0099 0.0050" rgba="1 0.5 0 0.7"/>
+                  <site name="kc_R" type="cylinder" size="0.003 0.001" pos="-0.0572  0.0099 0.0050" rgba="1 0.5 0 0.7"/>
+                  <site name="kc_T" type="cylinder" size="0.003 0.001" pos="-0.0381  0.0099 0.0050" rgba="1 0.5 0 0.7"/>
+                  <site name="kc_Y" type="cylinder" size="0.003 0.001" pos="-0.0191  0.0099 0.0050" rgba="1 0.5 0 0.7"/>
+                  <site name="kc_U" type="cylinder" size="0.003 0.001" pos=" 0.0000  0.0099 0.0050" rgba="1 0.5 0 0.7"/>
+                  <site name="kc_I" type="cylinder" size="0.003 0.001" pos=" 0.0191  0.0099 0.0050" rgba="1 0.5 0 0.7"/>
+                  <site name="kc_O" type="cylinder" size="0.003 0.001" pos=" 0.0381  0.0099 0.0050" rgba="1 0.5 0 0.7"/>
+                  <site name="kc_P" type="cylinder" size="0.003 0.001" pos=" 0.0572  0.0099 0.0050" rgba="1 0.5 0 0.7"/>
+                  <site name="kc_LBrace" type="cylinder" size="0.003 0.001" pos=" 0.0762  0.0099 0.0050" rgba="1 0.5 0 0.7"/>
+                  <site name="kc_RBrace" type="cylinder" size="0.003 0.001" pos=" 0.0953  0.0099 0.0050" rgba="1 0.5 0 0.7"/>
+                  <site name="kc_Bkslash" type="cylinder" size="0.003 0.001" pos=" 0.1191  0.0099 0.0050" rgba="1 0.5 0 0.7"/>
+                  <site name="kc_PgDn" type="cylinder" size="0.003 0.001" pos=" 0.1429  0.0099 0.0050" rgba="1 0.5 0 0.7"/>
+                  <!-- KEYCAP TARGET ROW 3 — Home row -->
                   <site name="kc_Caps" type="cylinder" size="0.003 0.001" pos="-0.1357 -0.0092 0.0050" rgba="1 0.5 0 0.7"/>
                   <site name="kc_A" type="cylinder" size="0.003 0.001" pos="-0.1095 -0.0092 0.0050" rgba="1 0.5 0 0.7"/>
                   <site name="kc_S" type="cylinder" size="0.003 0.001" pos="-0.0905 -0.0092 0.0050" rgba="1 0.5 0 0.7"/>
@@ -334,13 +389,14 @@
                   <site name="kc_F" type="cylinder" size="0.003 0.001" pos="-0.0524 -0.0092 0.0050" rgba="1 0.5 0 0.7"/>
                   <site name="kc_G" type="cylinder" size="0.003 0.001" pos="-0.0333 -0.0092 0.0050" rgba="1 0.5 0 0.7"/>
                   <site name="kc_H" type="cylinder" size="0.003 0.001" pos="-0.0143 -0.0092 0.0050" rgba="1 0.5 0 0.7"/>
-                  <site name="kc_J" type="cylinder" size="0.003 0.001" pos="0.0048 -0.0092 0.0050" rgba="1 0.5 0 0.7"/>
-                  <site name="kc_K" type="cylinder" size="0.003 0.001" pos="0.0238 -0.0092 0.0050" rgba="1 0.5 0 0.7"/>
-                  <site name="kc_L" type="cylinder" size="0.003 0.001" pos="0.0429 -0.0092 0.0050" rgba="1 0.5 0 0.7"/>
-                  <site name="kc_Semicol" type="cylinder" size="0.003 0.001" pos="0.0619 -0.0092 0.0050" rgba="1 0.5 0 0.7"/>
-                  <site name="kc_Quote" type="cylinder" size="0.003 0.001" pos="0.0810 -0.0092 0.0050" rgba="1 0.5 0 0.7"/>
-                  <site name="kc_Enter" type="cylinder" size="0.003 0.001" pos="0.1119 -0.0092 0.0050" rgba="1 0.5 0 0.7"/>
-                  <site name="kc_Home" type="cylinder" size="0.003 0.001" pos="0.1429 -0.0092 0.0050" rgba="1 0.5 0 0.7"/>
+                  <site name="kc_J" type="cylinder" size="0.003 0.001" pos=" 0.0048 -0.0092 0.0050" rgba="1 0.5 0 0.7"/>
+                  <site name="kc_K" type="cylinder" size="0.003 0.001" pos=" 0.0238 -0.0092 0.0050" rgba="1 0.5 0 0.7"/>
+                  <site name="kc_L" type="cylinder" size="0.003 0.001" pos=" 0.0429 -0.0092 0.0050" rgba="1 0.5 0 0.7"/>
+                  <site name="kc_Semicol" type="cylinder" size="0.003 0.001" pos=" 0.0619 -0.0092 0.0050" rgba="1 0.5 0 0.7"/>
+                  <site name="kc_Quote" type="cylinder" size="0.003 0.001" pos=" 0.0810 -0.0092 0.0050" rgba="1 0.5 0 0.7"/>
+                  <site name="kc_Enter" type="cylinder" size="0.003 0.001" pos=" 0.1119 -0.0092 0.0050" rgba="1 0.5 0 0.7"/>
+                  <site name="kc_Home" type="cylinder" size="0.003 0.001" pos=" 0.1429 -0.0092 0.0050" rgba="1 0.5 0 0.7"/>
+                  <!-- KEYCAP TARGET ROW 4 — Shift row -->
                   <site name="kc_LShift" type="cylinder" size="0.003 0.001" pos="-0.1310 -0.0282 0.0050" rgba="1 0.5 0 0.7"/>
                   <site name="kc_Z" type="cylinder" size="0.003 0.001" pos="-0.1000 -0.0282 0.0050" rgba="1 0.5 0 0.7"/>
                   <site name="kc_X" type="cylinder" size="0.003 0.001" pos="-0.0810 -0.0282 0.0050" rgba="1 0.5 0 0.7"/>
@@ -348,23 +404,25 @@
                   <site name="kc_V" type="cylinder" size="0.003 0.001" pos="-0.0429 -0.0282 0.0050" rgba="1 0.5 0 0.7"/>
                   <site name="kc_B" type="cylinder" size="0.003 0.001" pos="-0.0238 -0.0282 0.0050" rgba="1 0.5 0 0.7"/>
                   <site name="kc_N" type="cylinder" size="0.003 0.001" pos="-0.0048 -0.0282 0.0050" rgba="1 0.5 0 0.7"/>
-                  <site name="kc_M" type="cylinder" size="0.003 0.001" pos="0.0143 -0.0282 0.0050" rgba="1 0.5 0 0.7"/>
-                  <site name="kc_Comma" type="cylinder" size="0.003 0.001" pos="0.0333 -0.0282 0.0050" rgba="1 0.5 0 0.7"/>
-                  <site name="kc_Period" type="cylinder" size="0.003 0.001" pos="0.0524 -0.0282 0.0050" rgba="1 0.5 0 0.7"/>
-                  <site name="kc_Slash" type="cylinder" size="0.003 0.001" pos="0.0714 -0.0282 0.0050" rgba="1 0.5 0 0.7"/>
-                  <site name="kc_RShift" type="cylinder" size="0.003 0.001" pos="0.0976 -0.0282 0.0050" rgba="1 0.5 0 0.7"/>
-                  <site name="kc_Up" type="cylinder" size="0.003 0.001" pos="0.1238 -0.0282 0.0050" rgba="1 0.5 0 0.7"/>
-                  <site name="kc_End" type="cylinder" size="0.003 0.001" pos="0.1429 -0.0282 0.0050" rgba="1 0.5 0 0.7"/>
+                  <site name="kc_M" type="cylinder" size="0.003 0.001" pos=" 0.0143 -0.0282 0.0050" rgba="1 0.5 0 0.7"/>
+                  <site name="kc_Comma" type="cylinder" size="0.003 0.001" pos=" 0.0333 -0.0282 0.0050" rgba="1 0.5 0 0.7"/>
+                  <site name="kc_Period" type="cylinder" size="0.003 0.001" pos=" 0.0524 -0.0282 0.0050" rgba="1 0.5 0 0.7"/>
+                  <site name="kc_Slash" type="cylinder" size="0.003 0.001" pos=" 0.0714 -0.0282 0.0050" rgba="1 0.5 0 0.7"/>
+                  <site name="kc_RShift" type="cylinder" size="0.003 0.001" pos=" 0.0976 -0.0282 0.0050" rgba="1 0.5 0 0.7"/>
+                  <site name="kc_Up" type="cylinder" size="0.003 0.001" pos=" 0.1238 -0.0282 0.0050" rgba="1 0.5 0 0.7"/>
+                  <site name="kc_End" type="cylinder" size="0.003 0.001" pos=" 0.1429 -0.0282 0.0050" rgba="1 0.5 0 0.7"/>
+                  <!-- KEYCAP TARGET ROW 5 — Bottom row -->
                   <site name="kc_LCtrl" type="cylinder" size="0.003 0.001" pos="-0.1405 -0.0473 0.0050" rgba="1 0.5 0 0.7"/>
                   <site name="kc_LWin" type="cylinder" size="0.003 0.001" pos="-0.1167 -0.0473 0.0050" rgba="1 0.5 0 0.7"/>
                   <site name="kc_LAlt" type="cylinder" size="0.003 0.001" pos="-0.0929 -0.0473 0.0050" rgba="1 0.5 0 0.7"/>
                   <site name="kc_Space" type="cylinder" size="0.003 0.001" pos="-0.0214 -0.0473 0.0050" rgba="1 0.5 0 0.7"/>
-                  <site name="kc_RAlt" type="cylinder" size="0.003 0.001" pos="0.0476 -0.0473 0.0050" rgba="1 0.5 0 0.7"/>
-                  <site name="kc_Fn" type="cylinder" size="0.003 0.001" pos="0.0667 -0.0473 0.0050" rgba="1 0.5 0 0.7"/>
-                  <site name="kc_Left" type="cylinder" size="0.003 0.001" pos="0.0857 -0.0473 0.0050" rgba="1 0.5 0 0.7"/>
-                  <site name="kc_Down" type="cylinder" size="0.003 0.001" pos="0.1048 -0.0473 0.0050" rgba="1 0.5 0 0.7"/>
-                  <site name="kc_Right" type="cylinder" size="0.003 0.001" pos="0.1238 -0.0473 0.0050" rgba="1 0.5 0 0.7"/>
-                  <site name="kc_End2" type="cylinder" size="0.003 0.001" pos="0.1429 -0.0473 0.0050" rgba="1 0.5 0 0.7"/>
+                  <site name="kc_RAlt" type="cylinder" size="0.003 0.001" pos=" 0.0476 -0.0473 0.0050" rgba="1 0.5 0 0.7"/>
+                  <site name="kc_Fn" type="cylinder" size="0.003 0.001" pos=" 0.0667 -0.0473 0.0050" rgba="1 0.5 0 0.7"/>
+                  <site name="kc_Left" type="cylinder" size="0.003 0.001" pos=" 0.0857 -0.0473 0.0050" rgba="1 0.5 0 0.7"/>
+                  <site name="kc_Down" type="cylinder" size="0.003 0.001" pos=" 0.1048 -0.0473 0.0050" rgba="1 0.5 0 0.7"/>
+                  <site name="kc_Right" type="cylinder" size="0.003 0.001" pos=" 0.1238 -0.0473 0.0050" rgba="1 0.5 0 0.7"/>
+                  <site name="kc_End2" type="cylinder" size="0.003 0.001" pos=" 0.1429 -0.0473 0.0050" rgba="1 0.5 0 0.7"/>
+
                 </body>
               </body>
             </body>

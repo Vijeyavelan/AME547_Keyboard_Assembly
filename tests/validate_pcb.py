@@ -3,7 +3,7 @@ validate_pcb.py
 AME 547 — Phase 2 PCB validation
 
 Usage:
-    python controllers/validate_pcb.py
+    python tests/validate_pcb.py
 """
 
 import mujoco

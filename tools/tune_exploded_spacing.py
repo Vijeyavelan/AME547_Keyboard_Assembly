@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Tune Z spacing for keyboard_exploded_view_v3.xml.
 Edit only BASE_Z and STEP below, then run:
-  python tune_exploded_spacing.py keyboard_exploded_view_v3.xml
+  python tools/tune_exploded_spacing.py keyboard_exploded_view_v3.xml
 """
 from pathlib import Path
 import re
@@ -23,7 +23,7 @@ LAYERS = [
 ]
 
 def main() -> None:
-    path = Path(sys.argv[1] if len(sys.argv) > 1 else "models/stations/keyboard_exploded_view.xml")
+    path = Path(sys.argv[1] if len(sys.argv) > 1 else "tools/keyboard_exploded_view.xml")
     text = path.read_text()
     for i, layer in enumerate(LAYERS):
         z = BASE_Z + i * STEP

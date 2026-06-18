@@ -7,7 +7,7 @@ runs a short forward simulation to confirm no interpenetration,
 and reports mass properties.
 
 Usage:
-    python validate_bottom_case.py
+    python tests/validate_bottom_case.py
 """
 
 import mujoco

@@ -3,7 +3,7 @@ validate_epdm_foam.py
 AME 547 — Phase 2 EPDM foam validation
 
 Usage:
-    python controllers/validate_epdm_foam.py
+    python tests/validate_epdm_foam.py
 """
 
 import mujoco

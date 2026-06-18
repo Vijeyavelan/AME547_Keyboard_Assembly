@@ -3,7 +3,7 @@ validate_battery.py
 AME 547 — Phase 2 battery validation
 
 Usage:
-    python controllers/validate_battery.py
+    python tests/validate_battery.py
 """
 
 import mujoco
