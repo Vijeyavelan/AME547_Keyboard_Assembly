@@ -1,33 +1,12 @@
 """
-station3_controller.py — Sequential insert → pick with tray belt advance, 84 switches
-
-Tray system:
-  All 84 sw_* bodies start at XML positions spread along the tray
-  (sw_Esc at x=0, sw_F1 at x=-0.01905, ..., sw_End2 at x=-1.581).
-  tray_queue tracks which switch is currently at each tray slot.
-  tray_x[key] tracks the current world X of each un-picked switch.
-
-  During the rotate+XY phase each cycle, the belt advances concurrently:
-  every un-picked tray switch slides +PITCH in X over ADVANCE_STEPS steps,
-  bringing the next switch to x=0 under the pick head.
-
-  Gravity lock: every sim_step pins Y, Z, quat, vel of all tray switches
-  so they don't drift between advances.
-
-Pick sequence:
-  Head descends to tray depth (switch is already at x=0, y=0.300).
-  Switch is teleported precisely to head tip, pick weld activates, head rises.
-  Switch visually lifts off the tray.
-
-Insert sequence (unchanged):
-  Head descends, snap_to_site, weld swap, head rises.
-  inserted_map re-snaps every placed switch to its plate site every step.
-
-Cycle structure (after prime):
-  [Rotate 180° + XY to insert + tray belt advance (concurrent)]
-  [Sub-A] Insert head DOWN → snap → weld swap → UP
-  [Sub-B] Pick head DOWN   → teleport to tip → pick weld → UP
-  Swap heads. Repeat.
+station4_controller.py — Keycap installation, 84 keycaps
+Identical architecture to station3_controller.py with these differences:
+  - Keycap bodies (kc_*) instead of switch bodies (sw_*)
+  - kc_* sites at switch stem top (z_local=0.012 above sw_* site)
+  - No MESH_OFFSET_Z — keycap body origin = bottom face
+  - SWITCH_TOP_OFFSET=0.012: keycap bottom seats on switch stem top
+  - CARRY_Z_OFFSET=-0.0036: keycap center (half of 7.23mm height)
+  - Same tray belt advance, same rotate+XY pattern, same dual-head
 
 Run from repo root:
     mjpython controllers/station3.py
@@ -42,26 +21,26 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from cycle_timer import CycleTimer
 MODEL_PATH = "models/stations/station3.xml"
 
-TIMESTEP      = 0.002
-HEAD_Z_STEPS  = 150
-ROTATE_STEPS  = 200
-ADVANCE_STEPS = 200  # belt advance concurrent with rotation — same step count
-SETTLE_STEPS  = 30
+TIMESTEP       = 0.002
+HEAD_Z_STEPS   = 150
+ROTATE_STEPS   = 200
+ADVANCE_STEPS  = 200
+SETTLE_STEPS   = 30
 
-HEAD_Z_INSERT  = -0.015
+HEAD_Z_INSERT  = -0.015   # head descends 15mm to press keycap onto stem
 HEAD_Z_RETRACT =  0.000
 
-MESH_OFFSET_Z  = 0.00945
+# Keycap geometry
+SWITCH_TOP_OFFSET = 0.012   # kc_* site is 12mm above plate site
+                             # keycap bottom = kc_site_world_z (no extra offset)
+CARRY_Z_OFFSET    = -0.0036 # keycap center above tip (half of 7.23mm height)
 
-CARRY_Z_OFFSET = -0.013  # push switch 10mm below tip so 75% is visible
 TRAY_WORLD_Y  = 0.300
-TRAY_WORLD_Z  = 0.834
-TRAY_SWITCH_Z = TRAY_WORLD_Z - MESH_OFFSET_Z   # 0.82455
+TRAY_WORLD_Z  = 0.8411      # keycap bottom face at tray surface
+PITCH         = 0.01905     # 19.05mm slot pitch
 
-PITCH = 0.01905   # 19.05 mm switch pitch
-
-# Switch sequence — 84 keys (name, plate-local-x, plate-local-y)
-SWITCHES = [
+# 84 keycaps — same layout as switches
+KEYCAPS = [
     ("Esc",-0.1429,0.0480),("F1",-0.1238,0.0480),("F2",-0.1048,0.0480),
     ("F3",-0.0857,0.0480),("F4",-0.0667,0.0480),("F5",-0.0476,0.0480),
     ("F6",-0.0286,0.0480),("F7",-0.0095,0.0480),("F8",0.0095,0.0480),
@@ -94,10 +73,68 @@ SWITCHES = [
     ("Left",0.0857,-0.0473),("Down",0.1048,-0.0473),
     ("Right",0.1238,-0.0473),("End2",0.1429,-0.0473),
 ]
-assert len(SWITCHES) == 84
-N = len(SWITCHES)
-SWITCH_MAP = {k: (sx, sy) for k, sx, sy in SWITCHES}
-SWITCH_KEYS = [k for k, _, _ in SWITCHES]
+assert len(KEYCAPS) == 84
+N = len(KEYCAPS)
+KEYCAP_MAP  = {k: (sx, sy) for k, sx, sy in KEYCAPS}
+KEYCAP_KEYS = [k for k, _, _ in KEYCAPS]
+
+# Keycap widths in metres (measured from STL)
+KEYCAP_WIDTHS = {
+    "Esc":0.018,"F1":0.018,"F2":0.018,"F3":0.018,"F4":0.018,
+    "F5":0.018,"F6":0.018,"F7":0.018,"F8":0.018,"F9":0.018,
+    "F10":0.018,"F11":0.018,"F12":0.018,"PrtSc":0.018,
+    "Pause":0.018,"Del":0.018,"Grave":0.018,"1":0.018,"2":0.018,
+    "3":0.018,"4":0.018,"5":0.018,"6":0.018,"7":0.018,"8":0.018,
+    "9":0.018,"0":0.018,"Minus":0.018,"Equal":0.018,
+    "Bksp":0.0370,"PgUp":0.018,"Tab":0.0275,"Q":0.018,"W":0.018,
+    "E":0.018,"R":0.018,"T":0.018,"Y":0.018,"U":0.018,"I":0.018,
+    "O":0.018,"P":0.018,"LBrace":0.018,"RBrace":0.018,
+    "Bkslash":0.0275,"PgDn":0.018,"Caps":0.0323,"A":0.018,
+    "S":0.018,"D":0.018,"F":0.018,"G":0.018,"H":0.018,"J":0.018,
+    "K":0.018,"L":0.018,"Semicol":0.018,"Quote":0.018,
+    "Enter":0.0418,"Home":0.018,"LShift":0.0418,"Z":0.018,
+    "X":0.018,"C":0.018,"V":0.018,"B":0.018,"N":0.018,"M":0.018,
+    "Comma":0.018,"Period":0.018,"Slash":0.018,
+    "RShift":0.0323,"Up":0.018,"End":0.018,
+    "LCtrl":0.0228,"LWin":0.0228,"LAlt":0.0228,
+    "Space":0.1180,"RAlt":0.0228,"Fn":0.0228,
+    "Left":0.018,"Down":0.018,"Right":0.018,"End2":0.018,
+}
+
+GAP = 0.002  # 2mm gap between keycaps in tray
+
+
+def build_keycap_tray_x(keys, widths, gap):
+    """
+    Return initial tray X positions for a variable-width keycap row.
+
+    The first keycap center starts exactly at the pickup X reference. Each
+    following keycap is placed one center-to-center step behind it:
+
+        previous_width/2 + gap + current_width/2
+
+    This matches the belt advance used before every pick, so after advancing
+    from key i-1 to key i, the target key's center lands under the pickup tip.
+    """
+    tray_x = {}
+    current_center_x = 0.0
+
+    for i, key in enumerate(keys):
+        if i == 0:
+            tray_x[key] = current_center_x
+            continue
+
+        prev_key = keys[i - 1]
+        step = widths[prev_key] / 2.0 + gap + widths[key] / 2.0
+        current_center_x -= step
+        tray_x[key] = current_center_x
+
+    return tray_x
+
+
+def keycap_advance_amount(prev_key, current_key):
+    """Center-to-center belt step from prev_key to current_key."""
+    return KEYCAP_WIDTHS[prev_key] / 2.0 + GAP + KEYCAP_WIDTHS[current_key] / 2.0
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -127,29 +164,30 @@ def smoothstep(t):
     return t * t * (3.0 - 2.0 * t)
 
 def socket_to_ctrl(sx, sy):
-    """Table ctrl to bring plate socket (sx,sy) under insert head (world x=0, y=0.040)."""
+    """Table ctrl to bring plate socket (sx,sy) under insert head (world x=0, y=-0.050)."""
     xm = float(np.clip(-sx,        -0.160, 0.160))
     ym = float(np.clip(0.010 - sy, -0.115, 0.115))
     return xm, ym
 
 def snap_to_site(m, d, key):
-    """Snap switch body flush to its plate socket site."""
-    sid = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_SITE, f"sw_{key}")
+    """Snap keycap body so its bottom face sits exactly on the kc_* site."""
+    sid = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_SITE, f"kc_{key}")
     mujoco.mj_forward(m, d)
     sp = d.site_xpos[sid].copy()
-    qa, da = get_body_jnt(m, f"sw_{key}")
+    qa, da = get_body_jnt(m, f"kc_{key}")
+    # Keycap body origin = bottom face, so qpos z = site world z directly
     d.qpos[qa+0]      = sp[0]
     d.qpos[qa+1]      = sp[1]
-    d.qpos[qa+2]      = sp[2] - MESH_OFFSET_Z
+    d.qpos[qa+2]      = sp[2]
     d.qpos[qa+3]      = 1.0
     d.qpos[qa+4:qa+7] = 0.0
     d.qvel[da:da+6]   = 0.0
 
 def place_on_tray(d, qa, da, x):
-    """Pin a switch body at tray position x, locking Y/Z/quat/vel."""
+    """Pin a keycap body at tray position x."""
     d.qpos[qa+0] = x
     d.qpos[qa+1] = TRAY_WORLD_Y
-    d.qpos[qa+2] = TRAY_SWITCH_Z
+    d.qpos[qa+2] = TRAY_WORLD_Z
     d.qpos[qa+3] = 1.0
     d.qpos[qa+4] = 0.0
     d.qpos[qa+5] = 0.0
@@ -163,9 +201,9 @@ def sim_step(m, d, v, tbl, inserted_map, tray_state, carried_map):
     """
     Single physics step with four bypass operations:
     1. Table X/Y teleport
-    2. Inserted switch re-snap (follow plate as table moves)
-    3. Tray switch gravity lock (pin Y/Z/quat/vel of all un-picked switches)
-    4. Carried switch re-snap (pin switch to head tip during carry and rotation)
+    2. Inserted keycap re-snap (follow plate as table moves)
+    3. Tray keycap gravity lock
+    4. Carried keycap re-snap (pin to head tip during carry and rotation)
     """
     x_qa, y_qa, x_doa, y_doa, x_aid, y_aid = tbl
 
@@ -175,29 +213,29 @@ def sim_step(m, d, v, tbl, inserted_map, tray_state, carried_map):
     d.qvel[x_doa] = 0.0
     d.qvel[y_doa] = 0.0
 
-    # 2. Re-snap inserted switches to their plate sites
+    # 2. Re-snap installed keycaps to their plate sites
     for (qa, da, sid) in inserted_map.values():
         sp = d.site_xpos[sid]
         d.qpos[qa+0] = sp[0]
         d.qpos[qa+1] = sp[1]
-        d.qpos[qa+2] = sp[2] - MESH_OFFSET_Z
+        d.qpos[qa+2] = sp[2]   # body origin = bottom face, sits at site Z
         d.qpos[qa+3] = 1.0
         d.qpos[qa+4] = 0.0
         d.qpos[qa+5] = 0.0
         d.qpos[qa+6] = 0.0
         d.qvel[da:da+6] = 0.0
 
-    # 3. Gravity lock all tray switches (pin Y/Z/quat/vel, leave X alone)
+    # 3. Gravity lock all tray keycaps
     for key, (qa, da) in tray_state.items():
         d.qpos[qa+1] = TRAY_WORLD_Y
-        d.qpos[qa+2] = TRAY_SWITCH_Z
+        d.qpos[qa+2] = TRAY_WORLD_Z
         d.qpos[qa+3] = 1.0
         d.qpos[qa+4] = 0.0
         d.qpos[qa+5] = 0.0
         d.qpos[qa+6] = 0.0
         d.qvel[da:da+6] = 0.0
 
-    # 4. Pin carried switches exactly to their head tip (smooth arc during rotation)
+    # 4. Pin carried keycaps to head tip
     for (qa, da, tip_sid) in carried_map.values():
         tip = d.site_xpos[tip_sid]
         d.qpos[qa+0] = tip[0]
@@ -209,133 +247,122 @@ def sim_step(m, d, v, tbl, inserted_map, tray_state, carried_map):
         d.qpos[qa+6] = 0.0
         d.qvel[da:da+6] = 0.0
 
-    t0 = time.perf_counter()
+    t0 = time.time()
     mujoco.mj_step(m, d)
+    elapsed = time.time() - t0
+    time.sleep(max(0, TIMESTEP - elapsed))
     v.sync()
-    rem = TIMESTEP - (time.perf_counter() - t0)
-    if rem > 0:
-        time.sleep(rem)
 
 
 def drive_to(m, d, v, targets, steps, label, tbl, inserted_map, tray_state, carried_map):
-    act_ids = {n: get_aid(m, n) for n in targets}
-    starts  = {n: d.ctrl[act_ids[n]] for n in targets}
+    """Smoothly drive actuators to target values over N steps."""
+    start = {name: d.ctrl[get_aid(m, name)] for name in targets}
     for i in range(steps):
         t = smoothstep((i + 1) / steps)
-        for n, tgt in targets.items():
-            d.ctrl[act_ids[n]] = starts[n] + (tgt - starts[n]) * t
+        for name, target in targets.items():
+            d.ctrl[get_aid(m, name)] = start[name] + (target - start[name]) * t
         sim_step(m, d, v, tbl, inserted_map, tray_state, carried_map)
     if label:
         print(f"  ✓ {label}")
+
 
 def settle(m, d, v, steps, tbl, inserted_map, tray_state, carried_map):
     for _ in range(steps):
         sim_step(m, d, v, tbl, inserted_map, tray_state, carried_map)
 
 
-# ── Tray belt advance ─────────────────────────────────────────────────────────
-
-def tray_advance_step(d, tray_state, tray_x, start_x, step, total_steps):
-    """
-    Advance all tray switches one pitch toward pick position (+X direction).
-    Called once per sim step during the rotate+XY phase.
-    tray_x: dict key → current world X (updated in place as animation progresses)
-    start_x: dict key → world X at start of this advance
-    """
+def tray_advance_step(d, tray_state, tray_x, advance_start_x, step, total_steps, advance_amount):
     t = smoothstep((step + 1) / total_steps)
     for key, (qa, da) in tray_state.items():
-        new_x = start_x[key] + PITCH * t
+        new_x = advance_start_x[key] + advance_amount * t
+        tray_x[key] = new_x
         d.qpos[qa+0] = new_x
-        tray_x[key]  = new_x
 
-
-# ── Combined simultaneous pick + insert ──────────────────────────────────────
 
 def do_pick_and_insert(m, d, v,
                        ins_head_idx, ins_key,
                        pick_head_idx, pick_key,
                        tbl, inserted_map, tray_state, tray_x, carried_map):
     """
-    Both heads operate simultaneously:
-      ins_head  — inserts ins_key into its plate socket
-      pick_head — picks pick_key from the tray (already at x=0)
-
-    Either argument may be None to run only one head (prime / last cycle).
-
-    Sequence:
-      1. Both heads DOWN together (single drive_to with both actuators)
-      2. Weld operations (instantaneous qpos writes):
-           Insert: snap_to_site → deactivate pick weld → activate ins weld
-           Pick:   teleport to tip → activate pick weld
-      3. mj_forward + sync
-      4. Both heads UP together
-      5. Settle
+    Simultaneous insert (press keycap onto stem) + pick (lift from tray).
+    Mirrors S3 do_pick_and_insert exactly with keycap naming.
     """
-    targets_down = {}
-    targets_up   = {}
+    ins_head  = f"head_{ins_head_idx+1}"
+    pick_head = f"head_{pick_head_idx+1}"
+    ins_drive  = f"{ins_head}_drive"
+    pick_drive = f"{pick_head}_drive"
+    ins_tip_sid  = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_SITE, f"{ins_head}_tip_site")
+    pick_tip_sid = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_SITE, f"{pick_head}_tip_site")
 
-    if ins_key is not None:
-        targets_down[f"head_{ins_head_idx+1}_drive"] = HEAD_Z_INSERT
-        targets_up  [f"head_{ins_head_idx+1}_drive"] = HEAD_Z_RETRACT
-    if pick_key is not None:
-        targets_down[f"head_{pick_head_idx+1}_drive"] = HEAD_Z_INSERT
-        targets_up  [f"head_{pick_head_idx+1}_drive"] = HEAD_Z_RETRACT
+    has_ins  = ins_key is not None
+    has_pick = pick_key is not None
 
-    label_down = (
-        f"Head {ins_head_idx+1} insert + Head {pick_head_idx+1} pick"
-        if ins_key and pick_key
-        else ("insert head down" if ins_key else "pick head down")
-    )
+    # ── Both heads descend simultaneously ────────────────────────────────────
+    targets = {}
+    if has_ins:
+        targets[ins_drive]  = HEAD_Z_INSERT
+    if has_pick:
+        targets[pick_drive] = HEAD_Z_INSERT
+    if targets:
+        drive_to(m, d, v, targets, HEAD_Z_STEPS, "", tbl, inserted_map, tray_state, carried_map)
 
-    # ── 1. Both heads DOWN ────────────────────────────────────────────────────
-    drive_to(m, d, v, targets_down, HEAD_Z_STEPS,
-             f"both down ({label_down})", tbl, inserted_map, tray_state, carried_map)
-    settle(m, d, v, SETTLE_STEPS, tbl, inserted_map, tray_state, carried_map)
+    mujoco.mj_forward(m, d)
 
-    # ── 2. Weld operations ────────────────────────────────────────────────────
-    if ins_key is not None:
-        # Snap switch to socket, swap welds
+    # ── INSERT: snap keycap to plate site, activate weld ────────────────────
+    if has_ins:
         snap_to_site(m, d, ins_key)
-        d.eq_active[get_eid(m, f"pick{ins_head_idx+1}_{ins_key}")] = 0
-        d.eq_active[get_eid(m, f"ins_{ins_key}")]                  = 1
-        # Register for sim_step re-snap; remove from carried_map
-        sid = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_SITE, f"sw_{ins_key}")
-        qa, da = get_body_jnt(m, f"sw_{ins_key}")
-        inserted_map[ins_key] = (qa, da, sid)
-        carried_map.pop(ins_head_idx, None)
-
-    if pick_key is not None:
-        # Switch is at x=0 in tray — teleport to pick head tip
-        tip_site = f"head_{pick_head_idx+1}_tip_site"
-        tip_sid  = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_SITE, tip_site)
         mujoco.mj_forward(m, d)
-        tip = d.site_xpos[tip_sid].copy()
-        qa, da = get_body_jnt(m, f"sw_{pick_key}")
+        sid = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_SITE, f"kc_{ins_key}")
+        qa, da = get_body_jnt(m, f"kc_{ins_key}")
+        inserted_map[ins_key] = (qa, da, sid)
+        # Deactivate pick welds, activate insert weld
+        for h in range(2):
+            eid = get_eid(m, f"pick{h+1}_{ins_key}")
+            m.eq_active0[eid] = 0
+        eid = get_eid(m, f"ins_{ins_key}")
+        m.eq_active0[eid] = 1
+        # Remove from carried_map
+        if ins_head_idx in carried_map:
+            del carried_map[ins_head_idx]
+        print(f"    → kc_{ins_key} snapped to plate")
+
+    # ── PICK: teleport keycap to pick head tip, activate pick weld ──────────
+    if has_pick and pick_key in tray_state:
+        mujoco.mj_forward(m, d)
+        tip = d.site_xpos[pick_tip_sid].copy()
+        qa, da = get_body_jnt(m, f"kc_{pick_key}")
+        # Teleport keycap center to head tip
         d.qpos[qa+0] = tip[0]
         d.qpos[qa+1] = tip[1]
         d.qpos[qa+2] = tip[2] + CARRY_Z_OFFSET
-        d.qpos[qa+3]      = 1.0
+        d.qpos[qa+3] = 1.0
         d.qpos[qa+4:qa+7] = 0.0
         d.qvel[da:da+6]   = 0.0
-        d.eq_active[get_eid(m, f"pick{pick_head_idx+1}_{pick_key}")] = 1
-        # Remove from tray, register in carried_map
-        tray_state.pop(pick_key, None)
-        tray_x.pop(pick_key, None)
-        carried_map[pick_head_idx] = (qa, da, tip_sid)
+        mujoco.mj_forward(m, d)
+        # Activate pick weld
+        eid = get_eid(m, f"pick{pick_head_idx+1}_{pick_key}")
+        m.eq_active0[eid] = 1
+        # Add to carried_map, remove from tray
+        carried_map[pick_head_idx] = (qa, da, pick_tip_sid)
+        del tray_state[pick_key]
+        print(f"    → kc_{pick_key} picked from tray")
 
-    mujoco.mj_forward(m, d)
-    v.sync()
-
-    # ── 3. Both heads UP ──────────────────────────────────────────────────────
-    drive_to(m, d, v, targets_up, HEAD_Z_STEPS,
-             "both up", tbl, inserted_map, tray_state, carried_map)
     settle(m, d, v, SETTLE_STEPS, tbl, inserted_map, tray_state, carried_map)
 
+    # ── Both heads retract simultaneously ────────────────────────────────────
+    targets = {}
+    if has_ins:
+        targets[ins_drive]  = HEAD_Z_RETRACT
+    if has_pick:
+        targets[pick_drive] = HEAD_Z_RETRACT
+    if targets:
+        drive_to(m, d, v, targets, HEAD_Z_STEPS, "", tbl, inserted_map, tray_state, carried_map)
+
+# Add this before the rotation loop:
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 def main():
-    print(f"Loading: {MODEL_PATH}\n")
     m = mujoco.MjModel.from_xml_path(MODEL_PATH)
     d = mujoco.MjData(m)
     mujoco.mj_resetDataKeyframe(m, d, 0)
@@ -343,7 +370,7 @@ def main():
     # ── Verify welds & sites ──────────────────────────────────────────────────
     print("Verifying welds (252)...")
     try:
-        for key, _, _ in SWITCHES:
+        for key, _, _ in KEYCAPS:
             get_eid(m, f"pick1_{key}")
             get_eid(m, f"pick2_{key}")
             get_eid(m, f"ins_{key}")
@@ -352,27 +379,26 @@ def main():
         print(f"  ERROR: {e}"); return
 
     print("Verifying sites (84)...")
-    missing = [k for k, _, _ in SWITCHES
-               if mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_SITE, f"sw_{k}") < 0]
+    missing = [k for k, _, _ in KEYCAPS
+               if mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_SITE, f"kc_{k}") < 0]
     if missing:
         print(f"  ERROR: missing sites: {missing}"); return
     print("  All 84 sites ✓")
 
-    # ── Resolve tray switch joints ────────────────────────────────────────────
-    print("Resolving tray switch joints...")
-    # tray_state: key → (qa, da) for every switch still in the tray
-    # tray_x:     key → current world X
+    # ── Resolve tray keycap joints ────────────────────────────────────────────
+    print("Resolving tray keycap joints...")
     tray_state = {}
     tray_x     = {}
-    for i, key in enumerate(SWITCH_KEYS):
-        qa, da = get_body_jnt(m, f"sw_{key}")
-        tray_state[key] = (qa, da)
-        tray_x[key]     = -i * PITCH   # sw_Esc at x=0, sw_F1 at -0.01905, etc.
-    print(f"  {len(tray_state)} switches in tray ✓")
 
-    # Place all switches at their tray positions (overrides XML initial pos
-    # with the controller's canonical positions)
-    print("Placing switches in tray...")
+    tray_x = build_keycap_tray_x(KEYCAP_KEYS, KEYCAP_WIDTHS, GAP)
+    for key in KEYCAP_KEYS:
+        qa, da = get_body_jnt(m, f"kc_{key}")
+        tray_state[key] = (qa, da)
+    print(f"  {len(tray_state)} keycaps in tray ✓")
+    print("  Tray pickup reference: first keycap center starts at x=0.00mm")
+
+    # Place all keycaps at tray positions
+    print("Loading tray...")
     for key, (qa, da) in tray_state.items():
         place_on_tray(d, qa, da, tray_x[key])
     mujoco.mj_forward(m, d)
@@ -386,8 +412,8 @@ def main():
     col_aid = get_aid(m, "col_rotate")
     tbl = (x_qa, y_qa, x_doa, y_doa, x_aid_v, y_aid_v)
 
-    inserted_map = {}   # key → (qa, da, site_id) for placed switches
-    carried_map  = {}   # head_idx → (qa, da, tip_site_id) for in-transit switches
+    inserted_map = {}   # key → (qa, da, site_id) for installed keycaps
+    carried_map  = {}   # head_idx → (qa, da, tip_site_id) for in-transit keycaps
 
     def ss():
         sim_step(m, d, v, tbl, inserted_map, tray_state, carried_map)
@@ -396,11 +422,11 @@ def main():
     def stl(steps):
         settle(m, d, v, steps, tbl, inserted_map, tray_state, carried_map)
 
-    inserted     = 0
+    installed    = 0
     col_angle    = 0.0
     col_sign     = +1
     head_carry   = [None, None]
-    sw_queue_idx = 0
+    kc_queue_idx = 0
 
     with mujoco.viewer.launch_passive(m, d) as v:
         v.cam.lookat[:] = [0.0, 0.05, 0.83]
@@ -408,7 +434,7 @@ def main():
         v.cam.elevation = -25
         v.cam.azimuth   = 150
 
-        # ── HOME + DIAGNOSTICS ───────────────────────────────────────────────
+        # ── HOME ─────────────────────────────────────────────────────────────
         print("\n[INIT] Homing...")
         d.ctrl[x_aid_v] = 0.0
         d.ctrl[y_aid_v] = 0.0
@@ -424,9 +450,8 @@ def main():
             print(f"  Head {h+1} tip @ home: "
                   f"x={wp[0]:.4f}  y={wp[1]:.4f}  z={wp[2]:.4f}")
 
-        # ── PRIME: Head 2 picks sw_Esc (pick only, no insert yet) ───────────
-        # sw_Esc is already at x=0 — the pick head is directly above it.
-        print("\n[PRIME] Head 2 picks sw_Esc from tray...")
+        # ── PRIME: Head 2 picks kc_Esc ───────────────────────────────────────
+        print("\n[PRIME] Head 2 picks kc_Esc from tray...")
         do_pick_and_insert(m, d, v,
                            ins_head_idx=0,  ins_key=None,
                            pick_head_idx=1, pick_key="Esc",
@@ -434,77 +459,85 @@ def main():
                            tray_state=tray_state, tray_x=tray_x,
                            carried_map=carried_map)
         head_carry[1] = "Esc"
-        sw_queue_idx  = 1
-        print(f"  ✓ Head 2 carries sw_Esc")
+        kc_queue_idx  = 1
+        print(f"  ✓ Head 2 carries kc_Esc")
 
         insert_head = 1
         cycle = 0
         timer = CycleTimer("Station 3")
         timer.start(d)
-        # ── MAIN LOOP ────────────────────────────────────────────────────────
-        while inserted < N:
+        # ── MAIN LOOP ─────────────────────────────────────────────────────────
+        while installed < N:
             pick_head = 1 - insert_head
             ins_key   = head_carry[insert_head]
             has_ins   = ins_key is not None
-            pick_key  = SWITCHES[sw_queue_idx][0] if sw_queue_idx < N else None
+            pick_key  = KEYCAPS[kc_queue_idx][0] if kc_queue_idx < N else None
 
             cycle += 1
             print()
             print("=" * 60)
             print(f"[CYCLE {cycle:02d}]  "
-                  f"Insert: sw_{ins_key or 'none':12s}  "
-                  f"Pick: sw_{pick_key or 'none'}")
+                  f"Install: kc_{ins_key or 'none':12s}  "
+                  f"Pick: kc_{pick_key or 'none'}")
             print("=" * 60)
 
-            # ── Rotate + XY + tray belt advance (all concurrent) ─────────────
+            # ── Rotate + XY + tray belt advance ──────────────────────────────
             col_angle += col_sign * np.pi
             col_angle  = (col_angle + np.pi) % (2 * np.pi) - np.pi
             col_sign   = -col_sign
 
             if has_ins:
-                ins_sx, ins_sy = SWITCH_MAP[ins_key]
+                ins_sx, ins_sy = KEYCAP_MAP[ins_key]
                 ins_xc, ins_yc = socket_to_ctrl(ins_sx, ins_sy)
             else:
                 ins_xc, ins_yc = 0.0, 0.0
 
+            if pick_key is not None and kc_queue_idx > 0:
+                prev_key = KEYCAP_KEYS[kc_queue_idx - 1]
+                advance_amount = keycap_advance_amount(prev_key, pick_key)
+            else:
+                advance_amount = 0.0
+
             print(f"  Rotate → {np.degrees(col_angle):.0f}°  "
                   f"XY → ({ins_xc*1000:.1f}, {ins_yc*1000:.1f}) mm  "
-                  f"Belt advance +{PITCH*1000:.2f} mm")
+                  f"Belt advance +{advance_amount*1000:.2f} mm")
 
-            col_start  = d.ctrl[col_aid]
-            x_start    = d.ctrl[x_aid_v]
-            y_start    = d.ctrl[y_aid_v]
-            XY_STEPS   = int(ROTATE_STEPS * 0.8)
+            col_start = d.ctrl[col_aid]
+            x_start   = d.ctrl[x_aid_v]
+            y_start   = d.ctrl[y_aid_v]
+            XY_STEPS  = int(ROTATE_STEPS * 0.8)
 
-            # Snapshot tray X positions at start of advance
             advance_start_x = {k: tray_x[k] for k in tray_state}
 
             for step in range(ROTATE_STEPS):
-                # Column rotation
                 tc = smoothstep((step + 1) / ROTATE_STEPS)
                 d.ctrl[col_aid] = col_start + (col_angle - col_start) * tc
 
-                # XY table move (finishes at 80% of rotation)
                 if step < XY_STEPS:
                     tx = smoothstep((step + 1) / XY_STEPS)
                     d.ctrl[x_aid_v] = x_start + (ins_xc - x_start) * tx
                     d.ctrl[y_aid_v] = y_start + (ins_yc - y_start) * tx
 
-                # Belt advance (same step count as rotation)
+                    
                 if step < ADVANCE_STEPS and pick_key is not None:
                     tray_advance_step(d, tray_state, tray_x,
-                                      advance_start_x, step, ADVANCE_STEPS)
-
+                                      advance_start_x, step, ADVANCE_STEPS, advance_amount)
                 ss()
 
             stl(SETTLE_STEPS)
             print(f"  ✓ rotation + XY + belt advance done")
             timer.mark(d, f"C{cycle:02d} rotate+XY+belt ({ins_key or 'none'}→{pick_key or 'none'})")
-            # ── Simultaneous insert + pick ────────────────────────────────────
+            # ── Simultaneous install + pick ───────────────────────────────────
             if pick_key is not None:
                 px = tray_x.get(pick_key, None)
                 if px is not None:
-                    print(f"  Tray: sw_{pick_key} at x={px*1000:.2f}mm")
+                    pick_tip_site = f"head_{pick_head+1}_tip_site"
+                    pick_tip_sid = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_SITE, pick_tip_site)
+                    mujoco.mj_forward(m, d)
+                    pick_tip_x = d.site_xpos[pick_tip_sid][0]
+                    print(f"  Tray: kc_{pick_key} at x={px*1000:.2f}mm; "
+                          f"{pick_tip_site} x={pick_tip_x*1000:.2f}mm; "
+                          f"pickup offset={(px-pick_tip_x)*1000:.2f}mm")
 
             do_pick_and_insert(m, d, v,
                                ins_head_idx=insert_head, ins_key=ins_key if has_ins else None,
@@ -515,23 +548,23 @@ def main():
             timer.mark(d, f"C{cycle:02d} insert+pick ({ins_key or 'none'}+{pick_key or 'none'})")
             if has_ins:
                 head_carry[insert_head] = None
-                inserted += 1
-                print(f"  ✓ [{inserted}/{N}] sw_{ins_key} inserted")
+                installed += 1
+                print(f"  ✓ [{installed}/{N}] kc_{ins_key} installed")
 
             if pick_key is not None:
                 head_carry[pick_head] = pick_key
-                sw_queue_idx += 1
-                print(f"  ✓ sw_{pick_key} picked  [queue → {sw_queue_idx}/{N}]")
+                kc_queue_idx += 1
+                print(f"  ✓ kc_{pick_key} picked  [queue → {kc_queue_idx}/{N}]")
 
             insert_head = pick_head
 
         # ── DONE ─────────────────────────────────────────────────────────────
         print()
         print("=" * 60)
-        print(f"[DONE] All {inserted}/{N} switches inserted.")
+        print(f"[DONE] All {installed}/{N} keycaps installed.")
         print("=" * 60)
         timer.finish(d)
-        timer.print_report(ref_key="switch_fast")
+        timer.print_report(ref_key="keycap_fast")
         d.ctrl[x_aid_v] = 0.0
         d.ctrl[y_aid_v] = 0.0
         d.ctrl[col_aid] = 0.0

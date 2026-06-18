@@ -128,8 +128,8 @@ AME547_Keyboard_Assembly/
 ├── models/
 │   ├── stations/
 │   │   ├── station1_A.xml           # S1 model (UR5e, CDLR segment, kit tray, tool dock)
-│   │   ├── station3.xml             # S2 gantry + XY table model
-│   │   └── station4.xml             # S3 gantry + XY table model
+│   │   ├── station2.xml             # S2 gantry + XY table model
+│   │   └── station3.xml             # S3 gantry + XY table model
 │   └── assembly_cell.xml            # Full 18.5m cell, all stations on CDLR backbone
 ├── assets/
 │   └── images/                      # Simulation screenshots for README
